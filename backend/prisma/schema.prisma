@@ -1,0 +1,220 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  password    String
+  preferences Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  flashcards      Flashcard[]
+  flashcardReviews FlashcardReview[]
+  quizAttempts    QuizAttempt[]
+  progress        UserProgress?
+  dailyProgress   DailyProgress[]
+  studySessions   StudySession[]
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+model Flashcard {
+  id            String   @id @default(cuid())
+  word          String
+  definition    String
+  example       String
+  partOfSpeech  String
+  difficulty    String
+  category      String
+  tags          String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  userId        String?
+
+  // Relations
+  user     User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews  FlashcardReview[]
+
+  @@map("flashcards")
+}
+
+model FlashcardReview {
+  id           String   @id @default(cuid())
+  flashcardId  String
+  userId       String
+  isCorrect    Boolean
+  responseTime Int
+  reviewedAt   DateTime @default(now())
+
+  // Relations
+  flashcard Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("flashcard_reviews")
+}
+
+model Quiz {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  type        String
+  difficulty  String
+  timeLimit   Int?
+  questions   Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  attempts QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model QuizAttempt {
+  id             String   @id @default(cuid())
+  quizId         String
+  userId         String
+  score          Int
+  totalQuestions Int
+  correctAnswers Int
+  timeSpent      Int
+  answers        Json
+  completedAt    DateTime @default(now())
+
+  // Relations
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_attempts")
+}
+
+model UserProgress {
+  userId               String   @id
+  totalCardsStudied    Int      @default(0)
+  totalCorrectAnswers  Int      @default(0)
+  totalIncorrectAnswers Int     @default(0)
+  currentStreak        Int      @default(0)
+  longestStreak        Int      @default(0)
+  totalStudyTime       Int      @default(0)
+  lastStudyDate        DateTime?
+  level                String   @default("beginner")
+  experience           Int      @default(0)
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_progress")
+}
+
+model DailyProgress {
+  id             String   @id @default(cuid())
+  userId         String
+  date           DateTime @db.Date
+  cardsStudied   Int      @default(0)
+  correctAnswers Int      @default(0)
+  incorrectAnswers Int    @default(0)
+  studyTime      Int      @default(0)
+  streak         Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("daily_progress")
+}
+
+model StudySession {
+  id             String   @id @default(cuid())
+  userId         String
+  startTime      DateTime @default(now())
+  endTime        DateTime?
+  duration       Int?
+  cardsStudied   Int      @default(0)
+  correctAnswers Int      @default(0)
+  incorrectAnswers Int    @default(0)
+  sessionType    String
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("study_sessions")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  actionUrl String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// AI and Knowledge Graph related models
+model AIQuestion {
+  id          String   @id @default(cuid())
+  question    String
+  answer      String
+  explanation String
+  difficulty  String
+  category    String
+  relatedConcepts Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("ai_questions")
+}
+
+model KnowledgeNode {
+  id          String   @id @default(cuid())
+  type        String
+  title       String
+  description String
+  content     Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  relationships KnowledgeRelationship[] @relation("source")
+  relationshipsTarget KnowledgeRelationship[] @relation("target")
+
+  @@map("knowledge_nodes")
+}
+
+model KnowledgeRelationship {
+  id          String   @id @default(cuid())
+  sourceId    String
+  targetId    String
+  type        String
+  strength    Float
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  source KnowledgeNode @relation("source", fields: [sourceId], references: [id], onDelete: Cascade)
+  target KnowledgeNode @relation("target", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId, type])
+  @@map("knowledge_relationships")
+}
