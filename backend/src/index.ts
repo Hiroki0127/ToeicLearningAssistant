@@ -4,6 +4,10 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 
+// Import routes
+import authRoutes from '@/routes/auth.routes';
+import flashcardRoutes from '@/routes/flashcard.routes';
+
 // Load environment variables
 dotenv.config();
 
@@ -30,7 +34,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes (will be added later)
+// API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/flashcards', flashcardRoutes);
+
+// API info endpoint
 app.get('/api', (req, res) => {
   res.json({
     message: 'TOEIC Learning Assistant API',
