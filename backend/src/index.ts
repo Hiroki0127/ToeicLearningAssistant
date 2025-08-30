@@ -8,16 +8,19 @@ import dotenv from 'dotenv';
 import authRoutes from '@/routes/auth.routes';
 import flashcardRoutes from '@/routes/flashcard.routes';
 
+// Import database utilities
+import { checkDatabaseConnection, getDatabaseStats } from '@/utils/database';
+
 // Load environment variables
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env['PORT'] || 3001;
 
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env['FRONTEND_URL'] || 'http://localhost:3000',
   credentials: true,
 }));
 app.use(morgan('combined')); // Logging
@@ -25,13 +28,35 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', async (req, res) => {
+  const dbConnected = await checkDatabaseConnection();
+  
   res.json({
-    status: 'OK',
+    status: dbConnected ? 'OK' : 'WARNING',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
+    environment: process.env['NODE_ENV'] || 'development',
+    database: {
+      connected: dbConnected,
+    },
   });
+});
+
+// Database stats endpoint
+app.get('/api/stats', async (req, res) => {
+  const stats = await getDatabaseStats();
+  
+  if (stats) {
+    res.json({
+      success: true,
+      data: stats,
+    });
+  } else {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve database statistics',
+    });
+  }
 });
 
 // API routes
@@ -59,7 +84,7 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).json({
     success: false,
     error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
+    message: process.env['NODE_ENV'] === 'development' ? err.message : 'Something went wrong',
   });
 });
 
