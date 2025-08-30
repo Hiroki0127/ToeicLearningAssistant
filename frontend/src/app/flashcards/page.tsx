@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Flashcard } from '@/components/flashcards/Flashcard';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
+import Layout from '@/components/layout/Layout';
 import { useAppStore } from '@/lib/store';
 import type { Flashcard as FlashcardType } from '@/types';
 import { BookOpen, Plus, Settings } from 'lucide-react';
@@ -90,7 +91,8 @@ export default function FlashcardsPage() {
 
   if (sampleFlashcards.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
+      <Layout>
+        <div className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-4xl mx-auto px-4">
           <Card>
             <CardContent className="text-center py-12">
@@ -108,12 +110,14 @@ export default function FlashcardsPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <Layout>
+      <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -208,7 +212,8 @@ export default function FlashcardsPage() {
             </Button>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 }
