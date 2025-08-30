@@ -1,43 +1,13 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
+import Layout from '@/components/layout/Layout';
 import { BookOpen, Brain, Target, TrendingUp, Users, Zap } from 'lucide-react';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <BookOpen className="h-8 w-8 text-blue-600 mr-3" />
-              <h1 className="text-2xl font-bold text-gray-900">
-                TOEIC Learning Assistant
-              </h1>
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <Link href="/flashcards" className="text-gray-600 hover:text-blue-600">
-                Flashcards
-              </Link>
-              <Link href="/quiz" className="text-gray-600 hover:text-blue-600">
-                Quiz
-              </Link>
-              <Link href="/progress" className="text-gray-600 hover:text-blue-600">
-                Progress
-              </Link>
-              <Link href="/login" className="text-gray-600 hover:text-blue-600">
-                Login
-              </Link>
-            </nav>
-            <div className="md:hidden">
-              <Button variant="ghost" size="sm">
-                Menu
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <Layout>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
 
       {/* Hero Section */}
       <section className="py-20">
@@ -248,6 +218,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </Layout>
   );
 }
