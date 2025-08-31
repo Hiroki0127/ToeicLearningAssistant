@@ -18,7 +18,7 @@ export default function Home() {
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Enhance your TOEIC preparation with intelligent flashcards, personalized quizzes, 
-            and adaptive learning that remembers your progress and adjusts to your needs.
+            and adaptive learning powered by RAG + knowledge graph technology.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/flashcards">
@@ -139,13 +139,13 @@ export default function Home() {
                   <Users className="h-6 w-6 text-indigo-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900">
-                  Agentic Memory
+                  Smart Recommendations
                 </h3>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600">
-                  AI that remembers your learning patterns and provides 
-                  personalized recommendations.
+                  AI-powered suggestions based on learning patterns and 
+                  related concepts for optimal study paths.
                 </p>
               </CardContent>
             </Card>

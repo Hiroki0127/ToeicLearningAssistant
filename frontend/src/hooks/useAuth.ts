@@ -102,7 +102,7 @@ export const useAuth = () => {
   return {
     user,
     isAuthenticated,
-    loading: loading || setLoading,
+    loading,
     error,
     login,
     register,

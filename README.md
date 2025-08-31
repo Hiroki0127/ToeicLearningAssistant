@@ -1,6 +1,6 @@
 # TOEIC Learning Assistant
 
-An AI-powered study app with vocab flashcards, daily reminders, and progress tracking. Enhanced learning through Retrieval-Augmented Generation (RAG) for grammar/vocab questions, knowledge graphs to link related concepts, and agentic memory for personalized, long-term study recommendations.
+An AI-powered study app with vocab flashcards, daily reminders, and progress tracking. Enhanced learning through Retrieval-Augmented Generation (RAG) for grammar/vocab questions and knowledge graphs to link related concepts for comprehensive understanding.
 
 ## 🚀 Features
 
@@ -14,7 +14,7 @@ An AI-powered study app with vocab flashcards, daily reminders, and progress tra
 ### Advanced AI Features (Coming Soon)
 - 🔄 RAG (Retrieval-Augmented Generation)
 - 🔄 Knowledge Graphs
-- 🔄 Agentic Memory (Personalized Learning)
+- 🔄 Smart Recommendations (AI-powered suggestions based on learning patterns)
 
 ## 🛠️ Tech Stack
 
@@ -92,7 +92,7 @@ npm run dev
 - [ ] Quiz system
 - [ ] AI integration (RAG)
 - [ ] Knowledge graph implementation
-- [ ] Agentic memory system
+- [ ] Smart recommendations system
 
 ## 🤝 Contributing
 
