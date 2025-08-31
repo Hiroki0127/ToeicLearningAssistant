@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Flashcard } from '@/components/flashcards/Flashcard';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Layout from '@/components/layout/Layout';
 import { useAppStore } from '@/lib/store';
 import type { Flashcard as FlashcardType } from '@/types';
-import { BookOpen, Plus, Settings } from 'lucide-react';
+import { BookOpen, Plus, Settings, HelpCircle } from 'lucide-react';
 
 // Sample flashcards for testing
 const sampleFlashcards: FlashcardType[] = [
@@ -132,6 +133,12 @@ export default function FlashcardsPage() {
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
+            <Link href="/quiz">
+              <Button variant="outline" size="sm">
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Take Quiz
+              </Button>
+            </Link>
             <Button size="sm">
               <Plus className="h-4 w-4 mr-2" />
               Add Card
