@@ -1,205 +1,160 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/Card';
+import { useRouter } from 'next/navigation';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import Layout from '@/components/layout/Layout';
-import { useAuth } from '@/hooks/useAuth';
-import { 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  ArrowRight, 
-  ArrowLeft,
-  Trophy,
-  Target,
-  BarChart3,
-  RotateCcw
-} from 'lucide-react';
+import { Layout } from '@/components/layout/Layout';
+import { CheckCircle, XCircle, Clock, Trophy, Target } from 'lucide-react';
 
 interface Question {
   id: string;
-  type: 'multiple-choice' | 'fill-in-the-blank' | 'true-false';
+  type: 'multiple-choice';
   question: string;
-  options?: string[];
+  options: string[];
   correctAnswer: string;
-  explanation?: string;
+  explanation: string;
   points: number;
 }
 
-interface QuizResult {
-  totalQuestions: number;
-  correctAnswers: number;
-  score: number;
-  timeSpent: number;
-  accuracy: number;
+interface Quiz {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  difficulty: string;
+  timeLimit: number;
+  questions: Question[];
 }
 
 export default function QuizPage() {
-  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string>('');
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
-  const [isQuizStarted, setIsQuizStarted] = useState(false);
-  const [isQuizFinished, setIsQuizFinished] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [isQuizActive, setIsQuizActive] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Mock quiz data (in real app, this would come from API)
-  const [questions] = useState<Question[]>([
+  // Sample quiz data (replace with API call)
+  const sampleQuizzes: Quiz[] = [
     {
       id: '1',
-      type: 'multiple-choice',
-      question: 'What does "procurement" mean in business context?',
-      options: [
-        'The process of selling goods',
-        'The process of obtaining goods or services',
-        'The process of manufacturing products',
-        'The process of marketing products'
-      ],
-      correctAnswer: 'The process of obtaining goods or services',
-      explanation: 'Procurement refers to the process of obtaining goods or services, typically for business use.',
-      points: 5
-    },
-    {
-      id: '2',
-      type: 'multiple-choice',
-      question: 'Which word means "achieving maximum productivity with minimum wasted effort"?',
-      options: [
-        'Effective',
-        'Efficient',
-        'Productive',
-        'Successful'
-      ],
-      correctAnswer: 'Efficient',
-      explanation: 'Efficient means achieving maximum productivity with minimum wasted effort.',
-      points: 5
-    },
-    {
-      id: '3',
-      type: 'fill-in-the-blank',
-      question: 'An _____ is a document listing goods or services provided and their prices.',
-      correctAnswer: 'invoice',
-      explanation: 'An invoice is a document that lists goods or services provided and their prices.',
-      points: 5
-    },
-    {
-      id: '4',
-      type: 'true-false',
-      question: 'A "deadline" is a flexible target date that can be extended without consequences.',
-      options: ['True', 'False'],
-      correctAnswer: 'False',
-      explanation: 'A deadline is a fixed date or time by which something must be completed, not a flexible target.',
-      points: 5
-    },
-    {
-      id: '5',
-      type: 'multiple-choice',
-      question: 'What is the primary purpose of "negotiation" in business?',
-      options: [
-        'To avoid conflict at all costs',
-        'To try to reach an agreement by formal discussion',
-        'To impose one\'s terms on others',
-        'To delay decision making'
-      ],
-      correctAnswer: 'To try to reach an agreement by formal discussion',
-      explanation: 'Negotiation is the process of trying to reach an agreement through formal discussion.',
-      points: 5
+      title: 'Business Vocabulary Quiz',
+      description: 'Test your knowledge of common business terms',
+      type: 'vocabulary',
+      difficulty: 'medium',
+      timeLimit: 15,
+      questions: [
+        {
+          id: '1',
+          type: 'multiple-choice',
+          question: 'What does "procurement" mean?',
+          options: [
+            'The process of selling goods',
+            'The process of obtaining goods or services',
+            'The process of manufacturing products',
+            'The process of marketing products'
+          ],
+          correctAnswer: 'The process of obtaining goods or services',
+          explanation: 'Procurement refers to the process of obtaining goods or services, typically for business use.',
+          points: 5
+        },
+        {
+          id: '2',
+          type: 'multiple-choice',
+          question: 'Which word means "achieving maximum productivity with minimum wasted effort"?',
+          options: [
+            'Effective',
+            'Efficient',
+            'Productive',
+            'Successful'
+          ],
+          correctAnswer: 'Efficient',
+          explanation: 'Efficient means achieving maximum productivity with minimum wasted effort.',
+          points: 5
+        },
+        {
+          id: '3',
+          type: 'multiple-choice',
+          question: 'What is an "invoice"?',
+          options: [
+            'A receipt for payment',
+            'A document listing goods or services provided and their prices',
+            'A contract between parties',
+            'A financial report'
+          ],
+          correctAnswer: 'A document listing goods or services provided and their prices',
+          explanation: 'An invoice is a document that lists goods or services provided and their prices, typically sent to request payment.',
+          points: 5
+        }
+      ]
     }
-  ]);
-
-  const currentQuestion = questions[currentQuestionIndex];
-  const totalQuestions = questions.length;
-  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+  ];
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    
-    if (isQuizStarted && !isQuizFinished && timeLeft > 0) {
-      timer = setTimeout(() => {
-        setTimeLeft(prev => {
+    // Load quizzes (replace with API call)
+    setQuizzes(sampleQuizzes);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (isQuizActive && timeLeft > 0) {
+      const timer = setInterval(() => {
+        setTimeLeft((prev) => {
           if (prev <= 1) {
-            finishQuiz();
+            handleQuizComplete();
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
+
+      return () => clearInterval(timer);
     }
+  }, [isQuizActive, timeLeft]);
 
-    return () => clearTimeout(timer);
-  }, [isQuizStarted, isQuizFinished, timeLeft]);
-
-  const startQuiz = () => {
-    setIsQuizStarted(true);
-    setTimeLeft(300);
+  const startQuiz = (quiz: Quiz) => {
+    setSelectedQuiz(quiz);
     setCurrentQuestionIndex(0);
-    setAnswers({});
-    setSelectedAnswer('');
-  };
-
-  const finishQuiz = () => {
-    setIsQuizFinished(true);
-    calculateResults();
-  };
-
-  const calculateResults = () => {
-    let correctAnswers = 0;
-    
-    questions.forEach(question => {
-      const userAnswer = answers[question.id];
-      if (userAnswer && userAnswer.toLowerCase() === question.correctAnswer.toLowerCase()) {
-        correctAnswers++;
-      }
-    });
-
-    const score = (correctAnswers / totalQuestions) * 100;
-    const timeSpent = 300 - timeLeft;
-    const accuracy = (correctAnswers / totalQuestions) * 100;
-
-    setQuizResult({
-      totalQuestions,
-      correctAnswers,
-      score,
-      timeSpent,
-      accuracy
-    });
+    setSelectedAnswer(null);
+    setShowExplanation(false);
+    setScore(0);
+    setTimeLeft(quiz.timeLimit * 60); // Convert minutes to seconds
+    setIsQuizActive(true);
   };
 
   const handleAnswerSelect = (answer: string) => {
+    if (selectedAnswer || !selectedQuiz) return;
+    
     setSelectedAnswer(answer);
-    setAnswers(prev => ({
-      ...prev,
-      [currentQuestion.id]: answer
-    }));
+    setShowExplanation(true);
+
+    // Check if answer is correct
+    const currentQuestion = selectedQuiz.questions[currentQuestionIndex];
+    if (answer === currentQuestion.correctAnswer) {
+      setScore(prev => prev + currentQuestion.points);
+    }
   };
 
-  const handleNext = () => {
-    if (currentQuestionIndex < totalQuestions - 1) {
+  const handleNextQuestion = () => {
+    if (!selectedQuiz) return;
+
+    if (currentQuestionIndex < selectedQuiz.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
-      setSelectedAnswer(answers[questions[currentQuestionIndex + 1]?.id] || '');
+      setSelectedAnswer(null);
+      setShowExplanation(false);
     } else {
-      finishQuiz();
+      handleQuizComplete();
     }
   };
 
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-      setSelectedAnswer(answers[questions[currentQuestionIndex - 1]?.id] || '');
-    }
-  };
-
-  const resetQuiz = () => {
-    setIsQuizStarted(false);
-    setIsQuizFinished(false);
-    setShowResults(false);
-    setCurrentQuestionIndex(0);
-    setSelectedAnswer('');
-    setAnswers({});
-    setTimeLeft(300);
-    setQuizResult(null);
+  const handleQuizComplete = () => {
+    setIsQuizActive(false);
+    // Here you would typically save the quiz results to the database
   };
 
   const formatTime = (seconds: number) => {
@@ -208,214 +163,178 @@ export default function QuizPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 80) return 'text-blue-600';
-    if (score >= 70) return 'text-yellow-600';
-    return 'text-red-600';
+  const getCurrentQuestion = () => {
+    if (!selectedQuiz) return null;
+    return selectedQuiz.questions[currentQuestionIndex];
   };
 
-  if (!isQuizStarted && !isQuizFinished) {
+  if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen bg-gray-50 py-8">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">TOEIC Vocabulary Quiz</h1>
-              <p className="text-xl text-gray-600">Test your knowledge with our adaptive quiz system</p>
-            </div>
-
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <h2 className="text-2xl font-semibold text-gray-900">Quiz Information</h2>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <Target className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-600">Questions</p>
-                    <p className="text-2xl font-bold text-gray-900">{totalQuestions}</p>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <Clock className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-600">Time Limit</p>
-                    <p className="text-2xl font-bold text-gray-900">5 min</p>
-                  </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <Trophy className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-gray-600">Points</p>
-                    <p className="text-2xl font-bold text-gray-900">{totalQuestions * 5}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Question Types:</h3>
-                  <ul className="space-y-2 text-gray-600">
-                    <li className="flex items-center">
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                      Multiple Choice Questions
-                    </li>
-                    <li className="flex items-center">
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                      Fill in the Blank
-                    </li>
-                    <li className="flex items-center">
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                      True/False Questions
-                    </li>
-                  </ul>
-                </div>
-
-                <Button 
-                  onClick={startQuiz} 
-                  size="lg" 
-                  className="w-full"
-                >
-                  Start Quiz
-                </Button>
-              </CardContent>
-            </Card>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading quizzes...</p>
           </div>
         </div>
       </Layout>
     );
   }
 
-  if (isQuizFinished && !showResults) {
+  if (selectedQuiz && isQuizActive) {
+    const currentQuestion = getCurrentQuestion();
+    if (!currentQuestion) return null;
+
     return (
       <Layout>
-        <div className="min-h-screen bg-gray-50 py-8">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <h2 className="text-2xl font-semibold text-gray-900">Quiz Completed!</h2>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <p className="text-gray-600">
-                  Great job completing the quiz! Click below to see your results and review your answers.
-                </p>
-                <Button 
-                  onClick={() => setShowResults(true)} 
-                  size="lg" 
+        <div className="max-w-4xl mx-auto p-6">
+          {/* Quiz Header */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h1 className="text-2xl font-bold text-gray-900">{selectedQuiz.title}</h1>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 text-red-600">
+                  <Clock className="h-5 w-5" />
+                  <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
+                </div>
+                <div className="flex items-center space-x-2 text-blue-600">
+                  <Target className="h-5 w-5" />
+                  <span>Question {currentQuestionIndex + 1} of {selectedQuiz.questions.length}</span>
+                </div>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${((currentQuestionIndex + 1) / selectedQuiz.questions.length) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Question Card */}
+          <Card className="mb-6">
+            <CardHeader>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {currentQuestion.question}
+              </h2>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {currentQuestion.options.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswerSelect(option)}
+                    disabled={selectedAnswer !== null}
+                    className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
+                      selectedAnswer === option
+                        ? option === currentQuestion.correctAnswer
+                          ? 'border-green-500 bg-green-50'
+                          : 'border-red-500 bg-red-50'
+                        : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                    } ${selectedAnswer !== null ? 'cursor-default' : 'cursor-pointer'}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{option}</span>
+                      {selectedAnswer === option && (
+                        option === currentQuestion.correctAnswer ? (
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-600" />
+                        )
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {showExplanation && (
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                  <h3 className="font-semibold text-blue-900 mb-2">Explanation:</h3>
+                  <p className="text-blue-800">{currentQuestion.explanation}</p>
+                </div>
+              )}
+            </CardContent>
+            <CardFooter>
+              {showExplanation && (
+                <Button
+                  onClick={handleNextQuestion}
                   className="w-full"
                 >
-                  View Results
+                  {currentQuestionIndex < selectedQuiz.questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
                 </Button>
-              </CardContent>
-            </Card>
-          </div>
+              )}
+            </CardFooter>
+          </Card>
         </div>
       </Layout>
     );
   }
 
-  if (showResults && quizResult) {
+  if (selectedQuiz && !isQuizActive) {
+    // Quiz completed
+    const totalPoints = selectedQuiz.questions.reduce((sum, q) => sum + q.points, 0);
+    const percentage = Math.round((score / totalPoints) * 100);
+
     return (
       <Layout>
-        <div className="min-h-screen bg-gray-50 py-8">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">Quiz Results</h1>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Results Summary */}
-              <Card>
-                <CardHeader>
-                  <h2 className="text-xl font-semibold text-gray-900">Your Performance</h2>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="text-center">
-                    <div className={`text-6xl font-bold mb-2 ${getScoreColor(quizResult.score)}`}>
-                      {Math.round(quizResult.score)}%
-                    </div>
-                    <p className="text-gray-600">Overall Score</p>
+        <div className="max-w-2xl mx-auto p-6">
+          <Card>
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4">
+                <Trophy className="h-16 w-16 text-yellow-500" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">Quiz Complete!</h1>
+              <p className="text-gray-600">Great job completing the quiz</p>
+            </CardHeader>
+            <CardContent className="text-center">
+              <div className="mb-6">
+                <div className="text-4xl font-bold text-blue-600 mb-2">{score}/{totalPoints}</div>
+                <div className="text-lg text-gray-600 mb-4">{percentage}%</div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    className="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                    style={{ width: `${percentage}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">
+                    {selectedQuiz.questions.filter(q => q.correctAnswer === selectedAnswer).length}
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                      <p className="text-sm font-medium text-gray-600">Correct</p>
-                      <p className="text-xl font-bold text-gray-900">{quizResult.correctAnswers}</p>
-                    </div>
-                    <div className="text-center p-4 bg-red-50 rounded-lg">
-                      <XCircle className="h-6 w-6 text-red-600 mx-auto mb-2" />
-                      <p className="text-sm font-medium text-gray-600">Incorrect</p>
-                      <p className="text-xl font-bold text-gray-900">
-                        {quizResult.totalQuestions - quizResult.correctAnswers}
-                      </p>
-                    </div>
+                  <div className="text-sm text-green-700">Correct</div>
+                </div>
+                <div className="p-4 bg-red-50 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600">
+                    {selectedQuiz.questions.length - selectedQuiz.questions.filter(q => q.correctAnswer === selectedAnswer).length}
                   </div>
-
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Time Spent:</span>
-                      <span className="font-medium">{formatTime(quizResult.timeSpent)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Accuracy:</span>
-                      <span className="font-medium">{Math.round(quizResult.accuracy)}%</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Question Review */}
-              <Card>
-                <CardHeader>
-                  <h2 className="text-xl font-semibold text-gray-900">Question Review</h2>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {questions.map((question, index) => {
-                    const userAnswer = answers[question.id];
-                    const isCorrect = userAnswer && 
-                      userAnswer.toLowerCase() === question.correctAnswer.toLowerCase();
-                    
-                    return (
-                      <div key={question.id} className="border rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-600">
-                            Question {index + 1}
-                          </span>
-                          {isCorrect ? (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                          ) : (
-                            <XCircle className="h-5 w-5 text-red-500" />
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-900 mb-2">{question.question}</p>
-                        <div className="text-xs text-gray-600">
-                          <p><strong>Your answer:</strong> {userAnswer || 'Not answered'}</p>
-                          <p><strong>Correct answer:</strong> {question.correctAnswer}</p>
-                          {question.explanation && (
-                            <p className="mt-1 text-blue-600">{question.explanation}</p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="mt-8 flex justify-center space-x-4">
-              <Button 
-                onClick={resetQuiz} 
+                  <div className="text-sm text-red-700">Incorrect</div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex space-x-4">
+              <Button
+                onClick={() => {
+                  setSelectedQuiz(null);
+                  setCurrentQuestionIndex(0);
+                  setSelectedAnswer(null);
+                  setShowExplanation(false);
+                  setScore(0);
+                }}
                 variant="outline"
-                className="flex items-center"
+                className="flex-1"
               >
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Take Quiz Again
+                Take Another Quiz
               </Button>
-              <Button 
-                onClick={() => window.location.href = '/flashcards'} 
-                className="flex items-center"
+              <Button
+                onClick={() => router.push('/dashboard')}
+                className="flex-1"
               >
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Study Flashcards
+                Back to Dashboard
               </Button>
-            </div>
-          </div>
+            </CardFooter>
+          </Card>
         </div>
       </Layout>
     );
@@ -423,121 +342,49 @@ export default function QuizPage() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Quiz Header */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-2xl font-bold text-gray-900">
-                Question {currentQuestionIndex + 1} of {totalQuestions}
-              </h1>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center text-red-600">
-                  <Clock className="h-5 w-5 mr-2" />
-                  <span className="font-mono text-lg">{formatTime(timeLeft)}</span>
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">TOEIC Quizzes</h1>
+          <p className="text-gray-600">Test your knowledge with our interactive TOEIC-style quizzes</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {quizzes.map((quiz) => (
+            <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <h3 className="text-xl font-semibold text-gray-900">{quiz.title}</h3>
+                <p className="text-gray-600">{quiz.description}</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Type:</span>
+                    <span className="font-medium capitalize">{quiz.type}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Difficulty:</span>
+                    <span className="font-medium capitalize">{quiz.difficulty}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Time Limit:</span>
+                    <span className="font-medium">{quiz.timeLimit} minutes</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Questions:</span>
+                    <span className="font-medium">{quiz.questions.length}</span>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-          </div>
-
-          {/* Question Card */}
-          <Card className="mb-8">
-            <CardContent className="p-8">
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  {currentQuestion.question}
-                </h2>
-
-                {currentQuestion.type === 'multiple-choice' && currentQuestion.options && (
-                  <div className="space-y-3">
-                    {currentQuestion.options.map((option, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleAnswerSelect(option)}
-                        className={`w-full text-left p-4 rounded-lg border-2 transition-colors ${
-                          selectedAnswer === option
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <span className="font-medium text-gray-900">{option}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {currentQuestion.type === 'fill-in-the-blank' && (
-                  <div className="space-y-4">
-                    <input
-                      type="text"
-                      value={selectedAnswer}
-                      onChange={(e) => handleAnswerSelect(e.target.value)}
-                      placeholder="Type your answer here..."
-                      className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
-                )}
-
-                {currentQuestion.type === 'true-false' && currentQuestion.options && (
-                  <div className="space-y-3">
-                    {currentQuestion.options.map((option, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleAnswerSelect(option)}
-                        className={`w-full text-left p-4 rounded-lg border-2 transition-colors ${
-                          selectedAnswer === option
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <span className="font-medium text-gray-900">{option}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Navigation */}
-          <div className="flex justify-between">
-            <Button
-              onClick={handlePrevious}
-              disabled={currentQuestionIndex === 0}
-              variant="outline"
-              className="flex items-center"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Previous
-            </Button>
-
-            <div className="flex space-x-4">
-              <Button
-                onClick={finishQuiz}
-                variant="outline"
-                className="text-red-600 border-red-600 hover:bg-red-50"
-              >
-                Finish Quiz
-              </Button>
-
-              <Button
-                onClick={handleNext}
-                disabled={!selectedAnswer}
-                className="flex items-center"
-              >
-                {currentQuestionIndex === totalQuestions - 1 ? 'Finish' : 'Next'}
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-          </div>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  onClick={() => startQuiz(quiz)}
+                  className="w-full"
+                >
+                  Start Quiz
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
       </div>
     </Layout>
