@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/database';
 import { successResponse, badRequestResponse, notFoundResponse } from '../utils/response';
-import { generateToken } from '../utils/auth';
+// Remove unused import
 
 export interface QuizResult {
   quizId: string;
@@ -95,7 +95,7 @@ export const submitQuizResult = async (req: Request, res: Response): Promise<voi
 
     // Check if quiz exists
     const quiz = await prisma.quiz.findUnique({
-      where: { id: quizId },
+      where: { id: quizId as string },
     });
 
     if (!quiz) {
@@ -119,6 +119,7 @@ export const submitQuizResult = async (req: Request, res: Response): Promise<voi
     // Update user progress (add experience points)
     const experienceGained = Math.floor(score / 10) * 10; // 10 XP per 10% score
     
+    // Update or create user progress
     await prisma.userProgress.upsert({
       where: { userId: req.user.userId },
       update: {
@@ -136,6 +137,50 @@ export const submitQuizResult = async (req: Request, res: Response): Promise<voi
         longestStreak: 0,
         totalStudyTime: 0,
         level: 'beginner',
+      },
+    });
+
+    // Update daily progress
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    await prisma.dailyProgress.upsert({
+      where: {
+        userId_date: {
+          userId: req.user.userId,
+          date: today,
+        },
+      },
+      update: {
+        cardsStudied: {
+          increment: totalQuestions,
+        },
+        correctAnswers: {
+          increment: correctAnswers,
+        },
+        studyTime: {
+          increment: timeSpent,
+        },
+      },
+      create: {
+        userId: req.user.userId,
+        date: today,
+        cardsStudied: totalQuestions,
+        correctAnswers: correctAnswers,
+        studyTime: timeSpent,
+      },
+    });
+
+    // Create study session record
+    await prisma.studySession.create({
+      data: {
+        userId: req.user.userId,
+        startTime: new Date(Date.now() - timeSpent * 1000), // Calculate start time
+        endTime: new Date(),
+        sessionType: 'quiz',
+        cardsStudied: totalQuestions,
+        correctAnswers: correctAnswers,
+        incorrectAnswers: totalQuestions - correctAnswers,
       },
     });
 
