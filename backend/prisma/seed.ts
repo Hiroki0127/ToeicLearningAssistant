@@ -14,7 +14,7 @@ async function main() {
       partOfSpeech: 'noun',
       difficulty: 'hard',
       category: 'business',
-      tags: ['business', 'purchasing', 'management'],
+      tags: 'business,purchasing,management',
     },
     {
       word: 'invoice',
@@ -23,7 +23,7 @@ async function main() {
       partOfSpeech: 'noun',
       difficulty: 'medium',
       category: 'business',
-      tags: ['business', 'finance', 'documentation'],
+      tags: 'business,finance,documentation',
     },
     {
       word: 'efficient',
@@ -32,7 +32,7 @@ async function main() {
       partOfSpeech: 'adjective',
       difficulty: 'easy',
       category: 'general',
-      tags: ['productivity', 'performance', 'optimization'],
+      tags: 'productivity,performance,optimization',
     },
     {
       word: 'deadline',
@@ -41,7 +41,7 @@ async function main() {
       partOfSpeech: 'noun',
       difficulty: 'easy',
       category: 'business',
-      tags: ['business', 'time', 'project'],
+      tags: 'business,time,project',
     },
     {
       word: 'negotiate',
@@ -50,7 +50,7 @@ async function main() {
       partOfSpeech: 'verb',
       difficulty: 'medium',
       category: 'business',
-      tags: ['business', 'agreement', 'discussion'],
+      tags: 'business,agreement,discussion',
     },
     {
       word: 'revenue',
@@ -59,7 +59,7 @@ async function main() {
       partOfSpeech: 'noun',
       difficulty: 'medium',
       category: 'business',
-      tags: ['business', 'finance', 'income'],
+      tags: 'business,finance,income',
     },
     {
       word: 'implement',
@@ -68,7 +68,7 @@ async function main() {
       partOfSpeech: 'verb',
       difficulty: 'medium',
       category: 'general',
-      tags: ['action', 'execution', 'planning'],
+      tags: 'action,execution,planning',
     },
     {
       word: 'strategy',
@@ -77,7 +77,7 @@ async function main() {
       partOfSpeech: 'noun',
       difficulty: 'medium',
       category: 'business',
-      tags: ['business', 'planning', 'goal'],
+      tags: 'business,planning,goal',
     },
     {
       word: 'collaborate',
@@ -86,7 +86,7 @@ async function main() {
       partOfSpeech: 'verb',
       difficulty: 'medium',
       category: 'general',
-      tags: ['teamwork', 'cooperation', 'project'],
+      tags: 'teamwork,cooperation,project',
     },
     {
       word: 'innovation',
@@ -95,7 +95,7 @@ async function main() {
       partOfSpeech: 'noun',
       difficulty: 'medium',
       category: 'business',
-      tags: ['business', 'creativity', 'technology'],
+      tags: 'business,creativity,technology',
     },
     {
       word: 'sustainable',
@@ -104,7 +104,7 @@ async function main() {
       partOfSpeech: 'adjective',
       difficulty: 'medium',
       category: 'general',
-      tags: ['environment', 'maintenance', 'long-term'],
+      tags: 'environment,maintenance,long-term',
     },
     {
       word: 'leverage',
@@ -113,7 +113,7 @@ async function main() {
       partOfSpeech: 'verb',
       difficulty: 'hard',
       category: 'business',
-      tags: ['business', 'advantage', 'utilization'],
+      tags: 'business,advantage,utilization',
     },
     {
       word: 'paradigm',
@@ -122,7 +122,7 @@ async function main() {
       partOfSpeech: 'noun',
       difficulty: 'hard',
       category: 'general',
-      tags: ['pattern', 'example', 'model'],
+      tags: 'pattern,example,model',
     },
     {
       word: 'synergy',
@@ -131,7 +131,7 @@ async function main() {
       partOfSpeech: 'noun',
       difficulty: 'hard',
       category: 'business',
-      tags: ['business', 'interaction', 'combination'],
+      tags: 'business,interaction,combination',
     },
     {
       word: 'optimize',
@@ -140,7 +140,7 @@ async function main() {
       partOfSpeech: 'verb',
       difficulty: 'medium',
       category: 'general',
-      tags: ['improvement', 'efficiency', 'process'],
+      tags: 'improvement,efficiency,process',
     },
   ];
 
@@ -157,12 +157,12 @@ async function main() {
       name: 'Demo User',
       email: 'demo@example.com',
       password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK8i', // password: DemoPass123
-      preferences: {
+      preferences: JSON.stringify({
         dailyGoal: 20,
         notificationTime: '09:00',
         difficulty: 'intermediate',
         focusAreas: ['vocabulary', 'grammar', 'reading'],
-      },
+      }),
     },
   });
 
@@ -189,7 +189,7 @@ async function main() {
       type: 'vocabulary',
       difficulty: 'medium',
       timeLimit: 15,
-      questions: [
+      questions: JSON.stringify([
         {
           id: '1',
           type: 'multiple-choice',
@@ -218,7 +218,7 @@ async function main() {
           explanation: 'Efficient means achieving maximum productivity with minimum wasted effort.',
           points: 5
         }
-      ],
+      ]),
     },
   });
 
