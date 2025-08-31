@@ -6,6 +6,7 @@ import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button';
 import Layout from '@/components/layout/Layout';
 import { CheckCircle, XCircle, Clock, Trophy, Target } from 'lucide-react';
+import { getQuizzes, submitQuizResult, type Quiz, type QuizResult } from '@/lib/quiz';
 
 interface Question {
   id: string;
@@ -15,16 +16,6 @@ interface Question {
   correctAnswer: string;
   explanation: string;
   points: number;
-}
-
-interface Quiz {
-  id: string;
-  title: string;
-  description: string;
-  type: string;
-  difficulty: string;
-  timeLimit: number;
-  questions: Question[];
 }
 
 export default function QuizPage() {
@@ -39,184 +30,23 @@ export default function QuizPage() {
   const [isQuizActive, setIsQuizActive] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Sample quiz data (replace with API call)
-  const sampleQuizzes: Quiz[] = [
-    {
-      id: '1',
-      title: 'Business Vocabulary Quiz',
-      description: 'Test your knowledge of common business terms',
-      type: 'vocabulary',
-      difficulty: 'medium',
-      timeLimit: 15,
-      questions: [
-        {
-          id: '1',
-          type: 'multiple-choice',
-          question: 'What does "procurement" mean?',
-          options: [
-            'The process of selling goods',
-            'The process of obtaining goods or services',
-            'The process of manufacturing products',
-            'The process of marketing products'
-          ],
-          correctAnswer: 'The process of obtaining goods or services',
-          explanation: 'Procurement refers to the process of obtaining goods or services, typically for business use.',
-          points: 5
-        },
-        {
-          id: '2',
-          type: 'multiple-choice',
-          question: 'Which word means "achieving maximum productivity with minimum wasted effort"?',
-          options: [
-            'Effective',
-            'Efficient',
-            'Productive',
-            'Successful'
-          ],
-          correctAnswer: 'Efficient',
-          explanation: 'Efficient means achieving maximum productivity with minimum wasted effort.',
-          points: 5
-        },
-        {
-          id: '3',
-          type: 'multiple-choice',
-          question: 'What is an "invoice"?',
-          options: [
-            'A receipt for payment',
-            'A document listing goods or services provided and their prices',
-            'A contract between parties',
-            'A financial report'
-          ],
-          correctAnswer: 'A document listing goods or services provided and their prices',
-          explanation: 'An invoice is a document that lists goods or services provided and their prices, typically sent to request payment.',
-          points: 5
-        }
-      ]
-    },
-    {
-      id: '2',
-      title: 'Grammar Practice Quiz',
-      description: 'Practice essential TOEIC grammar concepts',
-      type: 'grammar',
-      difficulty: 'intermediate',
-      timeLimit: 20,
-      questions: [
-        {
-          id: '1',
-          type: 'multiple-choice',
-          question: 'Choose the correct form: "The meeting _____ at 3 PM tomorrow."',
-          options: [
-            'will be held',
-            'will be hold',
-            'will held',
-            'will holding'
-          ],
-          correctAnswer: 'will be held',
-          explanation: 'The passive voice "will be held" is correct for scheduled events.',
-          points: 5
-        },
-        {
-          id: '2',
-          type: 'multiple-choice',
-          question: 'Which sentence is grammatically correct?',
-          options: [
-            'Neither the manager nor the employees was present.',
-            'Neither the manager nor the employees were present.',
-            'Neither the manager or the employees were present.',
-            'Neither the manager and the employees were present.'
-          ],
-          correctAnswer: 'Neither the manager nor the employees were present.',
-          explanation: 'With "neither...nor", the verb agrees with the closer subject (employees = plural).',
-          points: 5
-        },
-        {
-          id: '3',
-          type: 'multiple-choice',
-          question: 'Complete: "If I _____ about the meeting earlier, I would have attended."',
-          options: [
-            'knew',
-            'had known',
-            'would know',
-            'have known'
-          ],
-          correctAnswer: 'had known',
-          explanation: 'This is a third conditional sentence requiring "had + past participle".',
-          points: 5
-        },
-        {
-          id: '4',
-          type: 'multiple-choice',
-          question: 'Choose the correct preposition: "The report is due _____ Friday."',
-          options: [
-            'in',
-            'on',
-            'at',
-            'by'
-          ],
-          correctAnswer: 'on',
-          explanation: 'Use "on" for specific days of the week.',
-          points: 5
-        }
-      ]
-    },
-    {
-      id: '3',
-      title: 'Reading Comprehension Quiz',
-      description: 'Test your reading skills with business texts',
-      type: 'reading',
-      difficulty: 'advanced',
-      timeLimit: 25,
-      questions: [
-        {
-          id: '1',
-          type: 'multiple-choice',
-          question: 'Based on the passage: "The company\'s quarterly revenue increased by 15% compared to the previous year, primarily due to expanded market presence in Asia and improved operational efficiency." What was the main reason for the revenue increase?',
-          options: [
-            'Reduced operational costs',
-            'Expanded market presence in Asia',
-            'Improved product quality',
-            'Increased advertising budget'
-          ],
-          correctAnswer: 'Expanded market presence in Asia',
-          explanation: 'The passage states that the increase was "primarily due to expanded market presence in Asia and improved operational efficiency."',
-          points: 5
-        },
-        {
-          id: '2',
-          type: 'multiple-choice',
-          question: 'In the context: "The implementation of the new software system resulted in a 30% reduction in processing time." What does "implementation" mean?',
-          options: [
-            'The design of a new system',
-            'The testing of a new system',
-            'The putting into effect of a new system',
-            'The maintenance of a new system'
-          ],
-          correctAnswer: 'The putting into effect of a new system',
-          explanation: 'Implementation means putting a plan or system into effect or operation.',
-          points: 5
-        },
-        {
-          id: '3',
-          type: 'multiple-choice',
-          question: 'What is the tone of this statement: "While the initial results are promising, we must remain cautious about long-term sustainability."',
-          options: [
-            'Optimistic',
-            'Pessimistic',
-            'Cautiously optimistic',
-            'Neutral'
-          ],
-          correctAnswer: 'Cautiously optimistic',
-          explanation: 'The statement shows hope ("promising") but also caution ("must remain cautious").',
-          points: 5
-        }
-      ]
-    }
-  ];
-
   useEffect(() => {
-    // Load quizzes (replace with API call)
-    setQuizzes(sampleQuizzes);
-    setLoading(false);
+    // Load quizzes from API
+    const loadQuizzes = async () => {
+      try {
+        setLoading(true);
+        const quizzesData = await getQuizzes();
+        setQuizzes(quizzesData);
+      } catch (error) {
+        console.error('Failed to load quizzes:', error);
+        // Fallback to sample data if API fails
+        setQuizzes([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadQuizzes();
   }, []);
 
   useEffect(() => {
@@ -270,9 +100,27 @@ export default function QuizPage() {
     }
   };
 
-  const handleQuizComplete = () => {
+  const handleQuizComplete = async () => {
+    if (!selectedQuiz) return;
+    
     setIsQuizActive(false);
-    // Here you would typically save the quiz results to the database
+    
+    // Submit quiz results to API
+    try {
+      const quizResult: QuizResult = {
+        quizId: selectedQuiz.id,
+        score: Math.round((score / (selectedQuiz.questions.reduce((sum, q) => sum + q.points, 0))) * 100),
+        totalQuestions: selectedQuiz.questions.length,
+        correctAnswers: Math.round(score / 5), // Assuming 5 points per question
+        timeSpent: (selectedQuiz.timeLimit * 60) - timeLeft, // Time spent in seconds
+        answers: {}, // This would be populated with actual answers
+      };
+      
+      await submitQuizResult(quizResult);
+    } catch (error) {
+      console.error('Failed to submit quiz result:', error);
+      // Continue with quiz completion even if submission fails
+    }
   };
 
   const formatTime = (seconds: number) => {
