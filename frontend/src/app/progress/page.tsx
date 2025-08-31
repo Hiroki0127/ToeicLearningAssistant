@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +15,8 @@ import {
   CheckCircle,
   XCircle,
   BarChart3,
-  Activity
+  Activity,
+  HelpCircle
 } from 'lucide-react';
 
 export default function ProgressPage() {
@@ -94,10 +96,20 @@ export default function ProgressPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Learning Progress</h1>
-            <p className="text-gray-600 mt-2">
-              Track your TOEIC learning journey and see your improvement over time
-            </p>
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Learning Progress</h1>
+                <p className="text-gray-600 mt-2">
+                  Track your TOEIC learning journey and see your improvement over time
+                </p>
+              </div>
+              <Link href="/quiz">
+                <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  <HelpCircle className="h-4 w-4 mr-2" />
+                  Take Quiz
+                </button>
+              </Link>
+            </div>
           </div>
 
           {/* Overview Cards */}
