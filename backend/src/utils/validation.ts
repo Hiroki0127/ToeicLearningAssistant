@@ -72,6 +72,15 @@ export const quizAttemptSchema = z.object({
   })),
 });
 
+export const submitQuizResultSchema = z.object({
+  quizId: z.string().min(1, 'Quiz ID is required'),
+  score: z.number().min(0).max(100, 'Score must be between 0 and 100'),
+  totalQuestions: z.number().min(1, 'Total questions must be at least 1'),
+  correctAnswers: z.number().min(0, 'Correct answers must be non-negative'),
+  timeSpent: z.number().min(0, 'Time spent must be non-negative'),
+  answers: z.record(z.string(), z.string()),
+});
+
 // Progress validation schemas
 export const updateProgressSchema = z.object({
   cardsStudied: z.number().min(0, 'Cards studied must be positive'),
@@ -129,9 +138,15 @@ export type UpdateFlashcardInput = z.infer<typeof updateFlashcardSchema>;
 export type FlashcardReviewInput = z.infer<typeof flashcardReviewSchema>;
 export type CreateQuizInput = z.infer<typeof createQuizSchema>;
 export type QuizAttemptInput = z.infer<typeof quizAttemptSchema>;
+export type SubmitQuizResultInput = z.infer<typeof submitQuizResultSchema>;
 export type UpdateProgressInput = z.infer<typeof updateProgressSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;
 export type CreateStudySessionInput = z.infer<typeof createStudySessionSchema>;
 export type EndStudySessionInput = z.infer<typeof endStudySessionSchema>;
 export type CreateNotificationInput = z.infer<typeof createNotificationSchema>;
 export type AIQuestionInput = z.infer<typeof aiQuestionSchema>;
+
+// Export validation schemas for use in routes
+export const quizValidationSchemas = {
+  submitQuizResult: submitQuizResultSchema,
+};
