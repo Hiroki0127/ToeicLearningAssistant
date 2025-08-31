@@ -13,7 +13,8 @@ import {
   LogOut, 
   Home,
   Plus,
-  BarChart3
+  BarChart3,
+  HelpCircle
 } from 'lucide-react';
 
 export default function Navigation() {
@@ -57,6 +58,12 @@ export default function Navigation() {
                   className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Flashcards
+                </Link>
+                <Link 
+                  href="/quiz" 
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Quizzes
                 </Link>
                 <Link 
                   href="/flashcards/create" 
@@ -161,6 +168,14 @@ export default function Navigation() {
                   >
                     <BookOpen className="h-5 w-5 mr-3" />
                     Flashcards
+                  </Link>
+                  <Link
+                    href="/quiz"
+                    className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-base font-medium transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <HelpCircle className="h-5 w-5 mr-3" />
+                    Quizzes
                   </Link>
                   <Link
                     href="/flashcards/create"
