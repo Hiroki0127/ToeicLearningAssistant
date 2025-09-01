@@ -62,6 +62,9 @@ export default function QuizPage() {
   const [calendarData, setCalendarData] = useState<any>(null);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [showPerformanceInsights, setShowPerformanceInsights] = useState(false);
+  const [insightsData, setInsightsData] = useState<any>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -112,6 +115,13 @@ export default function QuizPage() {
       loadCalendarData();
     }
   }, [selectedMonth, showStudyCalendar]);
+
+  // Load insights when toggled
+  useEffect(() => {
+    if (showPerformanceInsights) {
+      generatePerformanceInsights();
+    }
+  }, [showPerformanceInsights]);
 
   // Load quiz analytics
   const loadQuizAnalytics = async () => {
@@ -874,6 +884,251 @@ export default function QuizPage() {
     return 'bg-white text-gray-900 hover:bg-gray-50';
   };
 
+  // Generate performance insights
+  const generatePerformanceInsights = async () => {
+    try {
+      setInsightsLoading(true);
+      
+      // Get quiz history and stats
+      const history = await getQuizHistory();
+      const stats = await getQuizStats();
+      
+      if (history.length === 0) {
+        setInsightsData({
+          overallTrend: 'beginner',
+          strengths: [],
+          weaknesses: [],
+          recommendations: [],
+          learningStyle: 'balanced',
+          improvementAreas: [],
+          studyEfficiency: 'low',
+          motivationFactors: []
+        });
+        return;
+      }
+      
+      // Analyze overall performance trend
+      const recentScores = history.slice(-10).map(h => h.score);
+      const olderScores = history.slice(0, Math.min(10, Math.floor(history.length / 2))).map(h => h.score);
+      
+      const recentAvg = recentScores.reduce((sum, score) => sum + score, 0) / recentScores.length;
+      const olderAvg = olderScores.reduce((sum, score) => sum + score, 0) / olderScores.length;
+      
+      let overallTrend = 'stable';
+      if (recentAvg > olderAvg + 5) overallTrend = 'improving';
+      else if (recentAvg < olderAvg - 5) overallTrend = 'declining';
+      
+      // Analyze strengths and weaknesses by category
+      const categoryPerformance: Record<string, { total: number; scores: number[]; avgScore: number }> = {};
+      const difficultyPerformance: Record<string, { total: number; scores: number[]; avgScore: number }> = {};
+      
+      history.forEach(attempt => {
+        // Category analysis
+        if (!categoryPerformance[attempt.quiz.type]) {
+          categoryPerformance[attempt.quiz.type] = { total: 0, scores: [], avgScore: 0 };
+        }
+        categoryPerformance[attempt.quiz.type].total++;
+        categoryPerformance[attempt.quiz.type].scores.push(attempt.score);
+        
+        // Difficulty analysis
+        if (!difficultyPerformance[attempt.quiz.difficulty]) {
+          difficultyPerformance[attempt.quiz.difficulty] = { total: 0, scores: [], avgScore: 0 };
+        }
+        difficultyPerformance[attempt.quiz.difficulty].total++;
+        difficultyPerformance[attempt.quiz.difficulty].scores.push(attempt.score);
+      });
+      
+      // Calculate averages
+      Object.keys(categoryPerformance).forEach(category => {
+        const scores = categoryPerformance[category].scores;
+        categoryPerformance[category].avgScore = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+      });
+      
+      Object.keys(difficultyPerformance).forEach(difficulty => {
+        const scores = difficultyPerformance[difficulty].scores;
+        difficultyPerformance[difficulty].avgScore = Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+      });
+      
+      // Identify strengths (top 2 categories with highest scores)
+      const strengths = Object.entries(categoryPerformance)
+        .sort(([, a], [, b]) => b.avgScore - a.avgScore)
+        .slice(0, 2)
+        .map(([category, data]) => ({
+          category,
+          avgScore: data.avgScore,
+          totalAttempts: data.total,
+          strength: data.avgScore >= 80 ? 'excellent' : data.avgScore >= 70 ? 'good' : 'solid'
+        }));
+      
+      // Identify weaknesses (categories with lowest scores)
+      const weaknesses = Object.entries(categoryPerformance)
+        .sort(([, a], [, b]) => a.avgScore - b.avgScore)
+        .slice(0, 2)
+        .map(([category, data]) => ({
+          category,
+          avgScore: data.avgScore,
+          totalAttempts: data.total,
+          weakness: data.avgScore < 60 ? 'critical' : data.avgScore < 70 ? 'needs_improvement' : 'moderate'
+        }));
+      
+      // Analyze study patterns
+      const studyFrequency = history.length / Math.max(1, Math.ceil((Date.now() - new Date(history[0].completedAt).getTime()) / (1000 * 60 * 60 * 24)));
+      const averageStudyGap = history.length > 1 ? 
+        history.slice(1).reduce((total, attempt, index) => {
+          const prevDate = new Date(history[index].completedAt);
+          const currDate = new Date(attempt.completedAt);
+          return total + Math.abs(currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24);
+        }, 0) / (history.length - 1) : 0;
+      
+      // Determine learning style
+      let learningStyle = 'balanced';
+      if (studyFrequency > 2) learningStyle = 'intensive';
+      else if (studyFrequency < 0.5) learningStyle = 'casual';
+      
+      // Determine study efficiency
+      let studyEfficiency = 'medium';
+      if (overallTrend === 'improving' && studyFrequency > 1) studyEfficiency = 'high';
+      else if (overallTrend === 'declining' || studyFrequency < 0.3) studyEfficiency = 'low';
+      
+      // Generate personalized recommendations
+      const recommendations = [];
+      
+      if (weaknesses.length > 0) {
+        weaknesses.forEach(weakness => {
+          if (weakness.weakness === 'critical') {
+            recommendations.push({
+              type: 'urgent',
+              title: `Focus on ${weakness.category}`,
+              description: `Your ${weakness.category} performance needs immediate attention. Consider reviewing fundamentals.`,
+              priority: 'high',
+              action: `Take more ${weakness.category} quizzes and review incorrect answers`
+            });
+          } else if (weakness.weakness === 'needs_improvement') {
+            recommendations.push({
+              type: 'improvement',
+              title: `Improve ${weakness.category} skills`,
+              description: `Your ${weakness.category} performance shows room for improvement.`,
+              priority: 'medium',
+              action: `Practice with easier ${weakness.category} quizzes first`
+            });
+          }
+        });
+      }
+      
+      if (studyFrequency < 1) {
+        recommendations.push({
+          type: 'consistency',
+          title: 'Increase study frequency',
+          description: 'More regular practice will help maintain and improve your skills.',
+          priority: 'medium',
+          action: 'Aim for at least one quiz every 1-2 days'
+        });
+      }
+      
+      if (overallTrend === 'declining') {
+        recommendations.push({
+          type: 'performance',
+          title: 'Review recent performance',
+          description: 'Your scores have been declining. Consider reviewing previous material.',
+          priority: 'high',
+          action: 'Review flashcards and retake easier quizzes'
+        });
+      }
+      
+      if (strengths.length > 0) {
+        recommendations.push({
+          type: 'maintenance',
+          title: `Maintain ${strengths[0].category} excellence`,
+          description: `Keep up the great work in ${strengths[0].category}!`,
+          priority: 'low',
+          action: 'Continue practicing to maintain your high performance'
+        });
+      }
+      
+      // Identify improvement areas
+      const improvementAreas = Object.entries(categoryPerformance)
+        .filter(([, data]) => data.avgScore < 75)
+        .map(([category, data]) => ({
+          category,
+          currentScore: data.avgScore,
+          targetScore: 80,
+          improvementNeeded: 80 - data.avgScore,
+          priority: data.avgScore < 60 ? 'high' : 'medium'
+        }));
+      
+      // Identify motivation factors
+      const motivationFactors = [];
+      if (streakData && streakData.currentStreak > 7) {
+        motivationFactors.push('maintaining_streak');
+      }
+      if (recentScores.some(score => score >= 90)) {
+        motivationFactors.push('high_scores');
+      }
+      if (history.length > 20) {
+        motivationFactors.push('consistent_practice');
+      }
+      if (overallTrend === 'improving') {
+        motivationFactors.push('seeing_progress');
+      }
+      
+      setInsightsData({
+        overallTrend,
+        strengths,
+        weaknesses,
+        recommendations,
+        learningStyle,
+        improvementAreas,
+        studyEfficiency,
+        motivationFactors,
+        categoryPerformance,
+        difficultyPerformance,
+        studyFrequency: Math.round(studyFrequency * 100) / 100,
+        averageStudyGap: Math.round(averageStudyGap * 100) / 100,
+        totalAttempts: history.length,
+        recentPerformance: recentScores,
+        olderPerformance: olderScores
+      });
+      
+    } catch (error) {
+      console.error('Failed to generate insights:', error);
+      setInsightsData(null);
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
+
+  // Get insight priority color
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'text-red-600 bg-red-50 border-red-200';
+      case 'medium': return 'text-orange-600 bg-orange-50 border-orange-200';
+      case 'low': return 'text-green-600 bg-green-50 border-green-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
+  // Get insight type icon
+  const getInsightTypeIcon = (type: string) => {
+    switch (type) {
+      case 'urgent': return '🚨';
+      case 'improvement': return '📈';
+      case 'consistency': return '⏰';
+      case 'performance': return '📊';
+      case 'maintenance': return '🎯';
+      default: return '💡';
+    }
+  };
+
+  // Get learning style description
+  const getLearningStyleDescription = (style: string) => {
+    switch (style) {
+      case 'intensive': return 'You prefer focused, frequent study sessions';
+      case 'casual': return 'You prefer relaxed, occasional study sessions';
+      case 'balanced': return 'You maintain a good balance of study frequency';
+      default: return 'Your study pattern is still developing';
+    }
+  };
+
   useEffect(() => {
     if (isQuizActive && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -1284,6 +1539,24 @@ export default function QuizPage() {
                   <>
                     <Calendar className="w-4 h-4" />
                     Study Calendar
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => setShowPerformanceInsights(!showPerformanceInsights)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {showPerformanceInsights ? (
+                  <>
+                    <TrendingUp className="w-4 h-4" />
+                    Hide Insights
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="w-4 h-4" />
+                    Performance Insights
                   </>
                 )}
               </Button>
@@ -2149,6 +2422,232 @@ export default function QuizPage() {
                   <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No calendar data available</h3>
                   <p className="text-gray-600">Take some quizzes first to see your study calendar!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Performance Insights */}
+        {showPerformanceInsights && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <TrendingUp className="w-6 h-6 text-emerald-600" />
+                AI Performance Insights
+              </h2>
+              
+              {insightsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Analyzing your performance patterns...</p>
+                </div>
+              ) : insightsData ? (
+                <div className="space-y-8">
+                  {/* Overall Performance Summary */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Overview</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600 mb-1">
+                          {insightsData.overallTrend === 'improving' ? '📈' : 
+                           insightsData.overallTrend === 'declining' ? '📉' : '➡️'}
+                        </div>
+                        <div className="text-sm font-medium text-blue-800">Trend</div>
+                        <div className="text-lg font-bold text-blue-900 capitalize">{insightsData.overallTrend}</div>
+                      </div>
+                      
+                      <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600 mb-1">🎯</div>
+                        <div className="text-sm font-medium text-green-800">Learning Style</div>
+                        <div className="text-lg font-bold text-green-900 capitalize">{insightsData.learningStyle}</div>
+                      </div>
+                      
+                      <div className="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
+                        <div className="text-2xl font-bold text-purple-600 mb-1">⚡</div>
+                        <div className="text-sm font-medium text-purple-800">Efficiency</div>
+                        <div className="text-lg font-bold text-purple-900 capitalize">{insightsData.studyEfficiency}</div>
+                      </div>
+                      
+                      <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg">
+                        <div className="text-2xl font-bold text-orange-600 mb-1">📊</div>
+                        <div className="text-sm font-medium text-orange-800">Total Attempts</div>
+                        <div className="text-lg font-bold text-orange-900">{insightsData.totalAttempts}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-700">
+                        <strong>Learning Style:</strong> {getLearningStyleDescription(insightsData.learningStyle)}
+                      </p>
+                      <p className="text-sm text-gray-700 mt-1">
+                        <strong>Study Frequency:</strong> {insightsData.studyFrequency} quizzes per day on average
+                      </p>
+                      <p className="text-sm text-gray-700 mt-1">
+                        <strong>Average Gap:</strong> {insightsData.averageStudyGap} days between study sessions
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Strengths and Weaknesses */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Strengths */}
+                    <div className="bg-white p-6 rounded-lg shadow-sm border border-green-200">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <span className="text-2xl">💪</span>
+                        Your Strengths
+                      </h3>
+                      {insightsData.strengths.length > 0 ? (
+                        <div className="space-y-3">
+                                                  {insightsData.strengths.map((strength: any, index: number) => (
+                          <div key={index} className="p-3 bg-green-50 rounded-lg border border-green-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-green-800">{strength.category}</span>
+                              <span className="text-sm text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                {strength.strength}
+                              </span>
+                            </div>
+                            <div className="text-2xl font-bold text-green-600">{strength.avgScore}%</div>
+                            <div className="text-sm text-green-700">{strength.totalAttempts} attempts</div>
+                          </div>
+                        ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-center py-4">Keep practicing to discover your strengths!</p>
+                      )}
+                    </div>
+
+                    {/* Weaknesses */}
+                    <div className="bg-white p-6 rounded-lg shadow-sm border border-red-200">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <span className="text-2xl">🎯</span>
+                        Areas for Improvement
+                      </h3>
+                      {insightsData.weaknesses.length > 0 ? (
+                        <div className="space-y-3">
+                                                  {insightsData.weaknesses.map((weakness: any, index: number) => (
+                          <div key={index} className="p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-red-800">{weakness.category}</span>
+                              <span className="text-sm text-red-600 bg-red-100 px-2 py-1 rounded-full">
+                                {weakness.weakness.replace('_', ' ')}
+                              </span>
+                            </div>
+                            <div className="text-2xl font-bold text-red-600">{weakness.avgScore}%</div>
+                            <div className="text-sm text-red-700">{weakness.totalAttempts} attempts</div>
+                          </div>
+                        ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-center py-4">Great job! No critical weaknesses found.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Personalized Recommendations */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <span className="text-2xl">💡</span>
+                      AI Recommendations
+                    </h3>
+                    {insightsData.recommendations.length > 0 ? (
+                      <div className="space-y-4">
+                        {insightsData.recommendations.map((rec: any, index: number) => (
+                          <div key={index} className={`p-4 rounded-lg border ${getPriorityColor(rec.priority)}`}>
+                            <div className="flex items-start gap-3">
+                              <span className="text-2xl">{getInsightTypeIcon(rec.type)}</span>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h4 className="font-semibold text-gray-900">{rec.title}</h4>
+                                  <span className={`text-xs px-2 py-1 rounded-full border ${getPriorityColor(rec.priority)}`}>
+                                    {rec.priority} priority
+                                  </span>
+                                </div>
+                                <p className="text-gray-700 mb-2">{rec.description}</p>
+                                <p className="text-sm font-medium text-gray-800">
+                                  <strong>Action:</strong> {rec.action}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">No specific recommendations at this time.</p>
+                    )}
+                  </div>
+
+                  {/* Category Performance Breakdown */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Category Performance Analysis</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {Object.entries(insightsData.categoryPerformance).map(([category, data]: [string, any]) => (
+                        <div key={category} className="p-4 border rounded-lg text-center">
+                          <div className="text-sm font-medium text-gray-900 mb-2 capitalize">{category}</div>
+                          <div className="text-2xl font-bold text-indigo-600 mb-1">{data.avgScore}%</div>
+                          <div className="text-xs text-gray-600">{data.total} attempts</div>
+                          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-500 ${
+                                data.avgScore >= 80 ? 'bg-green-500' : 
+                                data.avgScore >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                              }`}
+                              style={{ width: `${data.avgScore}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Motivation Factors */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">🎉 What Motivates You</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {insightsData.motivationFactors.length > 0 ? (
+                        insightsData.motivationFactors.map((factor: any, index: number) => {
+                          const factorInfo = {
+                            maintaining_streak: { icon: '🔥', title: 'Learning Streaks', desc: 'You love maintaining your study momentum' },
+                            high_scores: { icon: '🏆', title: 'High Scores', desc: 'Achieving excellence motivates you' },
+                            consistent_practice: { icon: '⏰', title: 'Consistent Practice', desc: 'Regular study habits drive you' },
+                            seeing_progress: { icon: '📈', title: 'Visible Progress', desc: 'Improving over time keeps you going' }
+                          };
+                          const info = factorInfo[factor as keyof typeof factorInfo];
+                          return (
+                            <div key={index} className="p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                              <div className="text-center">
+                                <div className="text-3xl mb-2">{info.icon}</div>
+                                <div className="font-semibold text-gray-900 mb-1">{info.title}</div>
+                                <div className="text-sm text-gray-600">{info.desc}</div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="col-span-full text-center py-8">
+                          <p className="text-gray-500">Keep practicing to discover what motivates you!</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Insights Tips */}
+                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 rounded-lg border border-emerald-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">🧠 How to Use These Insights</h3>
+                    <div className="space-y-2 text-sm text-emerald-800">
+                      <p>• <strong>Focus on weaknesses:</strong> Prioritize categories with lower scores</p>
+                      <p>• <strong>Maintain strengths:</strong> Keep practicing strong areas to maintain performance</p>
+                      <p>• <strong>Follow recommendations:</strong> Implement the AI-suggested actions</p>
+                      <p>• <strong>Track progress:</strong> Monitor improvements in your weak areas</p>
+                      <p>• <strong>Adjust study habits:</strong> Use insights to optimize your learning approach</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <TrendingUp className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No insights available</h3>
+                  <p className="text-gray-600">Take some quizzes first to generate performance insights!</p>
                 </div>
               )}
             </div>
