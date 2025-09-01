@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Layout from '@/components/layout/Layout';
-import { CheckCircle, XCircle, Clock, Trophy, Target } from 'lucide-react';
-import { getQuizzes, submitQuizResult, type Quiz, type QuizResult } from '@/lib/quiz';
+import { CheckCircle, XCircle, Clock, Trophy, Target, BarChart3, TrendingUp, Award, BookOpen } from 'lucide-react';
+import { getQuizzes, submitQuizResult, getQuizStats, type Quiz, type QuizResult } from '@/lib/quiz';
 
 interface Question {
   id: string;
@@ -32,6 +32,9 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [quizStats, setQuizStats] = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -75,6 +78,28 @@ export default function QuizPage() {
   useEffect(() => {
     setFilteredQuizzes(filterQuizzes(quizzes, selectedDifficulty, selectedCategory));
   }, [selectedDifficulty, selectedCategory, quizzes]);
+
+  // Load quiz analytics
+  const loadQuizAnalytics = async () => {
+    try {
+      setAnalyticsLoading(true);
+      const stats = await getQuizStats();
+      setQuizStats(stats);
+    } catch (error) {
+      console.error('Failed to load quiz analytics:', error);
+      // Set default stats if API fails
+      setQuizStats({
+        totalQuizzes: 0,
+        averageScore: 0,
+        totalExperience: 0,
+        quizzesByDifficulty: { easy: 0, medium: 0, hard: 0 },
+        quizzesByCategory: { vocabulary: 0, grammar: 0, reading: 0, listening: 0 },
+        recentPerformance: []
+      });
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isQuizActive && timeLeft > 0) {
@@ -337,8 +362,34 @@ export default function QuizPage() {
     <Layout>
       <div className="max-w-6xl mx-auto p-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">TOEIC Quizzes</h1>
-          <p className="text-gray-600">Test your knowledge with our interactive TOEIC-style quizzes</p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">TOEIC Quizzes</h1>
+              <p className="text-gray-600">Test your knowledge with our interactive TOEIC-style quizzes</p>
+            </div>
+            <Button
+              onClick={() => {
+                if (!showAnalytics) {
+                  loadQuizAnalytics();
+                }
+                setShowAnalytics(!showAnalytics);
+              }}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              {showAnalytics ? (
+                <>
+                  <BookOpen className="w-4 h-4" />
+                  Hide Analytics
+                </>
+              ) : (
+                <>
+                  <BarChart3 className="w-4 h-4" />
+                  Show Analytics
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Difficulty Filter */}
@@ -458,6 +509,129 @@ export default function QuizPage() {
             </button>
           </div>
         </div>
+
+        {/* Quiz Analytics */}
+        {showAnalytics && (
+          <div className="mb-8">
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-blue-600" />
+                Quiz Performance Analytics
+              </h2>
+              
+              {analyticsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Loading analytics...</p>
+                </div>
+              ) : quizStats ? (
+                <div className="space-y-6">
+                  {/* Overview Stats */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="w-5 h-5 text-blue-600" />
+                        <div>
+                          <div className="text-2xl font-bold text-blue-600">{quizStats.totalQuizzes || 0}</div>
+                          <div className="text-sm text-blue-700">Total Quizzes</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-green-600" />
+                        <div>
+                          <div className="text-2xl font-bold text-green-600">{quizStats.averageScore || 0}%</div>
+                          <div className="text-sm text-green-700">Average Score</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Award className="w-5 h-5 text-purple-600" />
+                        <div>
+                          <div className="text-2xl font-bold text-purple-600">{quizStats.totalExperience || 0}</div>
+                          <div className="text-sm text-purple-700">Total Experience</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-orange-50 p-4 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <Target className="w-5 h-5 text-orange-600" />
+                        <div>
+                          <div className="text-2xl font-bold text-orange-600">
+                            {quizStats.recentPerformance?.length > 0 ? 
+                              Math.max(...quizStats.recentPerformance.map((p: any) => p.score)) : 0}%
+                          </div>
+                          <div className="text-sm text-orange-700">Best Recent Score</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Performance by Difficulty */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Performance by Difficulty</h3>
+                      <div className="space-y-2">
+                        {['easy', 'medium', 'hard'].map((difficulty) => (
+                          <div key={difficulty} className="flex justify-between items-center">
+                            <span className="capitalize text-gray-700">{difficulty}</span>
+                            <span className="font-medium text-gray-900">
+                              {quizStats.quizzesByDifficulty?.[difficulty] || 0} quizzes
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Performance by Category */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Performance by Category</h3>
+                      <div className="space-y-2">
+                        {['vocabulary', 'grammar', 'reading', 'listening'].map((category) => (
+                          <div key={category} className="flex justify-between items-center">
+                            <span className="capitalize text-gray-700">{category}</span>
+                            <span className="font-medium text-gray-900">
+                              {quizStats.quizzesByCategory?.[category] || 0} quizzes
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Performance */}
+                  {quizStats.recentPerformance && quizStats.recentPerformance.length > 0 && (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Recent Performance</h3>
+                      <div className="space-y-2">
+                        {quizStats.recentPerformance.slice(0, 5).map((attempt: any, index: number) => (
+                          <div key={index} className="flex justify-between items-center text-sm">
+                            <span className="text-gray-700">{attempt.quizTitle || `Quiz ${index + 1}`}</span>
+                            <span className={`font-medium ${
+                              attempt.score >= 80 ? 'text-green-600' : 
+                              attempt.score >= 60 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {attempt.score}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-600">
+                  No quiz data available yet. Take some quizzes to see your analytics!
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredQuizzes.map((quiz) => (
