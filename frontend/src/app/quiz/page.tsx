@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Layout from '@/components/layout/Layout';
-import { CheckCircle, XCircle, Clock, Trophy, Target, BarChart3, TrendingUp, Award, BookOpen, Search, LineChart, Activity } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Trophy, Target, BarChart3, TrendingUp, Award, BookOpen, Search, LineChart, Activity, Bell, Calendar, Zap } from 'lucide-react';
 import { getQuizzes, submitQuizResult, getQuizStats, getQuizHistory, type Quiz, type QuizResult, type QuizAttempt } from '@/lib/quiz';
 
 interface Question {
@@ -44,6 +44,17 @@ export default function QuizPage() {
   const [showProgressCharts, setShowProgressCharts] = useState(false);
   const [progressData, setProgressData] = useState<any>(null);
   const [progressLoading, setProgressLoading] = useState(false);
+  const [showStudyReminders, setShowStudyReminders] = useState(false);
+  const [reminderSettings, setReminderSettings] = useState({
+    enabled: true,
+    frequency: 'daily',
+    preferredTime: '18:00',
+    daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+    minStudyTime: 15,
+    goalQuizzesPerWeek: 3
+  });
+  const [reminderStats, setReminderStats] = useState<any>(null);
+  const [remindersLoading, setRemindersLoading] = useState(false);
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -379,6 +390,141 @@ export default function QuizPage() {
     } finally {
       setProgressLoading(false);
     }
+  };
+
+  // Load study reminder statistics and settings
+  const loadReminderData = async () => {
+    try {
+      setRemindersLoading(true);
+      
+      // Get quiz history for reminder analysis
+      const history = await getQuizHistory();
+      
+      if (history.length === 0) {
+        setReminderStats({
+          currentStreak: 0,
+          longestStreak: 0,
+          thisWeekQuizzes: 0,
+          lastStudyDate: null,
+          nextRecommendedStudy: null,
+          weeklyGoalProgress: 0,
+          averageStudyGap: 0
+        });
+        return;
+      }
+      
+      // Calculate reminder statistics
+      const now = new Date();
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      
+      // Sort history by completion date
+      const sortedHistory = history.sort((a, b) => 
+        new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+      );
+      
+      const lastStudyDate = new Date(sortedHistory[0].completedAt);
+      const thisWeekQuizzes = history.filter(h => 
+        new Date(h.completedAt) > oneWeekAgo
+      ).length;
+      
+      // Calculate current streak
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let tempStreak = 0;
+      let lastDate = null;
+      
+      for (let i = 0; i < sortedHistory.length; i++) {
+        const currentDate = new Date(sortedHistory[i].completedAt);
+        const currentDay = currentDate.toDateString();
+        
+        if (lastDate === null) {
+          tempStreak = 1;
+          lastDate = currentDay;
+        } else {
+          const lastDay = new Date(lastDate);
+          const dayDiff = Math.floor((lastDay.getTime() - currentDate.getTime()) / (24 * 60 * 60 * 1000));
+          
+          if (dayDiff === 1) {
+            tempStreak++;
+          } else {
+            longestStreak = Math.max(longestStreak, tempStreak);
+            tempStreak = 1;
+          }
+          lastDate = currentDay;
+        }
+      }
+      
+      longestStreak = Math.max(longestStreak, tempStreak);
+      
+      // Calculate current streak from today
+      if (lastStudyDate.toDateString() === now.toDateString()) {
+        currentStreak = tempStreak;
+      } else if (lastStudyDate.toDateString() === oneDayAgo.toDateString()) {
+        currentStreak = tempStreak;
+      } else {
+        currentStreak = 0;
+      }
+      
+      // Calculate next recommended study time
+      const nextRecommendedStudy = new Date();
+      if (currentStreak === 0) {
+        // If no current streak, recommend studying today
+        nextRecommendedStudy.setHours(parseInt(reminderSettings.preferredTime.split(':')[0]));
+        nextRecommendedStudy.setMinutes(parseInt(reminderSettings.preferredTime.split(':')[1]));
+      } else {
+        // If on a streak, recommend studying tomorrow
+        nextRecommendedStudy.setDate(nextRecommendedStudy.getDate() + 1);
+        nextRecommendedStudy.setHours(parseInt(reminderSettings.preferredTime.split(':')[0]));
+        nextRecommendedStudy.setMinutes(parseInt(reminderSettings.preferredTime.split(':')[1]));
+      }
+      
+      // Calculate weekly goal progress
+      const weeklyGoalProgress = Math.min((thisWeekQuizzes / reminderSettings.goalQuizzesPerWeek) * 100, 100);
+      
+      // Calculate average study gap
+      let totalGap = 0;
+      let gapCount = 0;
+      for (let i = 1; i < sortedHistory.length; i++) {
+        const currentDate = new Date(sortedHistory[i].completedAt);
+        const previousDate = new Date(sortedHistory[i - 1].completedAt);
+        const gap = Math.floor((previousDate.getTime() - currentDate.getTime()) / (24 * 60 * 60 * 1000));
+        totalGap += gap;
+        gapCount++;
+      }
+      const averageStudyGap = gapCount > 0 ? Math.round(totalGap / gapCount) : 0;
+      
+      setReminderStats({
+        currentStreak,
+        longestStreak,
+        thisWeekQuizzes,
+        lastStudyDate: lastStudyDate.toLocaleDateString(),
+        nextRecommendedStudy: nextRecommendedStudy.toLocaleString(),
+        weeklyGoalProgress,
+        averageStudyGap
+      });
+      
+    } catch (error) {
+      console.error('Failed to load reminder data:', error);
+      setReminderStats(null);
+    } finally {
+      setRemindersLoading(false);
+    }
+  };
+
+  // Update reminder settings
+  const updateReminderSettings = (newSettings: any) => {
+    setReminderSettings(prev => ({ ...prev, ...newSettings }));
+  };
+
+  // Toggle reminder for specific day
+  const toggleDayReminder = (day: string) => {
+    setReminderSettings(prev => ({
+      ...prev,
+      daysOfWeek: prev.daysOfWeek.includes(day)
+        ? prev.daysOfWeek.filter(d => d !== day)
+        : [...prev.daysOfWeek, day]
+    }));
   };
 
   useEffect(() => {
@@ -725,6 +871,29 @@ export default function QuizPage() {
                   </>
                 )}
               </Button>
+              
+              <Button
+                onClick={() => {
+                  if (!showStudyReminders) {
+                    loadReminderData();
+                  }
+                  setShowStudyReminders(!showStudyReminders);
+                }}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {showStudyReminders ? (
+                  <>
+                    <Bell className="w-4 h-4" />
+                    Hide Reminders
+                  </>
+                ) : (
+                  <>
+                    <Bell className="w-4 h-4" />
+                    Study Reminders
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </div>
@@ -1039,6 +1208,178 @@ export default function QuizPage() {
                   <LineChart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No progress data available</h3>
                   <p className="text-gray-600">Take some quizzes first to see your progress charts!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Study Reminders */}
+        {showStudyReminders && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Bell className="w-6 h-6 text-orange-600" />
+                Study Reminders & Goals
+              </h2>
+              
+              {remindersLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Loading your study data...</p>
+                </div>
+              ) : reminderStats ? (
+                <div className="space-y-8">
+                  {/* Current Status */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-orange-600">{reminderStats.currentStreak}</div>
+                        <div className="text-sm text-gray-600">Current Streak</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-red-600">{reminderStats.longestStreak}</div>
+                        <div className="text-sm text-gray-600">Longest Streak</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">{reminderStats.thisWeekQuizzes}</div>
+                        <div className="text-sm text-gray-600">This Week</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{reminderStats.averageStudyGap}</div>
+                        <div className="text-sm text-gray-600">Avg. Gap (Days)</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Weekly Goal Progress */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Goal Progress</h3>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-700">Target: {reminderSettings.goalQuizzesPerWeek} quizzes per week</span>
+                        <span className="text-gray-700">{reminderStats.thisWeekQuizzes}/{reminderSettings.goalQuizzesPerWeek}</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div 
+                          className="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full transition-all duration-500"
+                          style={{ width: `${reminderStats.weeklyGoalProgress}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-center">
+                        <span className={`text-sm font-medium ${
+                          reminderStats.weeklyGoalProgress >= 100 ? 'text-green-600' : 'text-orange-600'
+                        }`}>
+                          {reminderStats.weeklyGoalProgress >= 100 ? '🎉 Goal achieved!' : `${Math.round(reminderStats.weeklyGoalProgress)}% complete`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reminder Settings */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white p-6 rounded-lg shadow-sm border">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Reminder Settings</h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-700">Enable Reminders</span>
+                          <button
+                            onClick={() => updateReminderSettings({ enabled: !reminderSettings.enabled })}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                              reminderSettings.enabled ? 'bg-blue-600' : 'bg-gray-300'
+                            }`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              reminderSettings.enabled ? 'translate-x-6' : 'translate-x-1'
+                            }`} />
+                          </button>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Preferred Study Time</label>
+                          <input
+                            type="time"
+                            value={reminderSettings.preferredTime}
+                            onChange={(e) => updateReminderSettings({ preferredTime: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Minimum Study Time (minutes)</label>
+                          <input
+                            type="number"
+                            min="5"
+                            max="120"
+                            value={reminderSettings.minStudyTime}
+                            onChange={(e) => updateReminderSettings({ minStudyTime: parseInt(e.target.value) })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-sm border">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Study Days</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+                          <button
+                            key={day}
+                            onClick={() => toggleDayReminder(day)}
+                            className={`p-2 rounded-lg text-sm font-medium transition-colors ${
+                              reminderSettings.daysOfWeek.includes(day)
+                                ? 'bg-orange-100 text-orange-800 border border-orange-300'
+                                : 'bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200'
+                              }`}
+                          >
+                            {day.charAt(0).toUpperCase() + day.slice(1, 3)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Next Study Recommendation */}
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-blue-600" />
+                      Next Study Recommendation
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700">Last Study Date:</span>
+                        <span className="font-medium text-gray-900">{reminderStats.lastStudyDate || 'Never'}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700">Next Recommended Study:</span>
+                        <span className="font-medium text-blue-600">{reminderStats.nextRecommendedStudy}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700">Current Streak:</span>
+                        <span className="font-medium text-orange-600">{reminderStats.currentStreak} day{reminderStats.currentStreak !== 1 ? 's' : ''}</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 p-3 bg-blue-50 rounded-md">
+                      <p className="text-sm text-blue-800">
+                        💡 {reminderStats.currentStreak > 0 
+                          ? `Great job! Keep your ${reminderStats.currentStreak}-day streak going!` 
+                          : "Start building your study habit today!"
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Bell className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No study data available</h3>
+                  <p className="text-gray-600">Take some quizzes first to set up your study reminders!</p>
                 </div>
               )}
             </div>
