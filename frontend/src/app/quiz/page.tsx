@@ -55,6 +55,9 @@ export default function QuizPage() {
   });
   const [reminderStats, setReminderStats] = useState<any>(null);
   const [remindersLoading, setRemindersLoading] = useState(false);
+  const [showLearningStreaks, setShowLearningStreaks] = useState(false);
+  const [streakData, setStreakData] = useState<any>(null);
+  const [streaksLoading, setStreaksLoading] = useState(false);
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -527,6 +530,173 @@ export default function QuizPage() {
     }));
   };
 
+  // Load enhanced learning streak data
+  const loadStreakData = async () => {
+    try {
+      setStreaksLoading(true);
+      
+      // Get quiz history for streak analysis
+      const history = await getQuizHistory();
+      
+      if (history.length === 0) {
+        setStreakData({
+          currentStreak: 0,
+          longestStreak: 0,
+          totalStreaks: 0,
+          streakHistory: [],
+          achievements: [],
+          nextMilestone: null,
+          streakMultiplier: 1,
+          totalPoints: 0,
+          weeklyStreak: 0,
+          monthlyStreak: 0
+        });
+        return;
+      }
+      
+      // Calculate comprehensive streak data
+      const now = new Date();
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      
+      // Sort history by completion date
+      const sortedHistory = history.sort((a, b) => 
+        new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+      );
+      
+      // Calculate streaks
+      let currentStreak = 0;
+      let longestStreak = 0;
+      let totalStreaks = 0;
+      let tempStreak = 0;
+      let lastDate = null;
+      let streakHistory: any[] = [];
+      
+      for (let i = 0; i < sortedHistory.length; i++) {
+        const currentDate = new Date(sortedHistory[i].completedAt);
+        const currentDay = currentDate.toDateString();
+        
+        if (lastDate === null) {
+          tempStreak = 1;
+          lastDate = currentDay;
+        } else {
+          const lastDay = new Date(lastDate);
+          const dayDiff = Math.floor((lastDay.getTime() - currentDate.getTime()) / (24 * 60 * 60 * 1000));
+          
+          if (dayDiff === 1) {
+            tempStreak++;
+          } else {
+            if (tempStreak > 1) {
+              streakHistory.push({
+                length: tempStreak,
+                startDate: new Date(sortedHistory[i - tempStreak + 1].completedAt).toLocaleDateString(),
+                endDate: new Date(sortedHistory[i - 1].completedAt).toLocaleDateString()
+              });
+              totalStreaks++;
+            }
+            longestStreak = Math.max(longestStreak, tempStreak);
+            tempStreak = 1;
+          }
+          lastDate = currentDay;
+        }
+      }
+      
+      // Handle the last streak
+      if (tempStreak > 1) {
+        streakHistory.push({
+          length: tempStreak,
+          startDate: new Date(sortedHistory[sortedHistory.length - tempStreak].completedAt).toLocaleDateString(),
+          endDate: new Date(sortedHistory[sortedHistory.length - 1].completedAt).toLocaleDateString()
+        });
+        totalStreaks++;
+      }
+      
+      longestStreak = Math.max(longestStreak, tempStreak);
+      
+      // Calculate current streak from today
+      const lastStudyDate = new Date(sortedHistory[0].completedAt);
+      if (lastStudyDate.toDateString() === now.toDateString()) {
+        currentStreak = tempStreak;
+      } else if (lastStudyDate.toDateString() === oneDayAgo.toDateString()) {
+        currentStreak = tempStreak;
+      } else {
+        currentStreak = 0;
+      }
+      
+      // Calculate weekly and monthly streaks
+      const weeklyStreak = history.filter(h => 
+        new Date(h.completedAt) > oneWeekAgo
+      ).length;
+      
+      const monthlyStreak = history.filter(h => 
+        new Date(h.completedAt) > oneMonthAgo
+      ).length;
+      
+      // Calculate streak multiplier and points
+      const streakMultiplier = Math.min(1 + (currentStreak * 0.1), 3); // Max 3x multiplier
+      const totalPoints = history.reduce((sum, h) => sum + h.score, 0) * streakMultiplier;
+      
+      // Determine next milestone
+      const milestones = [3, 7, 14, 30, 50, 100, 365];
+      const nextMilestone = milestones.find(m => m > currentStreak) || null;
+      
+      // Generate achievements
+      const achievements = [];
+      if (currentStreak >= 3) achievements.push({ name: 'Getting Started', icon: '⭐', description: '3-day streak' });
+      if (currentStreak >= 7) achievements.push({ name: 'Week Warrior', icon: '🔥', description: '7-day streak' });
+      if (currentStreak >= 14) achievements.push({ name: 'Fortnight Fighter', icon: '⚡', description: '14-day streak' });
+      if (currentStreak >= 30) achievements.push({ name: 'Monthly Master', icon: '👑', description: '30-day streak' });
+      if (currentStreak >= 50) achievements.push({ name: 'Half Century Hero', icon: '🏆', description: '50-day streak' });
+      if (currentStreak >= 100) achievements.push({ name: 'Century Champion', icon: '💎', description: '100-day streak' });
+      if (longestStreak >= 365) achievements.push({ name: 'Year Rounder', icon: '🌟', description: '365-day streak' });
+      
+      setStreakData({
+        currentStreak,
+        longestStreak,
+        totalStreaks,
+        streakHistory: streakHistory.slice(0, 5), // Show last 5 streaks
+        achievements,
+        nextMilestone,
+        streakMultiplier,
+        totalPoints: Math.round(totalPoints),
+        weeklyStreak,
+        monthlyStreak
+      });
+      
+    } catch (error) {
+      console.error('Failed to load streak data:', error);
+      setStreakData(null);
+    } finally {
+      setStreaksLoading(false);
+    }
+  };
+
+  // Get streak motivation message
+  const getStreakMotivation = (streak: number) => {
+    if (streak === 0) return "Start your learning journey today!";
+    if (streak === 1) return "Great start! Keep the momentum going!";
+    if (streak < 3) return "Building a habit takes time. You're doing great!";
+    if (streak < 7) return "You're forming a study habit! Keep it up!";
+    if (streak < 14) return "Two weeks strong! You're unstoppable!";
+    if (streak < 30) return "Almost a month! You're a study machine!";
+    if (streak < 50) return "Halfway to 100! Incredible dedication!";
+    if (streak < 100) return "Century club is calling! Amazing work!";
+    return "Legendary status achieved! You're an inspiration!";
+  };
+
+  // Get streak icon based on length
+  const getStreakIcon = (streak: number) => {
+    if (streak === 0) return '⭐';
+    if (streak < 3) return '⭐';
+    if (streak < 7) return '🔥';
+    if (streak < 14) return '⚡';
+    if (streak < 30) return '👑';
+    if (streak < 50) return '🏆';
+    if (streak < 100) return '💎';
+    return '🌟';
+  };
+
   useEffect(() => {
     if (isQuizActive && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -891,6 +1061,29 @@ export default function QuizPage() {
                   <>
                     <Bell className="w-4 h-4" />
                     Study Reminders
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => {
+                  if (!showLearningStreaks) {
+                    loadStreakData();
+                  }
+                  setShowLearningStreaks(!showLearningStreaks);
+                }}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {showLearningStreaks ? (
+                  <>
+                    <Zap className="w-4 h-4" />
+                    Hide Streaks
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4" />
+                    Learning Streaks
                   </>
                 )}
               </Button>
@@ -1380,6 +1573,179 @@ export default function QuizPage() {
                   <Bell className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No study data available</h3>
                   <p className="text-gray-600">Take some quizzes first to set up your study reminders!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Learning Streaks */}
+        {showLearningStreaks && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Zap className="w-6 h-6 text-yellow-600" />
+                Learning Streaks & Achievements
+              </h2>
+              
+              {streaksLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Analyzing your streaks...</p>
+                </div>
+              ) : streakData ? (
+                <div className="space-y-8">
+                  {/* Current Streak Status */}
+                  <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-6 rounded-lg border border-yellow-300">
+                    <div className="text-center">
+                      <div className="text-6xl mb-2">{getStreakIcon(streakData.currentStreak)}</div>
+                      <div className="text-4xl font-bold text-yellow-800 mb-2">
+                        {streakData.currentStreak} Day{streakData.currentStreak !== 1 ? 's' : ''}
+                      </div>
+                      <div className="text-lg text-yellow-700 mb-4">
+                        {getStreakMotivation(streakData.currentStreak)}
+                      </div>
+                      {streakData.nextMilestone && (
+                        <div className="text-sm text-yellow-600">
+                          Next milestone: {streakData.nextMilestone} days
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Streak Statistics */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-red-600">{streakData.longestStreak}</div>
+                        <div className="text-sm text-gray-600">Longest Streak</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{streakData.totalStreaks}</div>
+                        <div className="text-sm text-gray-600">Total Streaks</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">{streakData.weeklyStreak}</div>
+                        <div className="text-sm text-gray-600">This Week</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{streakData.monthlyStreak}</div>
+                        <div className="text-sm text-gray-600">This Month</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Streak Multiplier & Points */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white p-6 rounded-lg shadow-sm border">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Streak Multiplier</h3>
+                      <div className="text-center">
+                        <div className="text-4xl font-bold text-orange-600 mb-2">
+                          {streakData.streakMultiplier.toFixed(1)}x
+                        </div>
+                        <div className="text-sm text-gray-600 mb-4">
+                          {streakData.currentStreak > 0 
+                            ? `Your ${streakData.currentStreak}-day streak gives you a ${streakData.streakMultiplier.toFixed(1)}x point multiplier!`
+                            : 'Start a streak to earn point multipliers!'
+                          }
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div 
+                            className="bg-gradient-to-r from-orange-500 to-red-500 h-3 rounded-full transition-all duration-500"
+                            style={{ width: `${(streakData.streakMultiplier / 3) * 100}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2">Max: 3.0x</div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg shadow-sm border">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Total Points</h3>
+                      <div className="text-center">
+                        <div className="text-4xl font-bold text-blue-600 mb-2">
+                          {streakData.totalPoints.toLocaleString()}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {streakData.currentStreak > 0 
+                            ? `Including ${streakData.streakMultiplier.toFixed(1)}x streak bonus!`
+                            : 'Take quizzes to start earning points!'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Achievements */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Achievements Unlocked</h3>
+                    {streakData.achievements.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {streakData.achievements.map((achievement: any, index: number) => (
+                          <div key={index} className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border border-yellow-200">
+                            <div className="text-center">
+                              <div className="text-3xl mb-2">{achievement.icon}</div>
+                              <div className="font-semibold text-gray-900 mb-1">{achievement.name}</div>
+                              <div className="text-sm text-gray-600">{achievement.description}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="text-4xl mb-2">🎯</div>
+                        <p className="text-gray-600">Start building streaks to unlock achievements!</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Streak History */}
+                  {streakData.streakHistory.length > 0 && (
+                    <div className="bg-white p-6 rounded-lg shadow-sm border">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Streaks</h3>
+                      <div className="space-y-3">
+                        {streakData.streakHistory.map((streak: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="text-2xl">{getStreakIcon(streak.length)}</div>
+                              <div>
+                                <div className="font-medium text-gray-900">{streak.length} days</div>
+                                <div className="text-sm text-gray-600">
+                                  {streak.startDate} - {streak.endDate}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {streak.length >= 30 ? '🏆' : streak.length >= 14 ? '🔥' : '⭐'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Streak Tips */}
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">💡 Streak Tips</h3>
+                    <div className="space-y-2 text-sm text-blue-800">
+                      <p>• Study every day, even if just for 15 minutes</p>
+                      <p>• Set a consistent study time that fits your schedule</p>
+                      <p>• Don't break the chain - every day counts!</p>
+                      <p>• Longer streaks give you better point multipliers</p>
+                      <p>• Celebrate your achievements and stay motivated!</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Zap className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No streak data available</h3>
+                  <p className="text-gray-600">Take some quizzes first to start building your learning streaks!</p>
                 </div>
               )}
             </div>
