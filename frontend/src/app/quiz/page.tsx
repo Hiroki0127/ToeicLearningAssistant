@@ -58,6 +58,10 @@ export default function QuizPage() {
   const [showLearningStreaks, setShowLearningStreaks] = useState(false);
   const [streakData, setStreakData] = useState<any>(null);
   const [streaksLoading, setStreaksLoading] = useState(false);
+  const [showStudyCalendar, setShowStudyCalendar] = useState(false);
+  const [calendarData, setCalendarData] = useState<any>(null);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -101,6 +105,13 @@ export default function QuizPage() {
   useEffect(() => {
     setFilteredQuizzes(filterQuizzes(quizzes, selectedDifficulty, selectedCategory));
   }, [selectedDifficulty, selectedCategory, quizzes]);
+
+  // Reload calendar data when month changes
+  useEffect(() => {
+    if (showStudyCalendar) {
+      loadCalendarData();
+    }
+  }, [selectedMonth, showStudyCalendar]);
 
   // Load quiz analytics
   const loadQuizAnalytics = async () => {
@@ -697,6 +708,172 @@ export default function QuizPage() {
     return '🌟';
   };
 
+  // Load study calendar data
+  const loadCalendarData = async () => {
+    try {
+      setCalendarLoading(true);
+      
+      // Get quiz history for calendar analysis
+      const history = await getQuizHistory();
+      
+      if (history.length === 0) {
+        setCalendarData({
+          studyDays: [],
+          monthlyStats: {
+            totalDays: 0,
+            studyDays: 0,
+            totalQuizzes: 0,
+            averageScore: 0,
+            totalTime: 0
+          },
+          weeklyGoals: [],
+          studyPatterns: []
+        });
+        return;
+      }
+      
+      // Process calendar data
+      const now = new Date();
+      const currentMonth = selectedMonth.getMonth();
+      const currentYear = selectedMonth.getFullYear();
+      
+      // Get all days in the selected month
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+      
+      // Create calendar grid
+      const calendarDays = [];
+      const studyDays = new Set();
+      let totalQuizzes = 0;
+      let totalScore = 0;
+      let totalTime = 0;
+      
+      // Fill in days before the first day of the month
+      for (let i = 0; i < firstDayOfMonth; i++) {
+        calendarDays.push({ day: null, isCurrentMonth: false });
+      }
+      
+      // Fill in the days of the month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+        const dateString = date.toDateString();
+        
+        // Check if this day has study activity
+        const dayHistory = history.filter(h => 
+          new Date(h.completedAt).toDateString() === dateString
+        );
+        
+        if (dayHistory.length > 0) {
+          studyDays.add(day);
+          totalQuizzes += dayHistory.length;
+          totalScore += dayHistory.reduce((sum, h) => sum + h.score, 0);
+          totalTime += dayHistory.reduce((sum, h) => sum + (h.timeSpent || 0), 0);
+        }
+        
+        calendarDays.push({
+          day,
+          isCurrentMonth: true,
+          hasStudy: dayHistory.length > 0,
+          studyCount: dayHistory.length,
+          averageScore: dayHistory.length > 0 ? Math.round(totalScore / totalQuizzes) : 0,
+          isToday: date.toDateString() === now.toDateString(),
+          isPast: date < now
+        });
+      }
+      
+      // Calculate monthly statistics
+      const monthlyStats = {
+        totalDays: daysInMonth,
+        studyDays: studyDays.size,
+        totalQuizzes,
+        averageScore: totalQuizzes > 0 ? Math.round(totalScore / totalQuizzes) : 0,
+        totalTime: Math.round(totalTime / 60) // Convert to minutes
+      };
+      
+      // Generate weekly goals
+      const weeklyGoals = [];
+      for (let week = 0; week < Math.ceil(daysInMonth / 7); week++) {
+        const weekStart = week * 7 + 1;
+        const weekEnd = Math.min((week + 1) * 7, daysInMonth);
+        const weekDays = calendarDays.filter((d, i) => 
+          i >= firstDayOfMonth + weekStart - 1 && i < firstDayOfMonth + weekEnd
+        );
+        const weekStudyDays = weekDays.filter(d => d.hasStudy).length;
+        const weekQuizzes = weekDays.reduce((sum, d) => sum + (d.studyCount || 0), 0);
+        
+        weeklyGoals.push({
+          week: week + 1,
+          days: weekEnd - weekStart + 1,
+          studyDays: weekStudyDays,
+          quizzes: weekQuizzes,
+          goal: reminderSettings.goalQuizzesPerWeek,
+          completed: weekQuizzes >= reminderSettings.goalQuizzesPerWeek
+        });
+      }
+      
+      // Analyze study patterns
+      const studyPatterns = [];
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      
+      for (let i = 0; i < 7; i++) {
+        const dayHistory = history.filter(h => 
+          new Date(h.completedAt).getDay() === i
+        );
+        
+        studyPatterns.push({
+          day: dayNames[i],
+          studyCount: dayHistory.length,
+          averageScore: dayHistory.length > 0 ? Math.round(dayHistory.reduce((sum, h) => sum + h.score, 0) / dayHistory.length) : 0,
+          isPreferred: reminderSettings.daysOfWeek.includes(dayNames[i].toLowerCase())
+        });
+      }
+      
+      setCalendarData({
+        calendarDays,
+        monthlyStats,
+        weeklyGoals,
+        studyPatterns
+      });
+      
+    } catch (error) {
+      console.error('Failed to load calendar data:', error);
+      setCalendarData(null);
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  // Navigate to previous month
+  const goToPreviousMonth = () => {
+    setSelectedMonth(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(prev.getMonth() - 1);
+      return newDate;
+    });
+  };
+
+  // Navigate to next month
+  const goToNextMonth = () => {
+    setSelectedMonth(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(prev.getMonth() + 1);
+      return newDate;
+    });
+  };
+
+  // Get calendar day styling
+  const getCalendarDayStyle = (day: any) => {
+    if (!day || !day.isCurrentMonth) return 'bg-gray-100 text-gray-400';
+    if (day.isToday) return 'bg-blue-500 text-white font-bold';
+    if (day.hasStudy) {
+      if (day.studyCount >= 3) return 'bg-green-500 text-white';
+      if (day.studyCount >= 2) return 'bg-green-400 text-white';
+      return 'bg-green-300 text-white';
+    }
+    if (day.isPast) return 'bg-gray-200 text-gray-600';
+    return 'bg-white text-gray-900 hover:bg-gray-50';
+  };
+
   useEffect(() => {
     if (isQuizActive && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -1084,6 +1261,29 @@ export default function QuizPage() {
                   <>
                     <Zap className="w-4 h-4" />
                     Learning Streaks
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => {
+                  if (!showStudyCalendar) {
+                    loadCalendarData();
+                  }
+                  setShowStudyCalendar(!showStudyCalendar);
+                }}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {showStudyCalendar ? (
+                  <>
+                    <Calendar className="w-4 h-4" />
+                    Hide Calendar
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="w-4 h-4" />
+                    Study Calendar
                   </>
                 )}
               </Button>
@@ -1746,6 +1946,209 @@ export default function QuizPage() {
                   <Zap className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No streak data available</h3>
                   <p className="text-gray-600">Take some quizzes first to start building your learning streaks!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Study Calendar */}
+        {showStudyCalendar && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Calendar className="w-6 h-6 text-indigo-600" />
+                Study Calendar & Goals
+              </h2>
+              
+              {calendarLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Loading your study calendar...</p>
+                </div>
+              ) : calendarData ? (
+                <div className="space-y-8">
+                  {/* Month Navigation */}
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={goToPreviousMonth}
+                      className="p-2 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
+                    >
+                      ← Previous
+                    </button>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {selectedMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </h3>
+                    <button
+                      onClick={goToNextMonth}
+                      className="p-2 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 transition-colors"
+                    >
+                      Next →
+                    </button>
+                  </div>
+
+                  {/* Monthly Statistics */}
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-indigo-600">{calendarData.monthlyStats.totalDays}</div>
+                        <div className="text-sm text-gray-600">Total Days</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">{calendarData.monthlyStats.studyDays}</div>
+                        <div className="text-sm text-gray-600">Study Days</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{calendarData.monthlyStats.totalQuizzes}</div>
+                        <div className="text-sm text-gray-600">Total Quizzes</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{calendarData.monthlyStats.averageScore}%</div>
+                        <div className="text-sm text-gray-600">Avg. Score</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-orange-600">{calendarData.monthlyStats.totalTime}</div>
+                        <div className="text-sm text-gray-600">Total Time (min)</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Calendar Grid */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Study Calendar</h3>
+                    <div className="grid grid-cols-7 gap-1">
+                      {/* Day headers */}
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                        <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
+                          {day}
+                        </div>
+                      ))}
+                      
+                      {/* Calendar days */}
+                      {calendarData.calendarDays.map((day: any, index: number) => (
+                        <div
+                          key={index}
+                          className={`p-2 text-center text-sm border rounded-lg min-h-[60px] flex flex-col items-center justify-center ${getCalendarDayStyle(day)}`}
+                        >
+                          {day && day.isCurrentMonth && (
+                            <>
+                              <div className="font-medium">{day.day}</div>
+                              {day.hasStudy && (
+                                <div className="text-xs mt-1">
+                                  {day.studyCount} quiz{day.studyCount !== 1 ? 'es' : ''}
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Calendar Legend */}
+                    <div className="mt-4 flex flex-wrap gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                        <span>Today</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-green-300 rounded"></div>
+                        <span>1 Quiz</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-green-400 rounded"></div>
+                        <span>2 Quizzes</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-green-500 rounded"></div>
+                        <span>3+ Quizzes</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Weekly Goals */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Goals Progress</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {calendarData.weeklyGoals.map((week: any, index: number) => (
+                        <div key={index} className="p-4 border rounded-lg">
+                          <div className="text-center">
+                            <div className="text-lg font-semibold text-gray-900 mb-2">Week {week.week}</div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span>Study Days:</span>
+                                <span className="font-medium">{week.studyDays}/{week.days}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span>Quizzes:</span>
+                                <span className="font-medium">{week.quizzes}/{week.goal}</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div 
+                                  className={`h-3 rounded-full transition-all duration-500 ${
+                                    week.completed ? 'bg-green-500' : 'bg-orange-500'
+                                  }`}
+                                  style={{ width: `${Math.min((week.quizzes / week.goal) * 100, 100)}%` }}
+                                ></div>
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {week.completed ? '🎉 Goal achieved!' : `${Math.round((week.quizzes / week.goal) * 100)}% complete`}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Study Patterns */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Study Patterns by Day</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+                      {calendarData.studyPatterns.map((pattern: any, index: number) => (
+                        <div key={index} className={`p-4 border rounded-lg text-center ${
+                          pattern.isPreferred ? 'bg-indigo-50 border-indigo-200' : ''
+                        }`}>
+                          <div className="text-sm font-medium text-gray-900 mb-2">{pattern.day}</div>
+                          <div className="text-2xl font-bold text-indigo-600 mb-1">{pattern.studyCount}</div>
+                          <div className="text-xs text-gray-600">quizzes</div>
+                          {pattern.averageScore > 0 && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Avg: {pattern.averageScore}%
+                            </div>
+                          )}
+                          {pattern.isPreferred && (
+                            <div className="text-xs text-indigo-600 font-medium mt-1">Preferred</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Calendar Tips */}
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">💡 Calendar Tips</h3>
+                    <div className="space-y-2 text-sm text-blue-800">
+                      <p>• Green days show your study activity - aim for consistency!</p>
+                      <p>• Use the calendar to identify your most productive study times</p>
+                      <p>• Set weekly goals and track your progress</p>
+                      <p>• Don't let gaps in your calendar discourage you - every day is a new start</p>
+                      <p>• Celebrate when you achieve your weekly goals!</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No calendar data available</h3>
+                  <p className="text-gray-600">Take some quizzes first to see your study calendar!</p>
                 </div>
               )}
             </div>
