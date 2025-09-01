@@ -31,13 +31,23 @@ export default function QuizPage() {
   const [isQuizActive, setIsQuizActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Filter quizzes based on selected difficulty
-  const filterQuizzes = (quizzes: Quiz[], difficulty: string) => {
-    if (difficulty === 'all') {
-      return quizzes;
+  // Filter quizzes based on selected difficulty and category
+  const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
+    let filtered = quizzes;
+    
+    // Filter by difficulty
+    if (difficulty !== 'all') {
+      filtered = filtered.filter(quiz => quiz.difficulty === difficulty);
     }
-    return quizzes.filter(quiz => quiz.difficulty === difficulty);
+    
+    // Filter by category
+    if (category !== 'all') {
+      filtered = filtered.filter(quiz => quiz.type === category);
+    }
+    
+    return filtered;
   };
 
   useEffect(() => {
@@ -47,7 +57,7 @@ export default function QuizPage() {
         setLoading(true);
         const quizzesData = await getQuizzes();
         setQuizzes(quizzesData);
-        setFilteredQuizzes(filterQuizzes(quizzesData, selectedDifficulty));
+        setFilteredQuizzes(filterQuizzes(quizzesData, selectedDifficulty, selectedCategory));
       } catch (error) {
         console.error('Failed to load quizzes:', error);
         // Fallback to sample data if API fails
@@ -61,10 +71,10 @@ export default function QuizPage() {
     loadQuizzes();
   }, []);
 
-  // Update filtered quizzes when difficulty changes
+  // Update filtered quizzes when difficulty or category changes
   useEffect(() => {
-    setFilteredQuizzes(filterQuizzes(quizzes, selectedDifficulty));
-  }, [selectedDifficulty, quizzes]);
+    setFilteredQuizzes(filterQuizzes(quizzes, selectedDifficulty, selectedCategory));
+  }, [selectedDifficulty, selectedCategory, quizzes]);
 
   useEffect(() => {
     if (isQuizActive && timeLeft > 0) {
@@ -378,6 +388,75 @@ export default function QuizPage() {
           <p className="text-sm text-gray-500 mt-2">
             Showing {filteredQuizzes.length} quiz{filteredQuizzes.length !== 1 ? 'es' : ''}
           </p>
+        </div>
+
+        {/* Category Filter */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedCategory === 'all'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              All Categories
+            </button>
+            <button
+              onClick={() => setSelectedCategory('vocabulary')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedCategory === 'vocabulary'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+            >
+              Vocabulary
+            </button>
+            <button
+              onClick={() => setSelectedCategory('grammar')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedCategory === 'grammar'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Grammar
+            </button>
+            <button
+              onClick={() => setSelectedCategory('reading')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedCategory === 'reading'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Reading
+            </button>
+            <button
+              onClick={() => setSelectedCategory('listening')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedCategory === 'listening'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Listening
+            </button>
+          </div>
+          
+          {/* Reset Filters Button */}
+          <div className="mt-3">
+            <button
+              onClick={() => {
+                setSelectedDifficulty('all');
+                setSelectedCategory('all');
+              }}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 underline"
+            >
+              Reset All Filters
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
