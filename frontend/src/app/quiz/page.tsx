@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Layout from '@/components/layout/Layout';
-import { CheckCircle, XCircle, Clock, Trophy, Target, BarChart3, TrendingUp, Award, BookOpen, Search } from 'lucide-react';
-import { getQuizzes, submitQuizResult, getQuizStats, type Quiz, type QuizResult } from '@/lib/quiz';
+import { CheckCircle, XCircle, Clock, Trophy, Target, BarChart3, TrendingUp, Award, BookOpen, Search, LineChart, Activity } from 'lucide-react';
+import { getQuizzes, submitQuizResult, getQuizStats, getQuizHistory, type Quiz, type QuizResult, type QuizAttempt } from '@/lib/quiz';
 
 interface Question {
   id: string;
@@ -41,6 +41,9 @@ export default function QuizPage() {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [recommendations, setRecommendations] = useState<Quiz[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [showProgressCharts, setShowProgressCharts] = useState(false);
+  const [progressData, setProgressData] = useState<any>(null);
+  const [progressLoading, setProgressLoading] = useState(false);
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -274,6 +277,108 @@ export default function QuizPage() {
     }
     
     return explanations.length > 0 ? explanations.join(" ") : "This quiz aligns well with your learning goals.";
+  };
+
+  // Load and process progress data for charts
+  const loadProgressData = async () => {
+    try {
+      setProgressLoading(true);
+      
+      // Get quiz history for progress analysis
+      const history = await getQuizHistory();
+      
+      if (history.length === 0) {
+        setProgressData(null);
+        return;
+      }
+      
+      // Process data for charts
+      const processedData = {
+        // Score progression over time
+        scoreTrend: history
+          .sort((a: QuizAttempt, b: QuizAttempt) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime())
+          .map((attempt: QuizAttempt, index: number) => ({
+            attempt: index + 1,
+            score: attempt.score,
+            date: new Date(attempt.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            quizTitle: attempt.quiz?.title || `Quiz ${index + 1}`
+          })),
+        
+        // Performance by category
+        categoryPerformance: Object.entries(
+          history.reduce((acc: Record<string, { total: number; scores: number[]; count: number }>, attempt: QuizAttempt) => {
+            const category = attempt.quiz?.type || 'unknown';
+            if (!acc[category]) {
+              acc[category] = { total: 0, scores: [], count: 0 };
+            }
+            acc[category].scores.push(attempt.score);
+            acc[category].total += attempt.score;
+            acc[category].count += 1;
+            return acc;
+          }, {} as Record<string, { total: number; scores: number[]; count: number }>)
+        ).map(([category, data]) => ({
+          category: category.charAt(0).toUpperCase() + category.slice(1),
+          averageScore: Math.round((data as { total: number; scores: number[]; count: number }).total / (data as { total: number; scores: number[]; count: number }).count),
+          count: (data as { total: number; scores: number[]; count: number }).count,
+          bestScore: Math.max(...(data as { total: number; scores: number[]; count: number }).scores),
+          worstScore: Math.min(...(data as { total: number; scores: number[]; count: number }).scores)
+        })),
+        
+        // Study frequency (quizzes per week)
+        studyFrequency: (() => {
+          const now = new Date();
+          const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+          
+          const thisWeek = history.filter((h: QuizAttempt) => new Date(h.completedAt) > oneWeekAgo).length;
+          const lastWeek = history.filter((h: QuizAttempt) => {
+            const date = new Date(h.completedAt);
+            return date > twoWeeksAgo && date <= oneWeekAgo;
+          }).length;
+          
+          return [
+            { week: 'Last Week', count: lastWeek },
+            { week: 'This Week', count: thisWeek }
+          ];
+        })(),
+        
+        // Difficulty progression
+        difficultyProgression: history
+          .sort((a: QuizAttempt, b: QuizAttempt) => new Date(a.completedAt).getTime() - new Date(b.completedAt).getTime())
+          .map((attempt: QuizAttempt, index: number) => {
+            const difficulty = attempt.quiz?.difficulty || 'unknown';
+            const difficultyScore = { easy: 1, medium: 2, hard: 3 }[difficulty] || 1;
+            return {
+              attempt: index + 1,
+              difficulty: difficultyScore,
+              difficultyLabel: difficulty.charAt(0).toUpperCase() + difficulty.slice(1),
+              score: attempt.score
+            };
+          }),
+        
+        // Overall statistics
+        overallStats: {
+          totalAttempts: history.length,
+          averageScore: Math.round(history.reduce((sum, h) => sum + h.score, 0) / history.length),
+          bestScore: Math.max(...history.map(h => h.score)),
+          improvement: (() => {
+            if (history.length < 2) return 0;
+            const firstHalf = history.slice(0, Math.ceil(history.length / 2));
+            const secondHalf = history.slice(Math.ceil(history.length / 2));
+            const firstAvg = firstHalf.reduce((sum, h) => sum + h.score, 0) / firstHalf.length;
+            const secondAvg = secondHalf.reduce((sum, h) => sum + h.score, 0) / secondHalf.length;
+            return Math.round(secondAvg - firstHalf.length);
+          })()
+        }
+      };
+      
+      setProgressData(processedData);
+    } catch (error) {
+      console.error('Failed to load progress data:', error);
+      setProgressData(null);
+    } finally {
+      setProgressLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -597,6 +702,29 @@ export default function QuizPage() {
                   </>
                 )}
               </Button>
+              
+              <Button
+                onClick={() => {
+                  if (!showProgressCharts) {
+                    loadProgressData();
+                  }
+                  setShowProgressCharts(!showProgressCharts);
+                }}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {showProgressCharts ? (
+                  <>
+                    <LineChart className="w-4 h-4" />
+                    Hide Charts
+                  </>
+                ) : (
+                  <>
+                    <LineChart className="w-4 h-4" />
+                    Show Progress
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </div>
@@ -742,6 +870,175 @@ export default function QuizPage() {
                   <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No recommendations available</h3>
                   <p className="text-gray-600">Take some quizzes first to get personalized recommendations!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Progress Charts */}
+        {showProgressCharts && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <LineChart className="w-6 h-6 text-green-600" />
+                Learning Progress Charts
+              </h2>
+              
+              {progressLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Loading your progress data...</p>
+                </div>
+              ) : progressData ? (
+                <div className="space-y-8">
+                  {/* Overall Progress Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{progressData.overallStats.totalAttempts}</div>
+                        <div className="text-sm text-gray-600">Total Quizzes</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">{progressData.overallStats.averageScore}%</div>
+                        <div className="text-sm text-gray-600">Average Score</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className={`text-2xl font-bold ${progressData.overallStats.improvement >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {progressData.overallStats.improvement >= 0 ? '+' : ''}{progressData.overallStats.improvement}%
+                        </div>
+                        <div className="text-sm text-gray-600">Improvement</div>
+                      </div>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-sm border">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{progressData.overallStats.bestScore}%</div>
+                        <div className="text-sm text-gray-600">Best Score</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Score Trend Chart */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Score Progression Over Time</h3>
+                    <div className="h-64 flex items-end justify-between gap-2">
+                      {progressData.scoreTrend.map((point: any, index: number) => (
+                        <div key={index} className="flex-1 flex flex-col items-center">
+                          <div 
+                            className="w-full bg-gradient-to-t from-blue-500 to-blue-300 rounded-t-sm transition-all duration-300 hover:from-blue-600 hover:to-blue-400"
+                            style={{ height: `${(point.score / 100) * 200}px` }}
+                            title={`${point.quizTitle}: ${point.score}%`}
+                          ></div>
+                          <div className="text-xs text-gray-500 mt-2 text-center">
+                            {point.date}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-center mt-4">
+                      <p className="text-sm text-gray-600">Your quiz scores over time - higher bars mean better performance!</p>
+                    </div>
+                  </div>
+
+                  {/* Category Performance */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white p-6 rounded-lg shadow-sm border">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance by Category</h3>
+                      <div className="space-y-3">
+                        {progressData.categoryPerformance.map((category: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <span className="text-gray-700">{category.category}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${category.averageScore}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900 w-12 text-right">
+                                {category.averageScore}%
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Study Frequency */}
+                    <div className="bg-white p-6 rounded-lg shadow-sm border">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Study Frequency</h3>
+                      <div className="space-y-4">
+                        {progressData.studyFrequency.map((week: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between">
+                            <span className="text-gray-700">{week.week}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-1">
+                                {Array.from({ length: Math.min(week.count, 5) }).map((_, i) => (
+                                  <div key={i} className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                ))}
+                                {week.count > 5 && (
+                                  <span className="text-xs text-gray-500 ml-1">+{week.count - 5}</span>
+                                )}
+                              </div>
+                              <span className="text-sm font-medium text-gray-900 w-8 text-right">
+                                {week.count}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-4 p-3 bg-green-50 rounded-md">
+                        <p className="text-xs text-green-800">
+                          💡 Consistent study habits lead to better results!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Difficulty Progression */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Difficulty Progression</h3>
+                    <div className="h-48 flex items-end justify-between gap-4">
+                      {progressData.difficultyProgression.map((point: any, index: number) => (
+                        <div key={index} className="flex-1 flex flex-col items-center">
+                          <div className="text-center mb-2">
+                            <div className={`text-sm font-medium ${
+                              point.difficulty === 1 ? 'text-green-600' : 
+                              point.difficulty === 2 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {point.difficultyLabel}
+                            </div>
+                          </div>
+                          <div 
+                            className={`w-full rounded-t-sm transition-all duration-300 ${
+                              point.difficulty === 1 ? 'bg-green-500' : 
+                              point.difficulty === 2 ? 'bg-yellow-500' : 'bg-red-500'
+                            }`}
+                            style={{ height: `${(point.score / 100) * 150}px` }}
+                            title={`${point.difficultyLabel}: ${point.score}%`}
+                          ></div>
+                          <div className="text-xs text-gray-500 mt-2 text-center">
+                            Quiz {point.attempt}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-center mt-4">
+                      <p className="text-sm text-gray-600">
+                        Track how you're handling different difficulty levels over time
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <LineChart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No progress data available</h3>
+                  <p className="text-gray-600">Take some quizzes first to see your progress charts!</p>
                 </div>
               )}
             </div>
