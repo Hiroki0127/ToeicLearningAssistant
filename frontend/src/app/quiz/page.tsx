@@ -38,6 +38,9 @@ export default function QuizPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Quiz[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [recommendations, setRecommendations] = useState<Quiz[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -177,6 +180,100 @@ export default function QuizPage() {
     });
     
     return Array.from(suggestions).slice(0, 8);
+  };
+
+  // Generate quiz recommendations based on user performance and preferences
+  const generateRecommendations = async () => {
+    try {
+      setRecommendationsLoading(true);
+      
+      // Get user's quiz history and stats
+      const stats = await getQuizStats();
+      
+      // Generate recommendations based on performance patterns
+      let recommendedQuizzes = [...quizzes];
+      
+      // If user has taken quizzes before, use performance data
+      if (stats.totalQuizzes > 0) {
+        // Sort by recommendation score
+        recommendedQuizzes.sort((a, b) => {
+          let scoreA = 0;
+          let scoreB = 0;
+          
+          // Prefer quizzes in categories where user needs improvement
+          if (stats.quizzesByCategory && stats.quizzesByCategory[a.type as keyof typeof stats.quizzesByCategory] < 2) scoreA += 3;
+          if (stats.quizzesByCategory && stats.quizzesByCategory[b.type as keyof typeof stats.quizzesByCategory] < 2) scoreB += 3;
+          
+          // Prefer appropriate difficulty level based on average score
+          if (stats.averageScore < 60) {
+            // User struggling - recommend easier quizzes
+            if (a.difficulty === 'easy') scoreA += 2;
+            if (b.difficulty === 'easy') scoreB += 2;
+          } else if (stats.averageScore > 80) {
+            // User doing well - recommend harder quizzes
+            if (a.difficulty === 'hard') scoreA += 2;
+            if (b.difficulty === 'hard') scoreB += 2;
+          } else {
+            // User in middle - recommend medium quizzes
+            if (a.difficulty === 'medium') scoreA += 2;
+            if (b.difficulty === 'medium') scoreB += 2;
+          }
+          
+          // Prefer quizzes with more questions for better learning
+          scoreA += Math.min(a.questions.length / 10, 1);
+          scoreB += Math.min(b.questions.length / 10, 1);
+          
+          return scoreB - scoreA;
+        });
+      } else {
+        // New user - recommend a mix of easy quizzes from different categories
+        recommendedQuizzes = quizzes.filter(quiz => quiz.difficulty === 'easy');
+        recommendedQuizzes.sort((a, b) => {
+          // Prioritize different categories
+          const categoryPriority = { vocabulary: 3, grammar: 2, reading: 2, listening: 1 };
+          return (categoryPriority[b.type as keyof typeof categoryPriority] || 0) - 
+                 (categoryPriority[a.type as keyof typeof categoryPriority] || 0);
+        });
+      }
+      
+      // Take top 6 recommendations
+      setRecommendations(recommendedQuizzes.slice(0, 6));
+    } catch (error) {
+      console.error('Failed to generate recommendations:', error);
+      // Fallback to random selection
+      const shuffled = [...quizzes].sort(() => 0.5 - Math.random());
+      setRecommendations(shuffled.slice(0, 6));
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  };
+
+  // Get recommendation explanation for a quiz
+  const getRecommendationExplanation = (quiz: Quiz) => {
+    if (!quizStats) return "This quiz is recommended based on your learning preferences.";
+    
+    const explanations = [];
+    
+    // Category-based explanation
+    if (quizStats.quizzesByCategory && quizStats.quizzesByCategory[quiz.type as keyof typeof quizStats.quizzesByCategory] < 2) {
+      explanations.push(`You haven't taken many ${quiz.type} quizzes yet.`);
+    }
+    
+    // Difficulty-based explanation
+    if (quizStats.averageScore < 60 && quiz.difficulty === 'easy') {
+      explanations.push("This easier quiz will help build your confidence.");
+    } else if (quizStats.averageScore > 80 && quiz.difficulty === 'hard') {
+      explanations.push("You're ready for a challenge with this harder quiz.");
+    } else if (quizStats.averageScore >= 60 && quizStats.averageScore <= 80 && quiz.difficulty === 'medium') {
+      explanations.push("This medium difficulty quiz matches your current skill level.");
+    }
+    
+    // Question count explanation
+    if (quiz.questions.length > 10) {
+      explanations.push("This comprehensive quiz will give you thorough practice.");
+    }
+    
+    return explanations.length > 0 ? explanations.join(" ") : "This quiz aligns well with your learning goals.";
   };
 
   useEffect(() => {
@@ -477,6 +574,29 @@ export default function QuizPage() {
                 <BarChart3 className="w-4 h-4" />
                 View History
               </Button>
+              
+              <Button
+                onClick={() => {
+                  if (!showRecommendations) {
+                    generateRecommendations();
+                  }
+                  setShowRecommendations(!showRecommendations);
+                }}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {showRecommendations ? (
+                  <>
+                    <Target className="w-4 h-4" />
+                    Hide Recommendations
+                  </>
+                ) : (
+                  <>
+                    <Target className="w-4 h-4" />
+                    Get Recommendations
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </div>
@@ -544,6 +664,89 @@ export default function QuizPage() {
             </div>
           )}
         </div>
+
+        {/* Quiz Recommendations */}
+        {showRecommendations && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Target className="w-6 h-6 text-blue-600" />
+                Recommended for You
+              </h2>
+              
+              {recommendationsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Analyzing your performance...</p>
+                </div>
+              ) : recommendations.length > 0 ? (
+                <div className="space-y-4">
+                  <p className="text-gray-700 mb-4">
+                    Based on your learning patterns and performance, here are quizzes we think would be perfect for you:
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {recommendations.map((quiz) => (
+                      <Card key={quiz.id} className="bg-white hover:shadow-lg transition-shadow border-blue-200">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <h3 className="text-lg font-semibold text-gray-900">{quiz.title}</h3>
+                            <div className="flex items-center gap-1">
+                              <Target className="w-4 h-4 text-blue-600" />
+                              <span className="text-xs text-blue-600 font-medium">Recommended</span>
+                            </div>
+                          </div>
+                          <p className="text-gray-600 text-sm">{quiz.description}</p>
+                          <div className="mt-2 p-2 bg-blue-50 rounded-md">
+                            <p className="text-xs text-blue-800">
+                              💡 {getRecommendationExplanation(quiz)}
+                            </p>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Type:</span>
+                              <span className="font-medium capitalize">{quiz.type}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Difficulty:</span>
+                              <span className="font-medium capitalize">{quiz.difficulty}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Questions:</span>
+                              <span className="font-medium">{quiz.questions.length}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                        <CardFooter className="pt-0">
+                          <Button
+                            onClick={() => startQuiz(quiz)}
+                            className="w-full bg-blue-600 hover:bg-blue-700"
+                          >
+                            Start Recommended Quiz
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  <div className="text-center pt-4">
+                    <p className="text-sm text-gray-600">
+                      These recommendations are personalized based on your learning progress and performance patterns.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No recommendations available</h3>
+                  <p className="text-gray-600">Take some quizzes first to get personalized recommendations!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Difficulty Filter */}
         <div className="mb-6">

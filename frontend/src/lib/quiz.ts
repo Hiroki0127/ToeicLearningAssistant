@@ -52,6 +52,23 @@ export interface QuizStats {
   averageScore: number;
   bestScore: number;
   quizTypesCount: number;
+  totalExperience?: number;
+  quizzesByDifficulty?: {
+    easy: number;
+    medium: number;
+    hard: number;
+  };
+  quizzesByCategory?: {
+    vocabulary: number;
+    grammar: number;
+    reading: number;
+    listening: number;
+  };
+  recentPerformance?: Array<{
+    quizTitle: string;
+    score: number;
+    completedAt: string;
+  }>;
 }
 
 // Get all quizzes
