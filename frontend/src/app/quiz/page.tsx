@@ -21,6 +21,7 @@ interface Question {
 export default function QuizPage() {
   const router = useRouter();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [filteredQuizzes, setFilteredQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -29,6 +30,15 @@ export default function QuizPage() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [isQuizActive, setIsQuizActive] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+
+  // Filter quizzes based on selected difficulty
+  const filterQuizzes = (quizzes: Quiz[], difficulty: string) => {
+    if (difficulty === 'all') {
+      return quizzes;
+    }
+    return quizzes.filter(quiz => quiz.difficulty === difficulty);
+  };
 
   useEffect(() => {
     // Load quizzes from API
@@ -37,10 +47,12 @@ export default function QuizPage() {
         setLoading(true);
         const quizzesData = await getQuizzes();
         setQuizzes(quizzesData);
+        setFilteredQuizzes(filterQuizzes(quizzesData, selectedDifficulty));
       } catch (error) {
         console.error('Failed to load quizzes:', error);
         // Fallback to sample data if API fails
         setQuizzes([]);
+        setFilteredQuizzes([]);
       } finally {
         setLoading(false);
       }
@@ -48,6 +60,11 @@ export default function QuizPage() {
 
     loadQuizzes();
   }, []);
+
+  // Update filtered quizzes when difficulty changes
+  useEffect(() => {
+    setFilteredQuizzes(filterQuizzes(quizzes, selectedDifficulty));
+  }, [selectedDifficulty, quizzes]);
 
   useEffect(() => {
     if (isQuizActive && timeLeft > 0) {
@@ -314,8 +331,57 @@ export default function QuizPage() {
           <p className="text-gray-600">Test your knowledge with our interactive TOEIC-style quizzes</p>
         </div>
 
+        {/* Difficulty Filter */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedDifficulty('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedDifficulty === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              All Levels
+            </button>
+            <button
+              onClick={() => setSelectedDifficulty('easy')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedDifficulty === 'easy'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Easy
+            </button>
+            <button
+              onClick={() => setSelectedDifficulty('medium')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedDifficulty === 'medium'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Medium
+            </button>
+            <button
+              onClick={() => setSelectedDifficulty('hard')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedDifficulty === 'hard'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Hard
+            </button>
+          </div>
+          <p className="text-sm text-gray-500 mt-2">
+            Showing {filteredQuizzes.length} quiz{filteredQuizzes.length !== 1 ? 'es' : ''}
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {quizzes.map((quiz) => (
+          {filteredQuizzes.map((quiz) => (
             <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <h3 className="text-xl font-semibold text-gray-900">{quiz.title}</h3>
