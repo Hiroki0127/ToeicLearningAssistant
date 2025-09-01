@@ -65,6 +65,32 @@ export default function QuizPage() {
   const [showPerformanceInsights, setShowPerformanceInsights] = useState(false);
   const [insightsData, setInsightsData] = useState<any>(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  const [showCustomQuizCreator, setShowCustomQuizCreator] = useState(false);
+  const [customQuizData, setCustomQuizData] = useState({
+    title: '',
+    description: '',
+    type: 'vocabulary',
+    difficulty: 'medium',
+    timeLimit: 15,
+    questions: [] as Array<{
+      id: string;
+      type: string;
+      question: string;
+      options: string[];
+      correctAnswer: string;
+      explanation: string;
+      points: number;
+    }>
+  });
+  const [currentQuestion, setCurrentQuestion] = useState({
+    question: '',
+    options: ['', '', '', ''],
+    correctAnswer: '',
+    explanation: '',
+    points: 1
+  });
+  const [editingQuestionIndex, setEditingQuestionIndex] = useState<number | null>(null);
+  const [customQuizLoading, setCustomQuizLoading] = useState(false);
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -1129,6 +1155,194 @@ export default function QuizPage() {
     }
   };
 
+  // Custom Quiz Creation Functions
+  const addQuestion = () => {
+    if (currentQuestion.question.trim() && currentQuestion.correctAnswer.trim()) {
+      const newQuestion = {
+        ...currentQuestion,
+        id: Date.now().toString(),
+        type: 'multiple-choice'
+      };
+      
+      setCustomQuizData(prev => ({
+        ...prev,
+        questions: [...prev.questions, newQuestion]
+      }));
+      
+      // Reset current question
+      setCurrentQuestion({
+        question: '',
+        options: ['', '', '', ''],
+        correctAnswer: '',
+        explanation: '',
+        points: 1
+      });
+    }
+  };
+
+  const editQuestion = (index: number) => {
+    const question = customQuizData.questions[index];
+    setCurrentQuestion({
+      question: question.question,
+      options: [...question.options],
+      correctAnswer: question.correctAnswer,
+      explanation: question.explanation,
+      points: question.points
+    });
+    setEditingQuestionIndex(index);
+  };
+
+  const updateQuestion = () => {
+    if (editingQuestionIndex !== null && currentQuestion.question.trim() && currentQuestion.correctAnswer.trim()) {
+      const updatedQuestion = {
+        ...currentQuestion,
+        id: customQuizData.questions[editingQuestionIndex].id,
+        type: 'multiple-choice'
+      };
+      
+      setCustomQuizData(prev => ({
+        ...prev,
+        questions: prev.questions.map((q, i) => 
+          i === editingQuestionIndex ? updatedQuestion : q
+        )
+      }));
+      
+      // Reset editing state
+      setEditingQuestionIndex(null);
+      setCurrentQuestion({
+        question: '',
+        options: ['', '', '', ''],
+        correctAnswer: '',
+        explanation: '',
+        points: 1
+      });
+    }
+  };
+
+  const deleteQuestion = (index: number) => {
+    setCustomQuizData(prev => ({
+      ...prev,
+      questions: prev.questions.filter((_, i) => i !== index)
+    }));
+  };
+
+  const moveQuestion = (index: number, direction: 'up' | 'down') => {
+    if ((direction === 'up' && index === 0) || 
+        (direction === 'down' && index === customQuizData.questions.length - 1)) {
+      return;
+    }
+    
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    setCustomQuizData(prev => {
+      const newQuestions = [...prev.questions];
+      [newQuestions[index], newQuestions[newIndex]] = [newQuestions[newIndex], newQuestions[index]];
+      return { ...prev, questions: newQuestions };
+    });
+  };
+
+  const validateQuiz = () => {
+    const errors = [];
+    
+    if (!customQuizData.title.trim()) errors.push('Quiz title is required');
+    if (!customQuizData.description.trim()) errors.push('Quiz description is required');
+    if (customQuizData.questions.length < 3) errors.push('Quiz must have at least 3 questions');
+    if (customQuizData.questions.length > 50) errors.push('Quiz cannot have more than 50 questions');
+    
+    customQuizData.questions.forEach((q, index) => {
+      if (!q.question.trim()) errors.push(`Question ${index + 1} text is required`);
+      if (q.options.filter(opt => opt.trim()).length < 2) errors.push(`Question ${index + 1} must have at least 2 options`);
+      if (!q.correctAnswer.trim()) errors.push(`Question ${index + 1} must have a correct answer`);
+      if (!q.options.includes(q.correctAnswer)) errors.push(`Question ${index + 1} correct answer must be one of the options`);
+    });
+    
+    return errors;
+  };
+
+  const saveCustomQuiz = async () => {
+    const errors = validateQuiz();
+    if (errors.length > 0) {
+      alert('Please fix the following errors:\n' + errors.join('\n'));
+      return;
+    }
+    
+    try {
+      setCustomQuizLoading(true);
+      
+      // For now, we'll save to localStorage as a demo
+      // In a real app, this would be sent to the backend
+      const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+      const newQuiz = {
+        ...customQuizData,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+        createdBy: 'current-user', // In real app, get from auth context
+        isCustom: true
+      };
+      
+      savedQuizzes.push(newQuiz);
+      localStorage.setItem('customQuizzes', JSON.stringify(savedQuizzes));
+      
+      // Reset form
+      setCustomQuizData({
+        title: '',
+        description: '',
+        type: 'vocabulary',
+        difficulty: 'medium',
+        timeLimit: 15,
+        questions: []
+      });
+      
+      alert('Custom quiz saved successfully! You can now find it in your quiz list.');
+      setShowCustomQuizCreator(false);
+      
+    } catch (error) {
+      console.error('Failed to save custom quiz:', error);
+      alert('Failed to save quiz. Please try again.');
+    } finally {
+      setCustomQuizLoading(false);
+    }
+  };
+
+  const resetCustomQuiz = () => {
+    if (confirm('Are you sure you want to reset the quiz? All progress will be lost.')) {
+      setCustomQuizData({
+        title: '',
+        description: '',
+        type: 'vocabulary',
+        difficulty: 'medium',
+        timeLimit: 15,
+        questions: []
+      });
+      setCurrentQuestion({
+        question: '',
+        options: ['', '', '', ''],
+        correctAnswer: '',
+        explanation: '',
+        points: 1
+      });
+      setEditingQuestionIndex(null);
+    }
+  };
+
+  const getQuizTypeIcon = (type: string) => {
+    switch (type) {
+      case 'vocabulary': return '📚';
+      case 'grammar': return '📝';
+      case 'reading': return '📖';
+      case 'listening': return '🎧';
+      default: return '❓';
+    }
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy': return 'text-green-600 bg-green-50 border-green-200';
+      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'hard': return 'text-red-600 bg-red-50 border-red-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
   useEffect(() => {
     if (isQuizActive && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -1557,6 +1771,24 @@ export default function QuizPage() {
                   <>
                     <TrendingUp className="w-4 h-4" />
                     Performance Insights
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => setShowCustomQuizCreator(!showCustomQuizCreator)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {showCustomQuizCreator ? (
+                  <>
+                    <BookOpen className="w-4 h-4" />
+                    Hide Creator
+                  </>
+                ) : (
+                  <>
+                    <BookOpen className="w-4 h-4" />
+                    Create Quiz
                   </>
                 )}
               </Button>
@@ -2650,6 +2882,338 @@ export default function QuizPage() {
                   <p className="text-gray-600">Take some quizzes first to generate performance insights!</p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Custom Quiz Creator */}
+        {showCustomQuizCreator && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <BookOpen className="w-6 h-6 text-purple-600" />
+                Create Your Own Quiz
+              </h2>
+              
+              <div className="space-y-8">
+                {/* Quiz Basic Information */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Quiz Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Quiz Title *</label>
+                      <input
+                        type="text"
+                        value={customQuizData.title}
+                        onChange={(e) => setCustomQuizData(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="Enter quiz title..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Quiz Type</label>
+                      <select
+                        value={customQuizData.type}
+                        onChange={(e) => setCustomQuizData(prev => ({ ...prev, type: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="vocabulary">📚 Vocabulary</option>
+                        <option value="grammar">📝 Grammar</option>
+                        <option value="reading">📖 Reading</option>
+                        <option value="listening">🎧 Listening</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
+                      <select
+                        value={customQuizData.difficulty}
+                        onChange={(e) => setCustomQuizData(prev => ({ ...prev, difficulty: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="easy">🟢 Easy</option>
+                        <option value="medium">🟡 Medium</option>
+                        <option value="hard">🔴 Hard</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Time Limit (minutes)</label>
+                      <input
+                        type="number"
+                        min="5"
+                        max="60"
+                        value={customQuizData.timeLimit}
+                        onChange={(e) => setCustomQuizData(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 15 }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                    <textarea
+                      value={customQuizData.description}
+                      onChange={(e) => setCustomQuizData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Describe what this quiz covers..."
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Question Creator */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Questions</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Question Text *</label>
+                      <textarea
+                        value={currentQuestion.question}
+                        onChange={(e) => setCurrentQuestion(prev => ({ ...prev, question: e.target.value }))}
+                        placeholder="Enter your question..."
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Options</label>
+                        {currentQuestion.options.map((option, index) => (
+                          <div key={index} className="flex items-center gap-2 mb-2">
+                            <input
+                              type="text"
+                              value={option}
+                              onChange={(e) => {
+                                const newOptions = [...currentQuestion.options];
+                                newOptions[index] = e.target.value;
+                                setCurrentQuestion(prev => ({ ...prev, options: newOptions }));
+                              }}
+                              placeholder={`Option ${index + 1}`}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            />
+                            <input
+                              type="radio"
+                              name="correctAnswer"
+                              checked={currentQuestion.correctAnswer === option}
+                              onChange={() => setCurrentQuestion(prev => ({ ...prev, correctAnswer: option }))}
+                              className="text-purple-600 focus:ring-purple-500"
+                            />
+                            <span className="text-sm text-gray-500">Correct</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Explanation</label>
+                          <textarea
+                            value={currentQuestion.explanation}
+                            onChange={(e) => setCurrentQuestion(prev => ({ ...prev, explanation: e.target.value }))}
+                            placeholder="Explain why this answer is correct..."
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Points</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={currentQuestion.points}
+                            onChange={(e) => setCurrentQuestion(prev => ({ ...prev, points: parseInt(e.target.value) || 1 }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      {editingQuestionIndex !== null ? (
+                        <>
+                          <Button
+                            onClick={updateQuestion}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            Update Question
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setEditingQuestionIndex(null);
+                              setCurrentQuestion({
+                                question: '',
+                                options: ['', '', '', ''],
+                                correctAnswer: '',
+                                explanation: '',
+                                points: 1
+                              });
+                            }}
+                            variant="outline"
+                          >
+                            Cancel Edit
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          onClick={addQuestion}
+                          className="bg-purple-600 hover:bg-purple-700"
+                        >
+                          Add Question
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Questions List */}
+                {customQuizData.questions.length > 0 && (
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      Questions ({customQuizData.questions.length})
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {customQuizData.questions.map((question, index) => (
+                        <div key={question.id} className="p-4 border rounded-lg bg-gray-50">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-gray-500">Q{index + 1}</span>
+                              <span className="text-sm text-gray-400">•</span>
+                              <span className={`text-xs px-2 py-1 rounded-full border ${getDifficultyColor(customQuizData.difficulty)}`}>
+                                {customQuizData.difficulty}
+                              </span>
+                              <span className="text-xs text-gray-500">• {question.points} pt{question.points !== 1 ? 's' : ''}</span>
+                            </div>
+                            
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => moveQuestion(index, 'up')}
+                                disabled={index === 0}
+                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                                title="Move up"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                onClick={() => moveQuestion(index, 'down')}
+                                disabled={index === customQuizData.questions.length - 1}
+                                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                                title="Move down"
+                              >
+                                ↓
+                              </button>
+                              <button
+                                onClick={() => editQuestion(index)}
+                                className="p-1 text-blue-600 hover:text-blue-800"
+                                title="Edit"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => deleteQuestion(index)}
+                                className="p-1 text-red-600 hover:text-red-800"
+                                title="Delete"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div className="mb-3">
+                            <p className="text-gray-900 font-medium">{question.question}</p>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                            {question.options.map((option, optIndex) => (
+                              <div
+                                key={optIndex}
+                                className={`p-2 rounded text-sm ${
+                                  option === question.correctAnswer
+                                    ? 'bg-green-100 text-green-800 border border-green-200'
+                                    : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                }`}
+                              >
+                                {option === question.correctAnswer ? '✅ ' : '○ '}
+                                {option}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {question.explanation && (
+                            <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded border border-blue-200">
+                              <strong>Explanation:</strong> {question.explanation}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quiz Actions */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      <p>Questions: {customQuizData.questions.length}/50</p>
+                      <p>Time Limit: {customQuizData.timeLimit} minutes</p>
+                      <p>Type: {getQuizTypeIcon(customQuizData.type)} {customQuizData.type}</p>
+                      <p>Difficulty: <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(customQuizData.difficulty)}`}>
+                        {customQuizData.difficulty}
+                      </span></p>
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={resetCustomQuiz}
+                        variant="outline"
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        Reset Quiz
+                      </Button>
+                      
+                      <Button
+                        onClick={saveCustomQuiz}
+                        disabled={customQuizLoading || customQuizData.questions.length < 3}
+                        className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50"
+                      >
+                        {customQuizLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Saving...
+                          </>
+                        ) : (
+                          'Save Quiz'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {customQuizData.questions.length < 3 && (
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-yellow-800">
+                        ⚠️ You need at least 3 questions to save your quiz.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Creation Tips */}
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg border border-purple-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">💡 Quiz Creation Tips</h3>
+                  <div className="space-y-2 text-sm text-purple-800">
+                    <p>• <strong>Clear questions:</strong> Make sure your questions are easy to understand</p>
+                    <p>• <strong>Balanced options:</strong> Provide 4 distinct answer choices</p>
+                    <p>• <strong>Helpful explanations:</strong> Explain why the correct answer is right</p>
+                    <p>• <strong>Appropriate difficulty:</strong> Match difficulty to your target audience</p>
+                    <p>• <strong>Reasonable time limits:</strong> Give enough time to think through answers</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
