@@ -66,6 +66,12 @@ export default function Navigation() {
                   Quizzes
                 </Link>
                 <Link 
+                  href="/quiz/history" 
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  History
+                </Link>
+                <Link 
                   href="/flashcards/create" 
                   className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
@@ -176,6 +182,14 @@ export default function Navigation() {
                   >
                     <HelpCircle className="h-5 w-5 mr-3" />
                     Quizzes
+                  </Link>
+                  <Link
+                    href="/quiz/history"
+                    className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-base font-medium transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <BarChart3 className="h-5 w-5 mr-3" />
+                    Quiz History
                   </Link>
                   <Link
                     href="/flashcards/create"

@@ -367,28 +367,39 @@ export default function QuizPage() {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">TOEIC Quizzes</h1>
               <p className="text-gray-600">Test your knowledge with our interactive TOEIC-style quizzes</p>
             </div>
-            <Button
-              onClick={() => {
-                if (!showAnalytics) {
-                  loadQuizAnalytics();
-                }
-                setShowAnalytics(!showAnalytics);
-              }}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              {showAnalytics ? (
-                <>
-                  <BookOpen className="w-4 h-4" />
-                  Hide Analytics
-                </>
-              ) : (
-                <>
-                  <BarChart3 className="w-4 h-4" />
-                  Show Analytics
-                </>
-              )}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  if (!showAnalytics) {
+                    loadQuizAnalytics();
+                  }
+                  setShowAnalytics(!showAnalytics);
+                }}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {showAnalytics ? (
+                  <>
+                    <BookOpen className="w-4 h-4" />
+                    Hide Analytics
+                  </>
+                ) : (
+                  <>
+                    <BarChart3 className="w-4 h-4" />
+                    Show Analytics
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => router.push('/quiz/history')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <BarChart3 className="w-4 h-4" />
+                View History
+              </Button>
+            </div>
           </div>
         </div>
 
