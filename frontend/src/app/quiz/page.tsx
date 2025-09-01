@@ -102,6 +102,11 @@ export default function QuizPage() {
     allowDuplication: false,
     expirationDate: null as string | null
   });
+  const [showGamification, setShowGamification] = useState(false);
+  const [gamificationData, setGamificationData] = useState<any>(null);
+  const [gamificationLoading, setGamificationLoading] = useState(false);
+  const [showRewards, setShowRewards] = useState(false);
+  const [unlockedRewards, setUnlockedRewards] = useState<any[]>([]);
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -166,6 +171,13 @@ export default function QuizPage() {
       loadSharedQuizzes();
     }
   }, [showQuizSharing]);
+
+  // Load gamification data when toggled
+  useEffect(() => {
+    if (showGamification) {
+      loadGamificationData();
+    }
+  }, [showGamification]);
 
   // Load quiz analytics
   const loadQuizAnalytics = async () => {
@@ -1522,6 +1534,198 @@ export default function QuizPage() {
     });
   };
 
+  // Gamification Functions
+  const loadGamificationData = async () => {
+    try {
+      setGamificationLoading(true);
+      
+      // Get quiz history and stats for gamification calculations
+      const history = await getQuizHistory();
+      const stats = await getQuizStats();
+      
+      if (history.length === 0) {
+        setGamificationData({
+          level: 1,
+          experience: 0,
+          experienceToNext: 100,
+          totalPoints: 0,
+          achievements: [],
+          badges: [],
+          dailyStreak: 0,
+          weeklyGoal: 0,
+          monthlyGoal: 0,
+          rank: 'Beginner',
+          progress: 0
+        });
+        return;
+      }
+      
+      // Calculate experience and level
+      let totalExperience = 0;
+      let totalPoints = 0;
+      
+      history.forEach(attempt => {
+        // Base experience for completing quiz
+        totalExperience += 10;
+        
+        // Bonus experience for score
+        if (attempt.score >= 90) totalExperience += 20;
+        else if (attempt.score >= 80) totalExperience += 15;
+        else if (attempt.score >= 70) totalExperience += 10;
+        else if (attempt.score >= 60) totalExperience += 5;
+        
+        // Bonus for difficulty
+        if (attempt.quiz?.difficulty === 'hard') totalExperience += 15;
+        else if (attempt.quiz?.difficulty === 'medium') totalExperience += 10;
+        else totalExperience += 5;
+        
+        // Points calculation
+        totalPoints += Math.floor(attempt.score / 10) * 10;
+        if (attempt.score >= 90) totalPoints += 50; // Perfect score bonus
+        if (attempt.score >= 80) totalPoints += 25; // High score bonus
+      });
+      
+      // Calculate level (every 100 XP = 1 level)
+      const level = Math.floor(totalExperience / 100) + 1;
+      const experienceInCurrentLevel = totalExperience % 100;
+      const experienceToNext = 100 - experienceInCurrentLevel;
+      const progress = (experienceInCurrentLevel / 100) * 100;
+      
+      // Determine rank based on level
+      let rank = 'Beginner';
+      if (level >= 50) rank = 'Legend';
+      else if (level >= 40) rank = 'Master';
+      else if (level >= 30) rank = 'Expert';
+      else if (level >= 20) rank = 'Advanced';
+      else if (level >= 10) rank = 'Intermediate';
+      else if (level >= 5) rank = 'Apprentice';
+      
+      // Calculate daily streak
+      const today = new Date().toDateString();
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
+      let dailyStreak = 0;
+      
+      for (let i = 0; i < 30; i++) {
+        const checkDate = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toDateString();
+        const hasActivity = history.some(h => 
+          new Date(h.completedAt).toDateString() === checkDate
+        );
+        if (hasActivity) {
+          dailyStreak++;
+        } else {
+          break;
+        }
+      }
+      
+      // Calculate weekly and monthly goals
+      const now = new Date();
+      const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      const weeklyQuizzes = history.filter(h => new Date(h.completedAt) >= weekStart).length;
+      const monthlyQuizzes = history.filter(h => new Date(h.completedAt) >= monthStart).length;
+      
+      // Generate achievements
+      const achievements = [];
+      
+      if (totalExperience >= 1000) achievements.push({ id: 'xp_master', name: 'XP Master', description: 'Earned 1000+ experience points', icon: '⭐', unlocked: true });
+      if (level >= 10) achievements.push({ id: 'level_up', name: 'Level Up!', description: 'Reached level 10', icon: '🚀', unlocked: true });
+      if (dailyStreak >= 7) achievements.push({ id: 'streak_week', name: 'Week Warrior', description: '7-day study streak', icon: '🔥', unlocked: true });
+      if (dailyStreak >= 30) achievements.push({ id: 'streak_month', name: 'Month Master', description: '30-day study streak', icon: '👑', unlocked: true });
+      if (history.length >= 50) achievements.push({ id: 'quiz_enthusiast', name: 'Quiz Enthusiast', description: 'Completed 50+ quizzes', icon: '🎯', unlocked: true });
+      if (stats.bestScore >= 95) achievements.push({ id: 'perfectionist', name: 'Perfectionist', description: 'Achieved 95%+ score', icon: '🏆', unlocked: true });
+      
+      // Generate badges
+      const badges = [];
+      
+      if (level >= 5) badges.push({ id: 'bronze', name: 'Bronze Badge', description: 'Level 5 achievement', icon: '🥉', color: 'bg-yellow-600' });
+      if (level >= 15) badges.push({ id: 'silver', name: 'Silver Badge', description: 'Level 15 achievement', icon: '🥈', color: 'bg-gray-400' });
+      if (level >= 25) badges.push({ id: 'gold', name: 'Gold Badge', description: 'Level 25 achievement', icon: '🥇', color: 'bg-yellow-400' });
+      if (dailyStreak >= 14) badges.push({ id: 'streak', name: 'Streak Badge', description: '14+ day streak', icon: '🔥', color: 'bg-orange-500' });
+      if (totalPoints >= 1000) badges.push({ id: 'points', name: 'Points Badge', description: '1000+ points earned', icon: '💎', color: 'bg-purple-500' });
+      
+      setGamificationData({
+        level,
+        experience: totalExperience,
+        experienceInCurrentLevel,
+        experienceToNext,
+        totalPoints,
+        achievements,
+        badges,
+        dailyStreak,
+        weeklyGoal: weeklyQuizzes,
+        monthlyGoal: monthlyQuizzes,
+        rank,
+        progress,
+        totalQuizzes: history.length,
+        averageScore: stats.averageScore,
+        bestScore: stats.bestScore
+      });
+      
+    } catch (error) {
+      console.error('Failed to load gamification data:', error);
+      setGamificationData(null);
+    } finally {
+      setGamificationLoading(false);
+    }
+  };
+
+  const getLevelColor = (level: number) => {
+    if (level >= 40) return 'text-purple-600 bg-purple-50 border-purple-200';
+    if (level >= 30) return 'text-blue-600 bg-blue-50 border-blue-200';
+    if (level >= 20) return 'text-green-600 bg-green-50 border-green-200';
+    if (level >= 10) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+    return 'text-gray-600 bg-gray-50 border-gray-200';
+  };
+
+  const getRankIcon = (rank: string) => {
+    switch (rank) {
+      case 'Legend': return '👑';
+      case 'Master': return '🏆';
+      case 'Expert': return '⭐';
+      case 'Advanced': return '🚀';
+      case 'Intermediate': return '📚';
+      case 'Apprentice': return '🎯';
+      default: return '🌱';
+    }
+  };
+
+  const getAchievementProgress = (achievementId: string) => {
+    if (!gamificationData) return 0;
+    
+    switch (achievementId) {
+      case 'xp_master':
+        return Math.min((gamificationData.experience / 1000) * 100, 100);
+      case 'level_up':
+        return Math.min((gamificationData.level / 10) * 100, 100);
+      case 'streak_week':
+        return Math.min((gamificationData.dailyStreak / 7) * 100, 100);
+      case 'streak_month':
+        return Math.min((gamificationData.dailyStreak / 30) * 100, 100);
+      case 'quiz_enthusiast':
+        return Math.min((gamificationData.totalQuizzes / 50) * 100, 100);
+      case 'perfectionist':
+        return Math.min((gamificationData.bestScore / 95) * 100, 100);
+      default:
+        return 0;
+    }
+  };
+
+  const unlockReward = (rewardType: string, rewardData: any) => {
+    const newReward = {
+      id: Date.now().toString(),
+      type: rewardType,
+      data: rewardData,
+      unlockedAt: new Date().toISOString(),
+      claimed: false
+    };
+    
+    setUnlockedRewards(prev => [...prev, newReward]);
+    
+    // Show celebration
+    alert(`🎉 Congratulations! You've unlocked: ${rewardData.name || rewardType}!`);
+  };
+
   useEffect(() => {
     if (isQuizActive && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -1986,6 +2190,23 @@ export default function QuizPage() {
                   <>
                     <Share2 className="w-4 h-4" />
                     Quiz Sharing
+                  </>
+                )}
+              </Button>              
+              <Button
+                onClick={() => setShowGamification(!showGamification)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {showGamification ? (
+                  <>
+                    <Trophy className="w-4 h-4" />
+                    Hide Rewards
+                  </>
+                ) : (
+                  <>
+                    <Trophy className="w-4 h-4" />
+                    Rewards & Levels
                   </>
                 )}
               </Button>
@@ -3659,6 +3880,251 @@ export default function QuizPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Gamification & Rewards */}
+        {showGamification && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Trophy className="w-6 h-6 text-yellow-600" />
+                Rewards & Level System
+              </h2>
+              
+              {gamificationLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600 mx-auto"></div>
+                  <p className="text-gray-600 mt-2">Loading your achievements...</p>
+                </div>
+              ) : gamificationData ? (
+                <div className="space-y-8">
+                  {/* Level & Rank Overview */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Current Level */}
+                      <div className="text-center">
+                        <div className="text-4xl font-bold text-yellow-600 mb-2">Level {gamificationData.level}</div>
+                        <div className={`text-sm px-3 py-1 rounded-full border ${getLevelColor(gamificationData.level)}`}>
+                          {gamificationData.rank}
+                        </div>
+                        <div className="text-2xl mt-2">{getRankIcon(gamificationData.rank)}</div>
+                      </div>
+                      
+                      {/* Experience Progress */}
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600 mb-2">{gamificationData.experience} XP</div>
+                        <div className="text-sm text-gray-600 mb-2">Total Experience</div>
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div 
+                            className="bg-blue-500 h-3 rounded-full transition-all duration-500"
+                            style={{ width: `${gamificationData.progress}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {gamificationData.experienceInCurrentLevel} / 100 XP to next level
+                        </div>
+                      </div>
+                      
+                      {/* Points & Streak */}
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600 mb-2">{gamificationData.totalPoints} pts</div>
+                        <div className="text-sm text-gray-600 mb-2">Total Points</div>
+                        <div className="text-lg font-semibold text-orange-600">
+                          🔥 {gamificationData.dailyStreak} day streak
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Statistics Dashboard */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Statistics</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">{gamificationData.totalQuizzes}</div>
+                        <div className="text-sm text-blue-800">Quizzes Taken</div>
+                      </div>
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">{gamificationData.averageScore}%</div>
+                        <div className="text-sm text-green-800">Average Score</div>
+                      </div>
+                      <div className="text-center p-4 bg-purple-50 rounded-lg">
+                        <div className="text-2xl font-bold text-purple-600">{gamificationData.bestScore}%</div>
+                        <div className="text-sm text-purple-800">Best Score</div>
+                      </div>
+                      <div className="text-center p-4 bg-orange-50 rounded-lg">
+                        <div className="text-2xl font-bold text-orange-600">{gamificationData.weeklyGoal}</div>
+                        <div className="text-sm text-orange-800">This Week</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Achievements */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">🏆 Achievements</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {gamificationData.achievements.map((achievement: any) => (
+                        <div key={achievement.id} className="p-4 border rounded-lg bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200">
+                          <div className="text-center">
+                            <div className="text-3xl mb-2">{achievement.icon}</div>
+                            <div className="font-semibold text-gray-900 mb-1">{achievement.name}</div>
+                            <div className="text-sm text-gray-600 mb-3">{achievement.description}</div>
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-yellow-500 h-2 rounded-full transition-all duration-500"
+                                style={{ width: `${getAchievementProgress(achievement.id)}%` }}
+                              ></div>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {Math.round(getAchievementProgress(achievement.id))}% complete
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Locked Achievements */}
+                      {gamificationData.achievements.length < 6 && (
+                        Array.from({ length: 6 - gamificationData.achievements.length }).map((_, index) => (
+                          <div key={`locked-${index}`} className="p-4 border rounded-lg bg-gray-100 border-gray-300 opacity-50">
+                            <div className="text-center">
+                              <div className="text-3xl mb-2">🔒</div>
+                              <div className="font-semibold text-gray-500 mb-1">Locked</div>
+                              <div className="text-sm text-gray-400">Keep learning to unlock!</div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Badges */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">🏅 Badges</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                      {gamificationData.badges.map((badge: any) => (
+                        <div key={badge.id} className="text-center p-4">
+                          <div className={`w-16 h-16 ${badge.color} rounded-full flex items-center justify-center mx-auto mb-2 text-2xl`}>
+                            {badge.icon}
+                          </div>
+                          <div className="text-sm font-medium text-gray-900">{badge.name}</div>
+                          <div className="text-xs text-gray-500">{badge.description}</div>
+                        </div>
+                      ))}
+                      
+                      {/* Locked Badge Slots */}
+                      {gamificationData.badges.length < 5 && (
+                        Array.from({ length: 5 - gamificationData.badges.length }).map((_, index) => (
+                          <div key={`locked-badge-${index}`} className="text-center p-4 opacity-50">
+                            <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">
+                              🔒
+                            </div>
+                            <div className="text-sm font-medium text-gray-500">Locked</div>
+                            <div className="text-xs text-gray-400">Coming soon</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Goals & Progress */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">🎯 Goals & Progress</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Weekly Goal */}
+                      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h4 className="font-medium text-blue-900 mb-3">Weekly Goal</h4>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600 mb-2">{gamificationData.weeklyGoal}/10</div>
+                          <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div 
+                              className="bg-blue-500 h-3 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min((gamificationData.weeklyGoal / 10) * 100, 100)}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-sm text-blue-700 mt-2">
+                            {gamificationData.weeklyGoal >= 10 ? '🎉 Weekly goal achieved!' : `${10 - gamificationData.weeklyGoal} more quizzes needed`}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Monthly Goal */}
+                      <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                        <h4 className="font-medium text-green-900 mb-3">Monthly Goal</h4>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-600 mb-2">{gamificationData.monthlyGoal}/40</div>
+                          <div className="w-full bg-gray-200 rounded-full h-3">
+                            <div 
+                              className="bg-green-500 h-3 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min((gamificationData.monthlyGoal / 40) * 100, 100)}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-sm text-green-700 mt-2">
+                            {gamificationData.monthlyGoal >= 40 ? '🎉 Monthly goal achieved!' : `${40 - gamificationData.monthlyGoal} more quizzes needed`}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Rewards & Celebrations */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">🎁 Rewards & Celebrations</h3>
+                    <div className="text-center">
+                      <Button
+                        onClick={() => setShowRewards(!showRewards)}
+                        variant="outline"
+                        className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white border-0 hover:from-yellow-500 hover:to-orange-500"
+                      >
+                        {showRewards ? 'Hide Rewards' : 'View Unlocked Rewards'}
+                      </Button>
+                      
+                      {showRewards && (
+                        <div className="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                          <h4 className="font-medium text-yellow-900 mb-4">Your Unlocked Rewards</h4>
+                          {unlockedRewards.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {unlockedRewards.map((reward) => (
+                                <div key={reward.id} className="p-3 bg-white rounded-lg border border-yellow-200">
+                                  <div className="text-center">
+                                    <div className="text-2xl mb-2">🎁</div>
+                                    <div className="font-medium text-gray-900">{reward.type}</div>
+                                    <div className="text-sm text-gray-600">{reward.data?.name || 'Special Reward'}</div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      Unlocked: {new Date(reward.unlockedAt).toLocaleDateString()}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-yellow-700">Keep learning to unlock amazing rewards!</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Gamification Tips */}
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-lg border border-yellow-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">💡 How to Level Up Faster</h3>
+                    <div className="space-y-2 text-sm text-yellow-800">
+                      <p>• <strong>Daily practice:</strong> Maintain your streak for bonus XP</p>
+                      <p>• <strong>High scores:</strong> Aim for 90%+ to earn bonus experience</p>
+                      <p>• <strong>Harder quizzes:</strong> Challenge yourself with difficult content</p>
+                      <p>• <strong>Consistent study:</strong> Regular practice builds momentum</p>
+                      <p>• <strong>Goal achievement:</strong> Complete weekly and monthly targets</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No gamification data available</h3>
+                  <p className="text-gray-600">Take some quizzes first to start earning rewards and leveling up!</p>
+                </div>
+              )}
             </div>
           </div>
         )}
