@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Layout from '@/components/layout/Layout';
-import { CheckCircle, XCircle, Clock, Trophy, Target, BarChart3, TrendingUp, Award, BookOpen } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Trophy, Target, BarChart3, TrendingUp, Award, BookOpen, Search } from 'lucide-react';
 import { getQuizzes, submitQuizResult, getQuizStats, type Quiz, type QuizResult } from '@/lib/quiz';
 
 interface Question {
@@ -35,6 +35,9 @@ export default function QuizPage() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [quizStats, setQuizStats] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<Quiz[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -99,6 +102,81 @@ export default function QuizPage() {
     } finally {
       setAnalyticsLoading(false);
     }
+  };
+
+  // Search quizzes by title, description, or content
+  const searchQuizzes = (searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const term = searchTerm.toLowerCase();
+    
+    const results = quizzes.filter(quiz => {
+      // Search in title
+      if (quiz.title.toLowerCase().includes(term)) return true;
+      
+      // Search in description
+      if (quiz.description.toLowerCase().includes(term)) return true;
+      
+      // Search in quiz type
+      if (quiz.type.toLowerCase().includes(term)) return true;
+      
+      // Search in difficulty
+      if (quiz.difficulty.toLowerCase().includes(term)) return true;
+      
+      // Search in questions content
+      const hasMatchingQuestion = quiz.questions.some(question => 
+        question.question.toLowerCase().includes(term) ||
+        question.options.some(option => option.toLowerCase().includes(term))
+      );
+      
+      return hasMatchingQuestion;
+    });
+
+    setSearchResults(results);
+    setIsSearching(false);
+  };
+
+  // Handle search input changes
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    if (value.trim()) {
+      searchQuizzes(value);
+    } else {
+      setSearchResults([]);
+      setIsSearching(false);
+    }
+  };
+
+  // Clear search
+  const clearSearch = () => {
+    setSearchTerm('');
+    setSearchResults([]);
+    setIsSearching(false);
+  };
+
+  // Get search suggestions based on available quiz content
+  const getSearchSuggestions = () => {
+    const suggestions = new Set<string>();
+    
+    quizzes.forEach(quiz => {
+      // Add quiz types
+      suggestions.add(quiz.type);
+      // Add difficulty levels
+      suggestions.add(quiz.difficulty);
+      // Add common words from titles
+      quiz.title.split(' ').forEach(word => {
+        if (word.length > 3) suggestions.add(word.toLowerCase());
+      });
+    });
+    
+    return Array.from(suggestions).slice(0, 8);
   };
 
   useEffect(() => {
@@ -403,6 +481,70 @@ export default function QuizPage() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search quizzes by title, description, or content..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+            />
+            {searchTerm && (
+              <button
+                onClick={clearSearch}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <XCircle className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+          
+          {/* Search Results Summary */}
+          {searchTerm && (
+            <div className="mt-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {isSearching ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                ) : (
+                  <Search className="h-4 w-4 text-blue-600" />
+                )}
+                <span className="text-sm text-gray-600">
+                  {searchResults.length} result{searchResults.length !== 1 ? 's' : ''} for "{searchTerm}"
+                </span>
+              </div>
+              <button
+                onClick={clearSearch}
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                Clear search
+              </button>
+            </div>
+          )}
+
+          {/* Search Suggestions */}
+          {!searchTerm && quizzes.length > 0 && (
+            <div className="mt-3">
+              <p className="text-sm text-gray-500 mb-2">Try searching for:</p>
+              <div className="flex flex-wrap gap-2">
+                {getSearchSuggestions().map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSearchTerm(suggestion)}
+                    className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Difficulty Filter */}
         <div className="mb-6">
           <div className="flex flex-wrap gap-2">
@@ -645,7 +787,23 @@ export default function QuizPage() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredQuizzes.map((quiz) => (
+          {searchTerm && searchResults.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No quizzes found</h3>
+              <p className="text-gray-600 mb-4">
+                No quizzes match your search for "{searchTerm}"
+              </p>
+              <Button
+                onClick={clearSearch}
+                variant="outline"
+                className="flex items-center gap-2 mx-auto"
+              >
+                <Search className="w-4 h-4" />
+                Try a different search term
+              </Button>
+            </div>
+          ) : (searchTerm ? searchResults : filteredQuizzes).map((quiz) => (
             <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <h3 className="text-xl font-semibold text-gray-900">{quiz.title}</h3>
