@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Layout from '@/components/layout/Layout';
-import { CheckCircle, XCircle, Clock, Trophy, Target, BarChart3, TrendingUp, Award, BookOpen, Search, LineChart, Activity, Bell, Calendar, Zap } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Trophy, Target, BarChart3, TrendingUp, Award, BookOpen, Search, LineChart, Activity, Bell, Calendar, Zap, Star, Flame, Crown, Gift, Share2 } from 'lucide-react';
 import { getQuizzes, submitQuizResult, getQuizStats, getQuizHistory, type Quiz, type QuizResult, type QuizAttempt } from '@/lib/quiz';
 
 interface Question {
@@ -91,6 +91,17 @@ export default function QuizPage() {
   });
   const [editingQuestionIndex, setEditingQuestionIndex] = useState<number | null>(null);
   const [customQuizLoading, setCustomQuizLoading] = useState(false);
+  const [showQuizSharing, setShowQuizSharing] = useState(false);
+  const [sharedQuizzes, setSharedQuizzes] = useState<any[]>([]);
+  const [sharingLoading, setSharingLoading] = useState(false);
+  const [selectedQuizForSharing, setSelectedQuizForSharing] = useState<any>(null);
+  const [shareSettings, setShareSettings] = useState({
+    isPublic: false,
+    allowComments: true,
+    allowRating: true,
+    allowDuplication: false,
+    expirationDate: null as string | null
+  });
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -148,6 +159,13 @@ export default function QuizPage() {
       generatePerformanceInsights();
     }
   }, [showPerformanceInsights]);
+
+  // Load shared quizzes when sharing is toggled
+  useEffect(() => {
+    if (showQuizSharing) {
+      loadSharedQuizzes();
+    }
+  }, [showQuizSharing]);
 
   // Load quiz analytics
   const loadQuizAnalytics = async () => {
@@ -1343,6 +1361,167 @@ export default function QuizPage() {
     }
   };
 
+  // Quiz Sharing Functions
+  const loadSharedQuizzes = async () => {
+    try {
+      setSharingLoading(true);
+      
+      // Load custom quizzes from localStorage
+      const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+      const publicQuizzes = savedQuizzes.filter((quiz: any) => quiz.isPublic);
+      
+      // In a real app, this would fetch from backend API
+      setSharedQuizzes(publicQuizzes);
+      
+    } catch (error) {
+      console.error('Failed to load shared quizzes:', error);
+      setSharedQuizzes([]);
+    } finally {
+      setSharingLoading(false);
+    }
+  };
+
+  const shareQuiz = async (quiz: any) => {
+    try {
+      setSharingLoading(true);
+      
+      // Update quiz sharing settings
+      const updatedQuiz = {
+        ...quiz,
+        isPublic: shareSettings.isPublic,
+        shareSettings: { ...shareSettings },
+        sharedAt: new Date().toISOString(),
+        shareId: `share_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      };
+      
+      // Update in localStorage
+      const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+      const updatedQuizzes = savedQuizzes.map((q: any) => 
+        q.id === quiz.id ? updatedQuiz : q
+      );
+      localStorage.setItem('customQuizzes', JSON.stringify(updatedQuizzes));
+      
+      // Generate share link
+      const shareLink = `${window.location.origin}/quiz/shared/${updatedQuiz.shareId}`;
+      
+      // Copy to clipboard
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareLink);
+        alert('Share link copied to clipboard!');
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = shareLink;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('Share link copied to clipboard!');
+      }
+      
+      // Refresh shared quizzes list
+      await loadSharedQuizzes();
+      
+    } catch (error) {
+      console.error('Failed to share quiz:', error);
+      alert('Failed to share quiz. Please try again.');
+    } finally {
+      setSharingLoading(false);
+    }
+  };
+
+  const unshareQuiz = async (quiz: any) => {
+    if (!confirm('Are you sure you want to unshare this quiz? It will no longer be visible to other users.')) {
+      return;
+    }
+    
+    try {
+      setSharingLoading(true);
+      
+      // Update quiz to private
+      const updatedQuiz = {
+        ...quiz,
+        isPublic: false,
+        shareSettings: null,
+        sharedAt: null,
+        shareId: null
+      };
+      
+      // Update in localStorage
+      const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+      const updatedQuizzes = savedQuizzes.map((q: any) => 
+        q.id === quiz.id ? updatedQuiz : q
+      );
+      localStorage.setItem('customQuizzes', JSON.stringify(updatedQuizzes));
+      
+      // Refresh shared quizzes list
+      await loadSharedQuizzes();
+      
+      alert('Quiz unshared successfully!');
+      
+    } catch (error) {
+      console.error('Failed to unshare quiz:', error);
+      alert('Failed to unshare quiz. Please try again.');
+    } finally {
+      setSharingLoading(false);
+    }
+  };
+
+  const duplicateQuiz = async (quiz: any) => {
+    try {
+      setSharingLoading(true);
+      
+      // Create a copy of the quiz
+      const duplicatedQuiz = {
+        ...quiz,
+        id: Date.now().toString(),
+        title: `${quiz.title} (Copy)`,
+        createdAt: new Date().toISOString(),
+        createdBy: 'current-user', // In real app, get from auth context
+        isPublic: false,
+        shareSettings: null,
+        sharedAt: null,
+        shareId: null
+      };
+      
+      // Save to localStorage
+      const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+      savedQuizzes.push(duplicatedQuiz);
+      localStorage.setItem('customQuizzes', JSON.stringify(savedQuizzes));
+      
+      alert('Quiz duplicated successfully! You can find it in your custom quizzes.');
+      
+    } catch (error) {
+      console.error('Failed to duplicate quiz:', error);
+      alert('Failed to duplicate quiz. Please try again.');
+    } finally {
+      setSharingLoading(false);
+    }
+  };
+
+  const getShareStatusIcon = (quiz: any) => {
+    if (!quiz.isPublic) return '🔒';
+    if (quiz.shareSettings?.allowDuplication) return '📋';
+    return '🔗';
+  };
+
+  const getShareStatusText = (quiz: any) => {
+    if (!quiz.isPublic) return 'Private';
+    if (quiz.shareSettings?.allowDuplication) return 'Public & Duplicatable';
+    return 'Public';
+  };
+
+  const formatShareDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   useEffect(() => {
     if (isQuizActive && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -1789,6 +1968,24 @@ export default function QuizPage() {
                   <>
                     <BookOpen className="w-4 h-4" />
                     Create Quiz
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => setShowQuizSharing(!showQuizSharing)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {showQuizSharing ? (
+                  <>
+                    <Share2 className="w-4 h-4" />
+                    Hide Sharing
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-4 h-4" />
+                    Quiz Sharing
                   </>
                 )}
               </Button>
@@ -3211,6 +3408,254 @@ export default function QuizPage() {
                     <p>• <strong>Helpful explanations:</strong> Explain why the correct answer is right</p>
                     <p>• <strong>Appropriate difficulty:</strong> Match difficulty to your target audience</p>
                     <p>• <strong>Reasonable time limits:</strong> Give enough time to think through answers</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quiz Sharing */}
+        {showQuizSharing && (
+          <div className="mb-8">
+            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Share2 className="w-6 h-6 text-blue-600" />
+                Quiz Sharing & Discovery
+              </h2>
+              
+              <div className="space-y-8">
+                {/* Share Your Quiz */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Share Your Quiz</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Quiz Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Select Quiz to Share</label>
+                      <select
+                        value={selectedQuizForSharing?.id || ''}
+                        onChange={(e) => {
+                          const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+                          const quiz = savedQuizzes.find((q: any) => q.id === e.target.value);
+                          setSelectedQuizForSharing(quiz || null);
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Choose a quiz...</option>
+                        {(() => {
+                          const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+                          return savedQuizzes.map((quiz: any) => (
+                            <option key={quiz.id} value={quiz.id}>
+                              {quiz.title} ({quiz.questions.length} questions)
+                            </option>
+                          ));
+                        })()}
+                      </select>
+                    </div>
+                    
+                    {/* Share Settings */}
+                    <div className="space-y-4">
+                      <div>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={shareSettings.isPublic}
+                            onChange={(e) => setShareSettings(prev => ({ ...prev, isPublic: e.target.checked }))}
+                            className="text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm font-medium text-gray-700">Make quiz public</span>
+                        </label>
+                      </div>
+                      
+                      {shareSettings.isPublic && (
+                        <>
+                          <div>
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={shareSettings.allowComments}
+                                onChange={(e) => setShareSettings(prev => ({ ...prev, allowComments: e.target.checked }))}
+                                className="text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="text-sm font-medium text-gray-700">Allow comments</span>
+                            </label>
+                          </div>
+                          
+                          <div>
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={shareSettings.allowRating}
+                                onChange={(e) => setShareSettings(prev => ({ ...prev, allowRating: e.target.checked }))}
+                                className="text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="text-sm font-medium text-gray-700">Allow rating</span>
+                            </label>
+                          </div>
+                          
+                          <div>
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={shareSettings.allowDuplication}
+                                onChange={(e) => setShareSettings(prev => ({ ...prev, allowDuplication: e.target.checked }))}
+                                className="text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="text-sm font-medium text-gray-700">Allow duplication</span>
+                            </label>
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Expiration Date (Optional)</label>
+                            <input
+                              type="date"
+                              value={shareSettings.expirationDate || ''}
+                              onChange={(e) => setShareSettings(prev => ({ ...prev, expirationDate: e.target.value || null }))}
+                              min={new Date().toISOString().split('T')[0]}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {selectedQuizForSharing && (
+                    <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h4 className="font-medium text-blue-900 mb-2">Quiz Preview</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-blue-800">
+                        <div>
+                          <strong>Title:</strong> {selectedQuizForSharing.title}
+                        </div>
+                        <div>
+                          <strong>Type:</strong> {getQuizTypeIcon(selectedQuizForSharing.type)} {selectedQuizForSharing.type}
+                        </div>
+                        <div>
+                          <strong>Questions:</strong> {selectedQuizForSharing.questions.length}
+                        </div>
+                        <div>
+                          <strong>Difficulty:</strong> <span className={`px-2 py-1 rounded text-xs ${getDifficultyColor(selectedQuizForSharing.difficulty)}`}>
+                            {selectedQuizForSharing.difficulty}
+                          </span>
+                        </div>
+                        <div>
+                          <strong>Time Limit:</strong> {selectedQuizForSharing.timeLimit} min
+                        </div>
+                        <div>
+                          <strong>Created:</strong> {formatShareDate(selectedQuizForSharing.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mt-6">
+                    <Button
+                      onClick={() => shareQuiz(selectedQuizForSharing)}
+                      disabled={!selectedQuizForSharing || sharingLoading || !shareSettings.isPublic}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {sharingLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Sharing...
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="w-4 h-4 mr-2" />
+                          Share Quiz
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Shared Quizzes Discovery */}
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Discover Shared Quizzes</h3>
+                  
+                  {sharingLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="text-gray-600 mt-2">Loading shared quizzes...</p>
+                    </div>
+                  ) : sharedQuizzes.length > 0 ? (
+                    <div className="space-y-4">
+                      {sharedQuizzes.map((quiz, index) => (
+                        <div key={quiz.id} className="p-4 border rounded-lg bg-gray-50">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h4 className="text-lg font-semibold text-gray-900">{quiz.title}</h4>
+                                <span className={`text-xs px-2 py-1 rounded-full border ${getDifficultyColor(quiz.difficulty)}`}>
+                                  {quiz.difficulty}
+                                </span>
+                                <span className="text-xs text-gray-500">{getQuizTypeIcon(quiz.type)} {quiz.type}</span>
+                                <span className="text-xs text-gray-500">• {quiz.questions.length} questions</span>
+                              </div>
+                              
+                              <p className="text-gray-600 text-sm mb-2">{quiz.description}</p>
+                              
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <span>Created by: {quiz.createdBy}</span>
+                                <span>Shared: {formatShareDate(quiz.sharedAt)}</span>
+                                <span className={`flex items-center gap-1 ${getShareStatusIcon(quiz) === '📋' ? 'text-green-600' : 'text-blue-600'}`}>
+                                  {getShareStatusIcon(quiz)} {getShareStatusText(quiz)}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 ml-4">
+                              {quiz.shareSettings?.allowDuplication && (
+                                <Button
+                                  onClick={() => duplicateQuiz(quiz)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-green-600 border-green-200 hover:bg-green-50"
+                                >
+                                  📋 Duplicate
+                                </Button>
+                              )}
+                              
+                              {quiz.createdBy === 'current-user' && (
+                                <Button
+                                  onClick={() => unshareQuiz(quiz)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 border-red-200 hover:bg-red-50"
+                                >
+                                  🔒 Unshare
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {quiz.shareSettings?.expirationDate && (
+                            <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                              ⏰ This quiz will expire on {new Date(quiz.shareSettings.expirationDate).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Share2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No shared quizzes available</h3>
+                      <p className="text-gray-600">Be the first to share a quiz, or check back later for new content!</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sharing Tips */}
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-lg border border-blue-200">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">💡 Sharing Tips</h3>
+                  <div className="space-y-2 text-sm text-blue-800">
+                    <p>• <strong>Quality content:</strong> Share well-crafted quizzes that others will find valuable</p>
+                    <p>• <strong>Clear descriptions:</strong> Help users understand what your quiz covers</p>
+                    <p>• <strong>Appropriate settings:</strong> Choose sharing options that match your goals</p>
+                    <p>• <strong>Regular updates:</strong> Keep your shared quizzes current and relevant</p>
+                    <p>• <strong>Community engagement:</strong> Respond to feedback and comments on your quizzes</p>
                   </div>
                 </div>
               </div>
