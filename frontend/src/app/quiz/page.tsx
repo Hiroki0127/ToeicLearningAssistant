@@ -107,6 +107,10 @@ export default function QuizPage() {
   const [gamificationLoading, setGamificationLoading] = useState(false);
   const [showRewards, setShowRewards] = useState(false);
   const [unlockedRewards, setUnlockedRewards] = useState<any[]>([]);
+  const [showBadgeCollection, setShowBadgeCollection] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState<any>(null);
+  const [badgeCategories, setBadgeCategories] = useState<string[]>(['all', 'performance', 'streak', 'milestone', 'special']);
+  const [selectedBadgeCategory, setSelectedBadgeCategory] = useState('all');
 
   // Filter quizzes based on selected difficulty and category
   const filterQuizzes = (quizzes: Quiz[], difficulty: string, category: string) => {
@@ -1635,14 +1639,17 @@ export default function QuizPage() {
       if (history.length >= 50) achievements.push({ id: 'quiz_enthusiast', name: 'Quiz Enthusiast', description: 'Completed 50+ quizzes', icon: '🎯', unlocked: true });
       if (stats.bestScore >= 95) achievements.push({ id: 'perfectionist', name: 'Perfectionist', description: 'Achieved 95%+ score', icon: '🏆', unlocked: true });
       
-      // Generate badges
-      const badges = [];
-      
-      if (level >= 5) badges.push({ id: 'bronze', name: 'Bronze Badge', description: 'Level 5 achievement', icon: '🥉', color: 'bg-yellow-600' });
-      if (level >= 15) badges.push({ id: 'silver', name: 'Silver Badge', description: 'Level 15 achievement', icon: '🥈', color: 'bg-gray-400' });
-      if (level >= 25) badges.push({ id: 'gold', name: 'Gold Badge', description: 'Level 25 achievement', icon: '🥇', color: 'bg-yellow-400' });
-      if (dailyStreak >= 14) badges.push({ id: 'streak', name: 'Streak Badge', description: '14+ day streak', icon: '🔥', color: 'bg-orange-500' });
-      if (totalPoints >= 1000) badges.push({ id: 'points', name: 'Points Badge', description: '1000+ points earned', icon: '💎', color: 'bg-purple-500' });
+      // Generate enhanced badges
+      const badges = generateAllBadges({
+        level,
+        experience: totalExperience,
+        totalQuizzes: history.length,
+        dailyStreak,
+        bestScore: stats.bestScore,
+        averageScore: stats.averageScore,
+        weeklyGoal: weeklyQuizzes,
+        totalPoints
+      });
       
       setGamificationData({
         level,
@@ -1724,6 +1731,350 @@ export default function QuizPage() {
     
     // Show celebration
     alert(`🎉 Congratulations! You've unlocked: ${rewardData.name || rewardType}!`);
+  };
+
+  // Enhanced Badge System Functions
+  const generateAllBadges = (userData: any) => {
+    const allBadges = [
+      // Performance Badges
+      {
+        id: 'first_quiz',
+        name: 'First Steps',
+        description: 'Complete your first quiz',
+        icon: '🌱',
+        category: 'performance',
+        rarity: 'common',
+        unlocked: userData.totalQuizzes >= 1,
+        requirement: 'Complete 1 quiz',
+        progress: Math.min(userData.totalQuizzes, 1),
+        maxProgress: 1,
+        color: 'bg-green-500',
+        borderColor: 'border-green-200',
+        bgColor: 'bg-green-50'
+      },
+      {
+        id: 'quiz_10',
+        name: 'Quiz Explorer',
+        description: 'Complete 10 quizzes',
+        icon: '🔍',
+        category: 'performance',
+        rarity: 'common',
+        unlocked: userData.totalQuizzes >= 10,
+        requirement: 'Complete 10 quizzes',
+        progress: Math.min(userData.totalQuizzes, 10),
+        maxProgress: 10,
+        color: 'bg-blue-500',
+        borderColor: 'border-blue-200',
+        bgColor: 'bg-blue-50'
+      },
+      {
+        id: 'quiz_50',
+        name: 'Quiz Enthusiast',
+        description: 'Complete 50 quizzes',
+        icon: '🎯',
+        category: 'performance',
+        rarity: 'rare',
+        unlocked: userData.totalQuizzes >= 50,
+        requirement: 'Complete 50 quizzes',
+        progress: Math.min(userData.totalQuizzes, 50),
+        maxProgress: 50,
+        color: 'bg-purple-500',
+        borderColor: 'border-purple-200',
+        bgColor: 'bg-purple-50'
+      },
+      {
+        id: 'quiz_100',
+        name: 'Quiz Master',
+        description: 'Complete 100 quizzes',
+        icon: '👑',
+        category: 'performance',
+        rarity: 'epic',
+        unlocked: userData.totalQuizzes >= 100,
+        requirement: 'Complete 100 quizzes',
+        progress: Math.min(userData.totalQuizzes, 100),
+        maxProgress: 100,
+        color: 'bg-yellow-500',
+        borderColor: 'border-yellow-200',
+        bgColor: 'bg-yellow-50'
+      },
+      {
+        id: 'perfect_score',
+        name: 'Perfectionist',
+        description: 'Achieve a perfect score (100%)',
+        icon: '💎',
+        category: 'performance',
+        rarity: 'legendary',
+        unlocked: userData.bestScore >= 100,
+        requirement: 'Score 100% on any quiz',
+        progress: userData.bestScore,
+        maxProgress: 100,
+        color: 'bg-red-500',
+        borderColor: 'border-red-200',
+        bgColor: 'bg-red-50'
+      },
+      {
+        id: 'high_scorer',
+        name: 'High Achiever',
+        description: 'Achieve 90%+ on a quiz',
+        icon: '⭐',
+        category: 'performance',
+        rarity: 'rare',
+        unlocked: userData.bestScore >= 90,
+        requirement: 'Score 90%+ on any quiz',
+        progress: userData.bestScore,
+        maxProgress: 100,
+        color: 'bg-indigo-500',
+        borderColor: 'border-indigo-200',
+        bgColor: 'bg-indigo-50'
+      },
+      
+      // Streak Badges
+      {
+        id: 'streak_3',
+        name: 'Getting Started',
+        description: 'Maintain a 3-day study streak',
+        icon: '🔥',
+        category: 'streak',
+        rarity: 'common',
+        unlocked: userData.dailyStreak >= 3,
+        requirement: '3-day study streak',
+        progress: Math.min(userData.dailyStreak, 3),
+        maxProgress: 3,
+        color: 'bg-orange-500',
+        borderColor: 'border-orange-200',
+        bgColor: 'bg-orange-50'
+      },
+      {
+        id: 'streak_7',
+        name: 'Week Warrior',
+        description: 'Maintain a 7-day study streak',
+        icon: '⚡',
+        category: 'streak',
+        rarity: 'rare',
+        unlocked: userData.dailyStreak >= 7,
+        requirement: '7-day study streak',
+        progress: Math.min(userData.dailyStreak, 7),
+        maxProgress: 7,
+        color: 'bg-yellow-500',
+        borderColor: 'border-yellow-200',
+        bgColor: 'bg-yellow-50'
+      },
+      {
+        id: 'streak_14',
+        name: 'Dedicated Learner',
+        description: 'Maintain a 14-day study streak',
+        icon: '🏆',
+        category: 'streak',
+        rarity: 'epic',
+        unlocked: userData.dailyStreak >= 14,
+        requirement: '14-day study streak',
+        progress: Math.min(userData.dailyStreak, 14),
+        maxProgress: 14,
+        color: 'bg-purple-500',
+        borderColor: 'border-purple-200',
+        bgColor: 'bg-purple-50'
+      },
+      {
+        id: 'streak_30',
+        name: 'Month Master',
+        description: 'Maintain a 30-day study streak',
+        icon: '👑',
+        category: 'streak',
+        rarity: 'legendary',
+        unlocked: userData.dailyStreak >= 30,
+        requirement: '30-day study streak',
+        progress: Math.min(userData.dailyStreak, 30),
+        maxProgress: 30,
+        color: 'bg-red-500',
+        borderColor: 'border-red-200',
+        bgColor: 'bg-red-50'
+      },
+      
+      // Milestone Badges
+      {
+        id: 'level_5',
+        name: 'Bronze Learner',
+        description: 'Reach level 5',
+        icon: '🥉',
+        category: 'milestone',
+        rarity: 'common',
+        unlocked: userData.level >= 5,
+        requirement: 'Reach level 5',
+        progress: Math.min(userData.level, 5),
+        maxProgress: 5,
+        color: 'bg-yellow-600',
+        borderColor: 'border-yellow-200',
+        bgColor: 'bg-yellow-50'
+      },
+      {
+        id: 'level_15',
+        name: 'Silver Scholar',
+        description: 'Reach level 15',
+        icon: '🥈',
+        category: 'milestone',
+        rarity: 'rare',
+        unlocked: userData.level >= 15,
+        requirement: 'Reach level 15',
+        progress: Math.min(userData.level, 15),
+        maxProgress: 15,
+        color: 'bg-gray-400',
+        borderColor: 'border-gray-200',
+        bgColor: 'bg-gray-50'
+      },
+      {
+        id: 'level_25',
+        name: 'Gold Graduate',
+        description: 'Reach level 25',
+        icon: '🥇',
+        category: 'milestone',
+        rarity: 'epic',
+        unlocked: userData.level >= 25,
+        requirement: 'Reach level 25',
+        progress: Math.min(userData.level, 25),
+        maxProgress: 25,
+        color: 'bg-yellow-400',
+        borderColor: 'border-yellow-200',
+        bgColor: 'bg-yellow-50'
+      },
+      {
+        id: 'level_50',
+        name: 'Legendary Learner',
+        description: 'Reach level 50',
+        icon: '🌟',
+        category: 'milestone',
+        rarity: 'legendary',
+        unlocked: userData.level >= 50,
+        requirement: 'Reach level 50',
+        progress: Math.min(userData.level, 50),
+        maxProgress: 50,
+        color: 'bg-purple-500',
+        borderColor: 'border-purple-200',
+        bgColor: 'bg-purple-50'
+      },
+      {
+        id: 'xp_1000',
+        name: 'Experience Collector',
+        description: 'Earn 1000+ experience points',
+        icon: '💫',
+        category: 'milestone',
+        rarity: 'rare',
+        unlocked: userData.experience >= 1000,
+        requirement: 'Earn 1000 XP',
+        progress: Math.min(userData.experience, 1000),
+        maxProgress: 1000,
+        color: 'bg-blue-500',
+        borderColor: 'border-blue-200',
+        bgColor: 'bg-blue-50'
+      },
+      {
+        id: 'xp_5000',
+        name: 'Experience Master',
+        description: 'Earn 5000+ experience points',
+        icon: '✨',
+        category: 'milestone',
+        rarity: 'epic',
+        unlocked: userData.experience >= 5000,
+        requirement: 'Earn 5000 XP',
+        progress: Math.min(userData.experience, 5000),
+        maxProgress: 5000,
+        color: 'bg-indigo-500',
+        borderColor: 'border-indigo-200',
+        bgColor: 'bg-indigo-50'
+      },
+      
+      // Special Badges
+      {
+        id: 'first_week',
+        name: 'Week One Warrior',
+        description: 'Complete your first week of study',
+        icon: '📅',
+        category: 'special',
+        rarity: 'common',
+        unlocked: userData.weeklyGoal >= 1,
+        requirement: 'Complete 1 week of study',
+        progress: Math.min(userData.weeklyGoal, 1),
+        maxProgress: 1,
+        color: 'bg-green-500',
+        borderColor: 'border-green-200',
+        bgColor: 'bg-green-50'
+      },
+      {
+        id: 'consistency',
+        name: 'Consistent Learner',
+        description: 'Maintain consistent study habits',
+        icon: '📚',
+        category: 'special',
+        rarity: 'rare',
+        unlocked: userData.averageScore >= 80 && userData.totalQuizzes >= 20,
+        requirement: '80%+ average score with 20+ quizzes',
+        progress: Math.min(userData.averageScore, 80),
+        maxProgress: 100,
+        color: 'bg-teal-500',
+        borderColor: 'border-teal-200',
+        bgColor: 'bg-teal-50'
+      },
+      {
+        id: 'variety',
+        name: 'Versatile Learner',
+        description: 'Try different types of quizzes',
+        icon: '🎲',
+        category: 'special',
+        rarity: 'epic',
+        unlocked: userData.totalQuizzes >= 30,
+        requirement: 'Complete 30+ quizzes',
+        progress: Math.min(userData.totalQuizzes, 30),
+        maxProgress: 30,
+        color: 'bg-pink-500',
+        borderColor: 'border-pink-200',
+        bgColor: 'bg-pink-50'
+      },
+      {
+        id: 'dedication',
+        name: 'Dedicated Student',
+        description: 'Show exceptional dedication to learning',
+        icon: '🎓',
+        category: 'special',
+        rarity: 'legendary',
+        unlocked: userData.level >= 30 && userData.dailyStreak >= 20,
+        requirement: 'Level 30+ with 20+ day streak',
+        progress: Math.min(userData.level, 30),
+        maxProgress: 50,
+        color: 'bg-red-500',
+        borderColor: 'border-red-200',
+        bgColor: 'bg-red-50'
+      }
+    ];
+    
+    return allBadges;
+  };
+
+  const getRarityColor = (rarity: string) => {
+    switch (rarity) {
+      case 'legendary': return 'text-red-600 bg-red-50 border-red-200';
+      case 'epic': return 'text-purple-600 bg-purple-50 border-purple-200';
+      case 'rare': return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'common': return 'text-green-600 bg-green-50 border-green-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getRarityIcon = (rarity: string) => {
+    switch (rarity) {
+      case 'legendary': return '🌟';
+      case 'epic': return '💎';
+      case 'rare': return '⭐';
+      case 'common': return '🌱';
+      default: return '📌';
+    }
+  };
+
+  const filterBadgesByCategory = (badges: any[], category: string) => {
+    if (category === 'all') return badges;
+    return badges.filter(badge => badge.category === category);
+  };
+
+  const getBadgeProgressPercentage = (badge: any) => {
+    return Math.min((badge.progress / badge.maxProgress) * 100, 100);
   };
 
   useEffect(() => {
@@ -4001,31 +4352,141 @@ export default function QuizPage() {
 
                   {/* Badges */}
                   <div className="bg-white p-6 rounded-lg shadow-sm border">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">🏅 Badges</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                      {gamificationData.badges.map((badge: any) => (
-                        <div key={badge.id} className="text-center p-4">
-                          <div className={`w-16 h-16 ${badge.color} rounded-full flex items-center justify-center mx-auto mb-2 text-2xl`}>
-                            {badge.icon}
-                          </div>
-                          <div className="text-sm font-medium text-gray-900">{badge.name}</div>
-                          <div className="text-xs text-gray-500">{badge.description}</div>
-                        </div>
-                      ))}
-                      
-                      {/* Locked Badge Slots */}
-                      {gamificationData.badges.length < 5 && (
-                        Array.from({ length: 5 - gamificationData.badges.length }).map((_, index) => (
-                          <div key={`locked-badge-${index}`} className="text-center p-4 opacity-50">
-                            <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">
-                              🔒
-                            </div>
-                            <div className="text-sm font-medium text-gray-500">Locked</div>
-                            <div className="text-xs text-gray-400">Coming soon</div>
-                          </div>
-                        ))
-                      )}
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">🏅 Badges</h3>
+                      <Button
+                        onClick={() => setShowBadgeCollection(!showBadgeCollection)}
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                      >
+                        {showBadgeCollection ? 'Hide Collection' : 'View Full Collection'}
+                      </Button>
                     </div>
+                    
+                    {!showBadgeCollection ? (
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        {gamificationData.badges.filter((badge: any) => badge.unlocked).slice(0, 5).map((badge: any) => (
+                          <div key={badge.id} className="text-center p-4">
+                            <div className={`w-16 h-16 ${badge.color} rounded-full flex items-center justify-center mx-auto mb-2 text-2xl`}>
+                              {badge.icon}
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">{badge.name}</div>
+                            <div className="text-xs text-gray-500">{badge.description}</div>
+                          </div>
+                        ))}
+                        
+                        {/* Show locked slots if less than 5 unlocked */}
+                        {gamificationData.badges.filter((badge: any) => badge.unlocked).length < 5 && (
+                          Array.from({ length: 5 - gamificationData.badges.filter((badge: any) => badge.unlocked).length }).map((_, index) => (
+                            <div key={`locked-badge-${index}`} className="text-center p-4 opacity-50">
+                              <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">
+                                🔒
+                              </div>
+                              <div className="text-sm font-medium text-gray-500">Locked</div>
+                              <div className="text-xs text-gray-400">Keep learning!</div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {/* Category Filter */}
+                        <div className="flex flex-wrap gap-2">
+                          {badgeCategories.map(category => (
+                            <button
+                              key={category}
+                              onClick={() => setSelectedBadgeCategory(category)}
+                              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                                selectedBadgeCategory === category
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              {category.charAt(0).toUpperCase() + category.slice(1)}
+                            </button>
+                          ))}
+                        </div>
+                        
+                        {/* Badge Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {filterBadgesByCategory(gamificationData.badges, selectedBadgeCategory).map((badge: any) => (
+                            <div
+                              key={badge.id}
+                              className={`p-4 border rounded-lg transition-all duration-200 cursor-pointer ${
+                                badge.unlocked
+                                  ? `${badge.bgColor} ${badge.borderColor} hover:shadow-md`
+                                  : 'bg-gray-100 border-gray-300 opacity-60'
+                              }`}
+                              onClick={() => setSelectedBadge(badge)}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`w-12 h-12 ${badge.color} rounded-full flex items-center justify-center text-xl`}>
+                                  {badge.icon}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="font-semibold text-gray-900">{badge.name}</h4>
+                                    <span className={`text-xs px-2 py-1 rounded-full border ${getRarityColor(badge.rarity)}`}>
+                                      {getRarityIcon(badge.rarity)} {badge.rarity}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-600 mb-2">{badge.description}</p>
+                                  <div className="space-y-1">
+                                    <div className="text-xs text-gray-500">{badge.requirement}</div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                      <div 
+                                        className={`h-2 rounded-full transition-all duration-500 ${
+                                          badge.unlocked ? 'bg-green-500' : 'bg-gray-400'
+                                        }`}
+                                        style={{ width: `${getBadgeProgressPercentage(badge)}%` }}
+                                      ></div>
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {badge.progress}/{badge.maxProgress} ({Math.round(getBadgeProgressPercentage(badge))}%)
+                                    </div>
+                                  </div>
+                                </div>
+                                {badge.unlocked && (
+                                  <div className="text-green-600 text-lg">✓</div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Badge Statistics */}
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <h4 className="font-medium text-gray-900 mb-3">Badge Collection Stats</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-blue-600">
+                                {gamificationData.badges.filter((b: any) => b.unlocked).length}
+                              </div>
+                              <div className="text-gray-600">Unlocked</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-gray-600">
+                                {gamificationData.badges.length}
+                              </div>
+                              <div className="text-gray-600">Total</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-purple-600">
+                                {Math.round((gamificationData.badges.filter((b: any) => b.unlocked).length / gamificationData.badges.length) * 100)}%
+                              </div>
+                              <div className="text-gray-600">Completion</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-yellow-600">
+                                {gamificationData.badges.filter((b: any) => b.rarity === 'legendary' && b.unlocked).length}
+                              </div>
+                              <div className="text-gray-600">Legendary</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Goals & Progress */}
@@ -4117,6 +4578,73 @@ export default function QuizPage() {
                       <p>• <strong>Goal achievement:</strong> Complete weekly and monthly targets</p>
                     </div>
                   </div>
+
+                  {/* Badge Detail Modal */}
+                  {selectedBadge && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                      <div className="bg-white rounded-lg max-w-md w-full p-6">
+                        <div className="text-center">
+                          <div className={`w-20 h-20 ${selectedBadge.color} rounded-full flex items-center justify-center mx-auto mb-4 text-3xl`}>
+                            {selectedBadge.icon}
+                          </div>
+                          
+                          <h3 className="text-xl font-bold text-gray-900 mb-2">{selectedBadge.name}</h3>
+                          
+                          <div className="flex items-center justify-center gap-2 mb-3">
+                            <span className={`text-sm px-3 py-1 rounded-full border ${getRarityColor(selectedBadge.rarity)}`}>
+                              {getRarityIcon(selectedBadge.rarity)} {selectedBadge.rarity}
+                            </span>
+                            {selectedBadge.unlocked && (
+                              <span className="text-sm px-3 py-1 rounded-full border text-green-600 bg-green-50 border-green-200">
+                                ✓ Unlocked
+                              </span>
+                            )}
+                          </div>
+                          
+                          <p className="text-gray-600 mb-4">{selectedBadge.description}</p>
+                          
+                          <div className="space-y-3">
+                            <div>
+                              <div className="text-sm font-medium text-gray-700 mb-1">Requirement</div>
+                              <div className="text-sm text-gray-600">{selectedBadge.requirement}</div>
+                            </div>
+                            
+                            <div>
+                              <div className="text-sm font-medium text-gray-700 mb-1">Progress</div>
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div 
+                                  className={`h-3 rounded-full transition-all duration-500 ${
+                                    selectedBadge.unlocked ? 'bg-green-500' : 'bg-blue-500'
+                                  }`}
+                                  style={{ width: `${getBadgeProgressPercentage(selectedBadge)}%` }}
+                                ></div>
+                              </div>
+                              <div className="text-sm text-gray-600 mt-1">
+                                {selectedBadge.progress}/{selectedBadge.maxProgress} ({Math.round(getBadgeProgressPercentage(selectedBadge))}%)
+                              </div>
+                            </div>
+                            
+                            {selectedBadge.unlocked && (
+                              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <div className="text-sm text-green-800">
+                                  🎉 Congratulations! You've earned this badge!
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="mt-6">
+                            <Button
+                              onClick={() => setSelectedBadge(null)}
+                              className="w-full"
+                            >
+                              Close
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">
