@@ -8,6 +8,8 @@ import dotenv from 'dotenv';
 import authRoutes from '@/routes/auth.routes';
 import flashcardRoutes from '@/routes/flashcard.routes';
 import quizRoutes from '@/routes/quiz.routes';
+import notificationRoutes from '@/routes/notification.routes';
+import aiRoutes from '@/routes/ai.routes';
 
 // Import database utilities
 import { checkDatabaseConnection, getDatabaseStats } from '@/utils/database';
@@ -64,6 +66,8 @@ app.get('/api/stats', async (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/flashcards', flashcardRoutes);
 app.use('/api/quiz', quizRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/ai', aiRoutes);
 
 // API info endpoint
 app.get('/api', (req, res) => {
@@ -75,6 +79,8 @@ app.get('/api', (req, res) => {
       auth: '/api/auth',
       flashcards: '/api/flashcards',
       quiz: '/api/quiz',
+      notifications: '/api/notifications',
+      ai: '/api/ai',
       progress: '/api/progress',
     },
   });
