@@ -35,19 +35,19 @@ export default function AIChat() {
     try {
       let response;
       if (activeTab === 'vocabulary') {
-        response = await fetch('/api/ai/explain-vocabulary', {
+        response = await fetch('http://localhost:3001/api/ai/explain-vocabulary', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ word: input }),
         });
       } else if (activeTab === 'grammar') {
-        response = await fetch('/api/ai/explain-grammar', {
+        response = await fetch('http://localhost:3001/api/ai/explain-grammar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question: input, userAnswer: 'A' }),
         });
       } else {
-        response = await fetch('/api/ai/generate-question', {
+        response = await fetch('http://localhost:3001/api/ai/generate-question', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ topic: input, difficulty: 'medium' }),
