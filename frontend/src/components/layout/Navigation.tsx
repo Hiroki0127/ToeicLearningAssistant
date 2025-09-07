@@ -14,7 +14,8 @@ import {
   Home,
   Plus,
   BarChart3,
-  HelpCircle
+  HelpCircle,
+  Brain
 } from 'lucide-react';
 
 export default function Navigation() {
@@ -82,6 +83,12 @@ export default function Navigation() {
                   className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Progress
+                </Link>
+                <Link 
+                  href="/ai" 
+                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  AI Assistant
                 </Link>
               </>
             ) : (
@@ -206,6 +213,14 @@ export default function Navigation() {
                   >
                     <BarChart3 className="h-5 w-5 mr-3" />
                     Progress
+                  </Link>
+                  <Link
+                    href="/ai"
+                    className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-base font-medium transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Brain className="h-5 w-5 mr-3" />
+                    AI Assistant
                   </Link>
                   <div className="border-t pt-4 mt-4">
                     <div className="flex items-center px-3 py-2">
