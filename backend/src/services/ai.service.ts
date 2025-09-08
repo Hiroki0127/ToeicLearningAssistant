@@ -1,7 +1,9 @@
-import OpenAI from 'openai';
+import Groq from 'groq-sdk';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY ? 'Found' : 'Not found');
+
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 });
 
 export class AIService {
@@ -11,8 +13,8 @@ export class AIService {
     Format the response as JSON with: question, options (array), correctAnswer, explanation.`;
 
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.7,
       });
@@ -30,8 +32,8 @@ export class AIService {
     Provide a clear explanation of the correct grammar rule and why the answer is right or wrong.`;
 
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.3,
       });
@@ -52,15 +54,19 @@ export class AIService {
     - Related words`;
 
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
+      console.log('Sending request to Groq for word:', word);
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.5,
       });
 
+      console.log('Groq response received');
       return completion.choices[0].message.content;
     } catch (error) {
-      console.error('Error generating vocabulary explanation:', error);
+      console.error('Detailed Groq error:', error);
+      console.error('Error message:', error.message);
+      console.error('Error status:', error.status);
       throw new Error('Failed to generate vocabulary explanation');
     }
   }

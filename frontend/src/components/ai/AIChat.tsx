@@ -14,7 +14,7 @@ interface Message {
 }
 
 export default function AIChat() {
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -35,6 +35,7 @@ export default function AIChat() {
     setLoading(true);
 
     try {
+      const token = localStorage.getItem('auth-token');
       const headers = {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` }),
