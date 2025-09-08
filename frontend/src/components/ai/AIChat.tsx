@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Brain, MessageCircle, BookOpen, Lightbulb } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Message {
   id: string;
@@ -13,6 +14,7 @@ interface Message {
 }
 
 export default function AIChat() {
+  const { token } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,23 +35,28 @@ export default function AIChat() {
     setLoading(true);
 
     try {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      };
+
       let response;
       if (activeTab === 'vocabulary') {
         response = await fetch('http://localhost:3001/api/ai/explain-vocabulary', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ word: input }),
         });
       } else if (activeTab === 'grammar') {
         response = await fetch('http://localhost:3001/api/ai/explain-grammar', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ question: input, userAnswer: 'A' }),
         });
       } else {
         response = await fetch('http://localhost:3001/api/ai/generate-question', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ topic: input, difficulty: 'medium' }),
         });
       }

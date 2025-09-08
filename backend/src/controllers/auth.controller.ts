@@ -32,12 +32,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         name,
         email,
         password: hashedPassword,
-        preferences: {
+        preferences: JSON.stringify({
           dailyGoal: 20,
           notificationTime: '09:00',
           difficulty: 'beginner',
           focusAreas: ['vocabulary', 'grammar'],
-        },
+        }),
       },
       select: {
         id: true,
