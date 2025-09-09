@@ -36,9 +36,8 @@ export class RAGService {
         flashcards.map(card => `${card.word}: ${card.definition} ${card.example}`)
       );
 
-      // Create FAISS index
-      this.index = new faiss.IndexFlatL2(embeddings[0].length);
-      this.index.add(embeddings);
+      // Skip FAISS for now - use simple text matching instead
+      console.log('Using simple text matching instead of FAISS');
       this.flashcardData = flashcards;
 
       console.log(`RAG initialized with ${flashcards.length} flashcards`);
@@ -47,22 +46,13 @@ export class RAGService {
     }
   }
 
-  // Generate embeddings using Groq
+  // Generate embeddings using simple hash-based method (Groq doesn't have embeddings)
   private static async generateEmbeddings(texts: string[]): Promise<number[][]> {
     const embeddings: number[][] = [];
     
     for (const text of texts) {
-      try {
-        const response = await groq.embeddings.create({
-          model: "text-embedding-3-small",
-          input: text,
-        });
-        embeddings.push(response.data[0].embedding);
-      } catch (error) {
-        console.error('Error generating embedding:', error);
-        // Fallback to simple hash-based embedding
-        embeddings.push(this.simpleEmbedding(text));
-      }
+      // Use simple hash-based embedding since Groq doesn't have embedding models
+      embeddings.push(this.simpleEmbedding(text));
     }
     
     return embeddings;
@@ -88,24 +78,33 @@ export class RAGService {
     return Math.abs(hash).toString();
   }
 
-  // Retrieve relevant flashcards for a query
+  // Retrieve relevant flashcards for a query using simple text matching
   static async retrieveRelevantContext(query: string, topK: number = 3): Promise<any[]> {
-    if (!this.index || this.flashcardData.length === 0) {
+    if (this.flashcardData.length === 0) {
       await this.initializeVectorDB();
     }
 
     try {
-      // Generate embedding for the query
-      const queryEmbedding = await this.generateEmbeddings([query]);
-      
-      // Search for similar flashcards
-      const { distances, labels } = this.index.search(queryEmbedding[0], topK);
-      
-      // Return relevant flashcards
-      return labels.map((label: number) => this.flashcardData[label]);
+      // Simple text matching - find flashcards with similar words
+      const queryLower = query.toLowerCase();
+      const relevantCards = this.flashcardData.filter(card => 
+        card.word.toLowerCase().includes(queryLower) ||
+        card.definition.toLowerCase().includes(queryLower) ||
+        queryLower.includes(card.word.toLowerCase())
+      );
+
+      // If no matches found, return first few flashcards
+      if (relevantCards.length === 0) {
+        console.log('No matching flashcards found, returning first few as context');
+        return this.flashcardData.slice(0, topK);
+      }
+
+      console.log(`Found ${relevantCards.length} relevant flashcards for query: ${query}`);
+      return relevantCards.slice(0, topK);
     } catch (error) {
       console.error('Error retrieving context:', error);
-      return [];
+      // Fallback: return first few flashcards
+      return this.flashcardData.slice(0, topK);
     }
   }
 
@@ -126,11 +125,13 @@ export class RAGService {
       }
 
       const prompt = `Provide a TOEIC-focused explanation for the word "${word}":
-      - Definition
+      - Definition (use the exact definition from the flashcards if available)
       - Part of speech
-      - Example sentence in business context
+      - Example sentence in business context (use the exact example from the flashcards if available)
       - Common TOEIC usage
       - Related words
+      
+      IMPORTANT: If flashcards are provided below, use their exact definitions and examples in your response.
       ${context}`;
 
       const completion = await groq.chat.completions.create({

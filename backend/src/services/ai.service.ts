@@ -1,4 +1,5 @@
 import Groq from 'groq-sdk';
+import { RAGService } from './rag.service';
 
 console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY ? 'Found' : 'Not found');
 
@@ -46,28 +47,37 @@ export class AIService {
   }
 
   static async generateVocabularyExplanation(word: string) {
-    const prompt = `Provide a TOEIC-focused explanation for the word "${word}":
-    - Definition
-    - Part of speech
-    - Example sentence in business context
-    - Common TOEIC usage
-    - Related words`;
-
     try {
-      console.log('Sending request to Groq for word:', word);
-      const completion = await groq.chat.completions.create({
-        model: "llama-3.1-8b-instant",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.5,
-      });
-
-      console.log('Groq response received');
-      return completion.choices[0].message.content;
+      console.log('Using RAG for vocabulary explanation:', word);
+      // Use RAG service for enhanced vocabulary explanation
+      return await RAGService.explainVocabularyWithRAG(word);
     } catch (error) {
-      console.error('Detailed Groq error:', error);
-      console.error('Error message:', error.message);
-      console.error('Error status:', error.status);
-      throw new Error('Failed to generate vocabulary explanation');
+      console.error('RAG vocabulary explanation failed, falling back to basic explanation:', error);
+      
+      // Fallback to basic explanation if RAG fails
+      const prompt = `Provide a TOEIC-focused explanation for the word "${word}":
+      - Definition
+      - Part of speech
+      - Example sentence in business context
+      - Common TOEIC usage
+      - Related words`;
+
+      try {
+        console.log('Sending fallback request to Groq for word:', word);
+        const completion = await groq.chat.completions.create({
+          model: "llama-3.1-8b-instant",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.5,
+        });
+
+        console.log('Groq fallback response received');
+        return completion.choices[0].message.content;
+      } catch (fallbackError) {
+        console.error('Detailed Groq error:', fallbackError);
+        console.error('Error message:', fallbackError.message);
+        console.error('Error status:', fallbackError.status);
+        throw new Error('Failed to generate vocabulary explanation');
+      }
     }
   }
 }
