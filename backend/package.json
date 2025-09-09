@@ -40,7 +40,8 @@
     "groq-sdk": "^0.7.0",
     "langchain": "^0.0.208",
     "redis": "^4.6.10",
-    "node-cron": "^3.0.3"
+    "node-cron": "^3.0.3",
+    "faiss-node": "^0.5.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
