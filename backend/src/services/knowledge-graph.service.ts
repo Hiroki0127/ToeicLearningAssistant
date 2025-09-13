@@ -50,8 +50,8 @@ export class KnowledgeGraphService {
     const node = await prisma.knowledgeNode.findFirst({
       where: {
         OR: [
-          { title: { contains: word, mode: 'insensitive' } },
-          { description: { contains: word, mode: 'insensitive' } },
+          { title: { contains: word } },
+          { description: { contains: word } },
         ],
       },
     });
@@ -92,8 +92,8 @@ export class KnowledgeGraphService {
     const startingNode = await prisma.knowledgeNode.findFirst({
       where: {
         OR: [
-          { title: { contains: startingWord, mode: 'insensitive' } },
-          { description: { contains: startingWord, mode: 'insensitive' } },
+          { title: { contains: startingWord } },
+          { description: { contains: startingWord } },
         ],
       },
     });
@@ -149,8 +149,8 @@ export class KnowledgeGraphService {
       where: {
         OR: [
           { word: { in: conceptTitles } },
-          { definition: { contains: concept, mode: 'insensitive' } },
-          { tags: { contains: concept, mode: 'insensitive' } },
+          { definition: { contains: concept } },
+          { tags: { contains: concept } },
         ],
       },
       take: 10,
