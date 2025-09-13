@@ -11,6 +11,7 @@ import quizRoutes from '@/routes/quiz.routes';
 import notificationRoutes from '@/routes/notification.routes';
 import aiRoutes from '@/routes/ai.routes';
 import knowledgeGraphRoutes from '@/routes/knowledge-graph.routes';
+import smartRecommendationsRoutes from '@/routes/smart-recommendations.routes';
 
 // Import database utilities
 import { checkDatabaseConnection, getDatabaseStats } from '@/utils/database';
@@ -70,6 +71,7 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/knowledge-graph', knowledgeGraphRoutes);
+app.use('/api/recommendations', smartRecommendationsRoutes);
 
 // API info endpoint
 app.get('/api', (req, res) => {
@@ -84,6 +86,7 @@ app.get('/api', (req, res) => {
       notifications: '/api/notifications',
       ai: '/api/ai',
       knowledgeGraph: '/api/knowledge-graph',
+      recommendations: '/api/recommendations',
       progress: '/api/progress',
     },
   });
