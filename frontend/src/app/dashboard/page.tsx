@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/hooks/useAuth';
 import { useFlashcards } from '@/hooks/useFlashcards';
+import { useDashboard } from '@/hooks/useDashboard';
 import { 
   BookOpen, 
   TrendingUp, 
@@ -22,6 +23,7 @@ import {
 export default function DashboardPage() {
   const { user, isAuthenticated, loading } = useAuth();
   const { fetchUserFlashcards, flashcards, pagination } = useFlashcards();
+  const { dashboardData, loading: dashboardLoading, error: dashboardError } = useDashboard();
   const router = useRouter();
 
   useEffect(() => {
@@ -36,7 +38,7 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated, fetchUserFlashcards]);
 
-  if (loading) {
+  if (loading || dashboardLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -51,22 +53,20 @@ export default function DashboardPage() {
     return null;
   }
 
-  // Mock progress data (in real app, this would come from API)
-  const progressData = {
-    totalCards: 150,
-    studiedToday: 12,
-    currentStreak: 7,
-    accuracy: 85,
-    level: 'intermediate',
-    experience: 1250,
-    nextLevel: 2000,
+  // Use real dashboard data or fallback to defaults
+  const progressData = dashboardData?.progress || {
+    totalCards: 0,
+    studiedToday: 0,
+    currentStreak: 0,
+    accuracy: 0,
+    level: 'beginner',
+    experience: 0,
+    nextLevel: 'intermediate',
+    nextLevelXP: 500,
+    currentLevelXP: 0,
   };
 
-  const recentActivity = [
-    { id: 1, type: 'flashcard', word: 'procurement', result: 'correct', time: '2 min ago' },
-    { id: 2, type: 'flashcard', word: 'efficient', result: 'correct', time: '5 min ago' },
-    { id: 3, type: 'quiz', title: 'Business Vocabulary', score: '8/10', time: '1 hour ago' },
-  ];
+  const recentActivity = dashboardData?.recentActivity || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -83,7 +83,7 @@ export default function DashboardPage() {
               <div className="w-32 bg-gray-200 rounded-full h-2">
                 <div 
                   className="bg-blue-600 h-2 rounded-full" 
-                  style={{ width: `${(progressData.experience / progressData.nextLevel) * 100}%` }}
+                  style={{ width: `${progressData.nextLevelXP > 0 ? ((progressData.experience - progressData.currentLevelXP) / (progressData.nextLevelXP - progressData.currentLevelXP)) * 100 : 0}%` }}
                 ></div>
               </div>
             </div>
@@ -176,12 +176,12 @@ export default function DashboardPage() {
                 <div className="mt-6">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Experience Progress</span>
-                    <span className="text-sm text-gray-500">{progressData.experience} / {progressData.nextLevel} XP</span>
+                    <span className="text-sm text-gray-500">{progressData.experience} / {progressData.nextLevelXP} XP</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div 
                       className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300" 
-                      style={{ width: `${(progressData.experience / progressData.nextLevel) * 100}%` }}
+                      style={{ width: `${progressData.nextLevelXP > 0 ? ((progressData.experience - progressData.currentLevelXP) / (progressData.nextLevelXP - progressData.currentLevelXP)) * 100 : 0}%` }}
                     ></div>
                   </div>
                 </div>
@@ -231,12 +231,12 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{progressData.studiedToday}/20</div>
+                  <div className="text-3xl font-bold text-blue-600">{dashboardData?.dailyGoal.studied || 0}/{dashboardData?.dailyGoal.goal || 20}</div>
                   <div className="text-sm text-gray-600">cards studied today</div>
                   <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
                     <div 
                       className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${(progressData.studiedToday / 20) * 100}%` }}
+                      style={{ width: `${dashboardData?.dailyGoal.progress || 0}%` }}
                     ></div>
                   </div>
                 </div>
@@ -266,19 +266,19 @@ export default function DashboardPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Total Study Time</span>
-                    <span className="text-sm font-medium">2h 15m</span>
+                    <span className="text-sm font-medium">{Math.floor((dashboardData?.quickStats.totalStudyTime || 0) / 60)}h {(dashboardData?.quickStats.totalStudyTime || 0) % 60}m</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Cards Mastered</span>
-                    <span className="text-sm font-medium">87</span>
+                    <span className="text-sm font-medium">{dashboardData?.quickStats.cardsMastered || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Quizzes Taken</span>
-                    <span className="text-sm font-medium">12</span>
+                    <span className="text-sm font-medium">{dashboardData?.quickStats.quizzesTaken || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Average Score</span>
-                    <span className="text-sm font-medium">85%</span>
+                    <span className="text-sm font-medium">{dashboardData?.quickStats.averageScore || 0}%</span>
                   </div>
                 </div>
               </CardContent>
