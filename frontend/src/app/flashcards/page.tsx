@@ -104,10 +104,12 @@ export default function FlashcardsPage() {
               <p className="text-gray-600 mb-6">
                 Start by adding some vocabulary flashcards to study.
               </p>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Flashcard
-              </Button>
+              <Link href="/flashcards/create">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Flashcard
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>
@@ -139,10 +141,12 @@ export default function FlashcardsPage() {
                 Take Quiz
               </Button>
             </Link>
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Card
-            </Button>
+            <Link href="/flashcards/create">
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Card
+              </Button>
+            </Link>
           </div>
         </div>
 
