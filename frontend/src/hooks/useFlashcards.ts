@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '@/lib/store';
 import { flashcardService } from '@/lib/flashcards';
 import type { Flashcard, FlashcardFilters, FlashcardResponse } from '@/lib/flashcards';
@@ -14,7 +14,7 @@ export const useFlashcards = () => {
     totalPages: 0,
   });
 
-  const fetchFlashcards = async (filters: FlashcardFilters = {}) => {
+  const fetchFlashcards = useCallback(async (filters: FlashcardFilters = {}) => {
     try {
       setLoading(true);
       setError(null);
@@ -29,9 +29,9 @@ export const useFlashcards = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setFlashcards]);
 
-  const fetchUserFlashcards = async (page: number = 1, limit: number = 10) => {
+  const fetchUserFlashcards = useCallback(async (page: number = 1, limit: number = 10) => {
     try {
       setLoading(true);
       setError(null);
@@ -46,7 +46,7 @@ export const useFlashcards = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setFlashcards]);
 
   const createFlashcard = async (data: {
     word: string;

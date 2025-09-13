@@ -6,12 +6,16 @@ const prisma = new PrismaClient();
 
 export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('Dashboard stats request - user:', req.user ? 'authenticated' : 'not authenticated');
+    
     if (!req.user) {
+      console.log('No user found in request');
       badRequestResponse(res, 'Authentication required');
       return;
     }
 
     const userId = req.user.userId;
+    console.log('Getting dashboard stats for user:', userId);
 
     // Get user progress
     const userProgress = await prisma.userProgress.findUnique({

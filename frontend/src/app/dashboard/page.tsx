@@ -49,6 +49,17 @@ export default function DashboardPage() {
     );
   }
 
+  if (dashboardError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Error loading dashboard: {dashboardError}</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return null;
   }
@@ -67,6 +78,10 @@ export default function DashboardPage() {
   };
 
   const recentActivity = dashboardData?.recentActivity || [];
+
+  // Debug logging
+  console.log('Dashboard data:', dashboardData);
+  console.log('Recent activity:', recentActivity);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -266,19 +281,19 @@ export default function DashboardPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Total Study Time</span>
-                    <span className="text-sm font-medium">{Math.floor((dashboardData?.quickStats.totalStudyTime || 0) / 60)}h {(dashboardData?.quickStats.totalStudyTime || 0) % 60}m</span>
+                    <span className="text-sm font-medium text-gray-900">{Math.floor((dashboardData?.quickStats.totalStudyTime || 0) / 60)}h {(dashboardData?.quickStats.totalStudyTime || 0) % 60}m</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Cards Mastered</span>
-                    <span className="text-sm font-medium">{dashboardData?.quickStats.cardsMastered || 0}</span>
+                    <span className="text-sm font-medium text-gray-900">{dashboardData?.quickStats.cardsMastered || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Quizzes Taken</span>
-                    <span className="text-sm font-medium">{dashboardData?.quickStats.quizzesTaken || 0}</span>
+                    <span className="text-sm font-medium text-gray-900">{dashboardData?.quickStats.quizzesTaken || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Average Score</span>
-                    <span className="text-sm font-medium">{dashboardData?.quickStats.averageScore || 0}%</span>
+                    <span className="text-sm font-medium text-gray-900">{dashboardData?.quickStats.averageScore || 0}%</span>
                   </div>
                 </div>
               </CardContent>

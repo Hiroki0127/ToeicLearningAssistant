@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/hooks/useAuth';
+import { useDashboard } from '@/hooks/useDashboard';
 import { 
   TrendingUp, 
   Calendar, 
@@ -21,47 +22,29 @@ import {
 
 export default function ProgressPage() {
   const { user, isAuthenticated } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { dashboardData, loading: dashboardLoading, error: dashboardError } = useDashboard();
 
-  // Mock progress data (in real app, this would come from API)
-  const [progressData] = useState({
-    totalCards: 150,
-    studiedToday: 12,
-    currentStreak: 7,
-    longestStreak: 15,
-    accuracy: 85,
-    level: 'intermediate',
-    experience: 1250,
-    nextLevel: 2000,
-    totalStudyTime: 135, // minutes
-    averageSessionTime: 25, // minutes
-    cardsMastered: 87,
-    quizzesTaken: 12,
-    averageQuizScore: 85,
-    weeklyProgress: [
-      { day: 'Mon', cards: 8, accuracy: 75 },
-      { day: 'Tue', cards: 12, accuracy: 83 },
-      { day: 'Wed', cards: 15, accuracy: 87 },
-      { day: 'Thu', cards: 10, accuracy: 80 },
-      { day: 'Fri', cards: 18, accuracy: 92 },
-      { day: 'Sat', cards: 14, accuracy: 85 },
-      { day: 'Sun', cards: 12, accuracy: 88 },
-    ],
-    recentActivity: [
-      { id: 1, type: 'flashcard', word: 'procurement', result: 'correct', time: '2 min ago' },
-      { id: 2, type: 'flashcard', word: 'efficient', result: 'correct', time: '5 min ago' },
-      { id: 3, type: 'quiz', title: 'Business Vocabulary', score: '8/10', time: '1 hour ago' },
-      { id: 4, type: 'flashcard', word: 'negotiate', result: 'incorrect', time: '2 hours ago' },
-      { id: 5, type: 'quiz', title: 'Grammar Practice', score: '9/10', time: '3 hours ago' },
-    ]
-  });
+  // Show error if there's one
+  if (dashboardError) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-600 text-lg mb-4">Error loading progress data</div>
+            <div className="text-gray-600 mb-4">{dashboardError}</div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
-  useEffect(() => {
-    // Simulate loading
-    setTimeout(() => setLoading(false), 1000);
-  }, []);
-
-  if (loading) {
+  if (dashboardLoading) {
     return (
       <Layout>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -73,6 +56,39 @@ export default function ProgressPage() {
       </Layout>
     );
   }
+
+  // Use real dashboard data or fallback to defaults
+  const progressData = dashboardData?.progress || {
+    totalCards: 0,
+    studiedToday: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+    accuracy: 0,
+    level: 'beginner',
+    experience: 0,
+    nextLevel: 'intermediate',
+    nextLevelXP: 500,
+    currentLevelXP: 0,
+  };
+
+  const recentActivity = dashboardData?.recentActivity || [];
+  const quickStats = dashboardData?.quickStats || {
+    totalStudyTime: 0,
+    cardsMastered: 0,
+    quizzesTaken: 0,
+    averageScore: 0,
+  };
+
+  // Mock weekly progress for now (could be enhanced with real API later)
+  const weeklyProgress = [
+    { day: 'Mon', cards: Math.floor(progressData.studiedToday * 0.8), accuracy: progressData.accuracy },
+    { day: 'Tue', cards: Math.floor(progressData.studiedToday * 1.2), accuracy: progressData.accuracy + 2 },
+    { day: 'Wed', cards: progressData.studiedToday, accuracy: progressData.accuracy },
+    { day: 'Thu', cards: Math.floor(progressData.studiedToday * 0.9), accuracy: progressData.accuracy - 1 },
+    { day: 'Fri', cards: Math.floor(progressData.studiedToday * 1.1), accuracy: progressData.accuracy + 1 },
+    { day: 'Sat', cards: Math.floor(progressData.studiedToday * 0.7), accuracy: progressData.accuracy - 2 },
+    { day: 'Sun', cards: Math.floor(progressData.studiedToday * 0.6), accuracy: progressData.accuracy + 1 },
+  ];
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -167,7 +183,7 @@ export default function ProgressPage() {
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Study Time</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      {Math.floor(progressData.totalStudyTime / 60)}h {progressData.totalStudyTime % 60}m
+                      {Math.floor(quickStats.totalStudyTime / 60)}h {quickStats.totalStudyTime % 60}m
                     </p>
                   </div>
                 </div>
@@ -192,24 +208,24 @@ export default function ProgressPage() {
                           </span>
                         </span>
                         <span className="text-sm text-gray-500">
-                          {progressData.experience} / {progressData.nextLevel} XP
+                          {progressData.experience} / {progressData.nextLevelXP} XP
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-3">
                         <div 
                           className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300" 
-                          style={{ width: `${(progressData.experience / progressData.nextLevel) * 100}%` }}
+                          style={{ width: `${progressData.nextLevelXP > 0 ? ((progressData.experience - progressData.currentLevelXP) / (progressData.nextLevelXP - progressData.currentLevelXP)) * 100 : 0}%` }}
                         ></div>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center p-4 bg-gray-50 rounded-lg">
-                        <div className="text-2xl font-bold text-blue-600">{progressData.cardsMastered}</div>
+                        <div className="text-2xl font-bold text-blue-600">{quickStats.cardsMastered}</div>
                         <div className="text-sm text-gray-600">Cards Mastered</div>
                       </div>
                       <div className="text-center p-4 bg-gray-50 rounded-lg">
-                        <div className="text-2xl font-bold text-green-600">{progressData.quizzesTaken}</div>
+                        <div className="text-2xl font-bold text-green-600">{quickStats.quizzesTaken}</div>
                         <div className="text-sm text-gray-600">Quizzes Taken</div>
                       </div>
                     </div>
@@ -225,11 +241,11 @@ export default function ProgressPage() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">{progressData.quizzesTaken}</div>
+                      <div className="text-2xl font-bold text-blue-600">{quickStats.quizzesTaken}</div>
                       <div className="text-sm text-gray-600">Total Quizzes</div>
                     </div>
                     <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">{progressData.averageQuizScore}%</div>
+                      <div className="text-2xl font-bold text-green-600">{quickStats.averageScore}%</div>
                       <div className="text-sm text-gray-600">Average Score</div>
                     </div>
                     <div className="text-center p-4 bg-purple-50 rounded-lg">
@@ -291,7 +307,7 @@ export default function ProgressPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {progressData.weeklyProgress.map((day, index) => (
+                    {weeklyProgress.map((day, index) => (
                       <div key={index} className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-700 w-12">{day.day}</span>
                         <div className="flex-1 mx-4">
@@ -356,7 +372,7 @@ export default function ProgressPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {progressData.recentActivity.map((activity) => (
+                    {(dashboardData?.recentActivity || []).map((activity) => (
                       <div key={activity.id} className="flex items-center justify-between">
                         <div className="flex items-center">
                           <Activity className="h-4 w-4 text-gray-400 mr-2" />

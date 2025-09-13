@@ -12,7 +12,6 @@ import {
   User, 
   LogOut, 
   Home,
-  Plus,
   BarChart3,
   HelpCircle,
   Brain
@@ -71,12 +70,6 @@ export default function Navigation() {
                   className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   History
-                </Link>
-                <Link 
-                  href="/flashcards/create" 
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Create
                 </Link>
                 <Link 
                   href="/progress" 
@@ -197,14 +190,6 @@ export default function Navigation() {
                   >
                     <BarChart3 className="h-5 w-5 mr-3" />
                     Quiz History
-                  </Link>
-                  <Link
-                    href="/flashcards/create"
-                    className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-base font-medium transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Plus className="h-5 w-5 mr-3" />
-                    Create Flashcard
                   </Link>
                   <Link
                     href="/progress"

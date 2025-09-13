@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import api from '@/lib/api';
 
 interface DashboardStats {
   progress: {
@@ -39,45 +40,29 @@ export const useDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch('/api/dashboard/stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch dashboard stats: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const response = await api.get('/dashboard/stats');
       
-      if (data.success) {
-        setDashboardData(data.data);
+      if (response.data.success) {
+        setDashboardData(response.data.data);
       } else {
-        throw new Error(data.message || 'Failed to fetch dashboard stats');
+        throw new Error(response.data.message || 'Failed to fetch dashboard stats');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching dashboard stats:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err.response?.data?.message || err.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDashboardStats();
-  }, []);
+  }, [fetchDashboardStats]);
 
   return {
     dashboardData,
