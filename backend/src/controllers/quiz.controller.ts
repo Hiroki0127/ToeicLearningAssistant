@@ -40,7 +40,13 @@ export const getQuizzes = async (req: Request, res: Response): Promise<void> => 
       },
     });
 
-    successResponse(res, quizzes, 'Quizzes retrieved successfully');
+    // Parse questions JSON string to array
+    const quizzesWithParsedQuestions = quizzes.map(quiz => ({
+      ...quiz,
+      questions: JSON.parse(quiz.questions),
+    }));
+
+    successResponse(res, quizzesWithParsedQuestions, 'Quizzes retrieved successfully');
   } catch (error) {
     console.error('Get quizzes error:', error);
     badRequestResponse(res, 'Failed to retrieve quizzes');
@@ -71,7 +77,13 @@ export const getQuizById = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    successResponse(res, quiz, 'Quiz retrieved successfully');
+    // Parse questions JSON string to array
+    const quizWithParsedQuestions = {
+      ...quiz,
+      questions: JSON.parse(quiz.questions),
+    };
+
+    successResponse(res, quizWithParsedQuestions, 'Quiz retrieved successfully');
   } catch (error) {
     console.error('Get quiz error:', error);
     badRequestResponse(res, 'Failed to retrieve quiz');

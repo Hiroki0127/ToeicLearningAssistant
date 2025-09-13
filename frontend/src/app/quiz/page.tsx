@@ -2228,7 +2228,7 @@ export default function QuizPage() {
                     } ${selectedAnswer !== null ? 'cursor-default' : 'cursor-pointer'}`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium">{option}</span>
+                      <span className="font-medium text-gray-900">{option}</span>
                       {selectedAnswer === option && (
                         option === currentQuestion.correctAnswer ? (
                           <CheckCircle className="h-5 w-5 text-green-600" />
