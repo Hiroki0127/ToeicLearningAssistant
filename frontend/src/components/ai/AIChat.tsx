@@ -64,10 +64,24 @@ export default function AIChat() {
 
       const data = await response.json();
       
+      let aiContent = '';
+      
+      if (activeTab === 'question' && data.data) {
+        // Format the generated TOEIC question nicely
+        if (data.data.question && data.data.options) {
+          const partInfo = data.data.part ? `**TOEIC Part ${data.data.part}** - ${data.data.questionType || 'Question'}\n\n` : '';
+          aiContent = `${partInfo}**Question:**\n${data.data.question}\n\n**Options:**\n${data.data.options.map((option: string, index: number) => `${String.fromCharCode(65 + index)}. ${option}`).join('\n')}\n\n**Correct Answer:** ${data.data.correctAnswer}\n\n**Explanation:**\n${data.data.explanation || 'No explanation provided'}`;
+        } else {
+          aiContent = data.data.question || 'Sorry, I could not generate a question.';
+        }
+      } else {
+        aiContent = data.data?.explanation || data.data?.question || 'Sorry, I could not process your request.';
+      }
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'ai',
-        content: data.data?.explanation || data.data?.question || 'Sorry, I could not process your request.',
+        content: aiContent,
         timestamp: new Date(),
       };
 
@@ -125,9 +139,9 @@ export default function AIChat() {
                 <Brain className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>Start a conversation with your AI study assistant!</p>
                 <p className="text-sm mt-2">
-                  {activeTab === 'vocabulary' && 'Ask about any vocabulary word'}
-                  {activeTab === 'grammar' && 'Ask about grammar rules'}
-                  {activeTab === 'question' && 'Request a TOEIC question on any topic'}
+                  {activeTab === 'vocabulary' && 'Type any vocabulary word to get a detailed explanation'}
+                  {activeTab === 'grammar' && 'Ask about specific grammar rules or concepts'}
+                  {activeTab === 'question' && 'Type a topic (e.g., "prepositions", "business email", "verb tenses", "office memo") to generate a TOEIC Reading Part 5, 6, or 7 practice question'}
                 </p>
               </div>
             ) : (
