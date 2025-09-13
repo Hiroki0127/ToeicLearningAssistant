@@ -10,6 +10,7 @@ import flashcardRoutes from '@/routes/flashcard.routes';
 import quizRoutes from '@/routes/quiz.routes';
 import notificationRoutes from '@/routes/notification.routes';
 import aiRoutes from '@/routes/ai.routes';
+import knowledgeGraphRoutes from '@/routes/knowledge-graph.routes';
 
 // Import database utilities
 import { checkDatabaseConnection, getDatabaseStats } from '@/utils/database';
@@ -68,6 +69,7 @@ app.use('/api/flashcards', flashcardRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/knowledge-graph', knowledgeGraphRoutes);
 
 // API info endpoint
 app.get('/api', (req, res) => {
@@ -81,6 +83,7 @@ app.get('/api', (req, res) => {
       quiz: '/api/quiz',
       notifications: '/api/notifications',
       ai: '/api/ai',
+      knowledgeGraph: '/api/knowledge-graph',
       progress: '/api/progress',
     },
   });
