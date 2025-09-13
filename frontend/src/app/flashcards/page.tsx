@@ -1,60 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Flashcard } from '@/components/flashcards/Flashcard';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Layout from '@/components/layout/Layout';
 import { useAppStore } from '@/lib/store';
+import { useFlashcards } from '@/hooks/useFlashcards';
 import type { Flashcard as FlashcardType } from '@/types';
 import { BookOpen, Plus, Settings, HelpCircle } from 'lucide-react';
-
-// Sample flashcards for testing
-const sampleFlashcards: FlashcardType[] = [
-  {
-    id: '1',
-    word: 'invoice',
-    definition: 'A document listing goods or services provided and their prices',
-    example: 'Please send me the invoice for the consulting services.',
-    partOfSpeech: 'noun',
-    difficulty: 'medium',
-    category: 'business',
-    tags: ['business', 'finance', 'documentation'],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '2',
-    word: 'procurement',
-    definition: 'The process of obtaining goods or services',
-    example: 'The procurement department handles all vendor contracts.',
-    partOfSpeech: 'noun',
-    difficulty: 'hard',
-    category: 'business',
-    tags: ['business', 'purchasing', 'management'],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: '3',
-    word: 'efficient',
-    definition: 'Achieving maximum productivity with minimum wasted effort',
-    example: 'The new system is much more efficient than the old one.',
-    partOfSpeech: 'adjective',
-    difficulty: 'easy',
-    category: 'general',
-    tags: ['productivity', 'performance', 'optimization'],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
 
 export default function FlashcardsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [incorrectAnswers, setIncorrectAnswers] = useState(0);
   const { addStudySession } = useAppStore();
+  const { flashcards, loading, error } = useFlashcards();
 
   const handleCorrect = () => {
     setCorrectAnswers(prev => prev + 1);
@@ -65,7 +27,7 @@ export default function FlashcardsPage() {
   };
 
   const handleNext = () => {
-    if (currentIndex < sampleFlashcards.length - 1) {
+    if (currentIndex < flashcards.length - 1) {
       setCurrentIndex(prev => prev + 1);
     }
   };
@@ -82,7 +44,7 @@ export default function FlashcardsPage() {
       userId: 'demo-user',
       startTime: new Date(),
       endTime: new Date(),
-      cardsStudied: sampleFlashcards.length,
+      cardsStudied: flashcards.length,
       correctAnswers,
       incorrectAnswers,
       sessionType: 'flashcards' as const,
@@ -90,7 +52,40 @@ export default function FlashcardsPage() {
     addStudySession(session);
   };
 
-  if (sampleFlashcards.length === 0) {
+  // Reset current index when flashcards change
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [flashcards]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gray-50 py-12">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="text-center">
+              <div className="text-lg text-gray-600">Loading flashcards...</div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-gray-50 py-12">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="text-center">
+              <div className="text-lg text-red-600">Error loading flashcards: {error}</div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (flashcards.length === 0) {
     return (
       <Layout>
         <div className="min-h-screen bg-gray-50 py-12">
@@ -154,17 +149,17 @@ export default function FlashcardsPage() {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-gray-600">
-              Progress: {currentIndex + 1} of {sampleFlashcards.length}
+              Progress: {currentIndex + 1} of {flashcards.length}
             </span>
             <span className="text-sm text-gray-600">
-              {Math.round(((currentIndex + 1) / sampleFlashcards.length) * 100)}%
+              {flashcards.length > 0 ? Math.round(((currentIndex + 1) / flashcards.length) * 100) : 0}%
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{
-                width: `${((currentIndex + 1) / sampleFlashcards.length) * 100}%`,
+                width: `${flashcards.length > 0 ? ((currentIndex + 1) / flashcards.length) * 100 : 0}%`,
               }}
             />
           </div>
@@ -197,7 +192,7 @@ export default function FlashcardsPage() {
           <Card>
             <CardContent className="text-center py-4">
               <div className="text-2xl font-bold text-purple-600">
-                {sampleFlashcards.length - (currentIndex + 1)}
+                {flashcards.length - (currentIndex + 1)}
               </div>
               <div className="text-sm text-gray-600">Remaining</div>
             </CardContent>
@@ -206,17 +201,17 @@ export default function FlashcardsPage() {
 
         {/* Flashcard */}
         <Flashcard
-          flashcard={sampleFlashcards[currentIndex]}
+          flashcard={flashcards[currentIndex]}
           onNext={handleNext}
           onPrevious={handlePrevious}
           onCorrect={handleCorrect}
           onIncorrect={handleIncorrect}
           isFirst={currentIndex === 0}
-          isLast={currentIndex === sampleFlashcards.length - 1}
+          isLast={currentIndex === flashcards.length - 1}
         />
 
         {/* Session End Button */}
-        {currentIndex === sampleFlashcards.length - 1 && (
+        {currentIndex === flashcards.length - 1 && (
           <div className="text-center mt-8">
             <Button onClick={handleSessionEnd} size="lg">
               End Study Session

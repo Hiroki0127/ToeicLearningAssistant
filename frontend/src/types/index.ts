@@ -23,8 +23,6 @@ export interface Flashcard {
   example: string;
   partOfSpeech: 'noun' | 'verb' | 'adjective' | 'adverb' | 'preposition' | 'conjunction' | 'interjection';
   difficulty: 'easy' | 'medium' | 'hard';
-  category: string; // e.g., 'business', 'academic', 'daily-life'
-  tags: string[];
   createdAt: Date;
   updatedAt: Date;
   userId?: string; // for user-created cards
@@ -123,7 +121,6 @@ export interface AIQuestion {
   explanation: string;
   relatedConcepts: RelatedConcept[];
   difficulty: 'easy' | 'medium' | 'hard';
-  category: string;
 }
 
 // API Response types

@@ -2338,12 +2338,12 @@ export default function QuizPage() {
     <Layout>
       <div className="max-w-6xl mx-auto p-6">
         <div className="mb-8">
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">TOEIC Quizzes</h1>
               <p className="text-gray-600">Test your knowledge with our interactive TOEIC-style quizzes</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() => {
                   if (!showAnalytics) {
@@ -2352,6 +2352,7 @@ export default function QuizPage() {
                   setShowAnalytics(!showAnalytics);
                 }}
                 variant="outline"
+                size="sm"
                 className="flex items-center gap-2"
               >
                 {showAnalytics ? (
@@ -2370,6 +2371,7 @@ export default function QuizPage() {
               <Button
                 onClick={() => router.push('/quiz/history')}
                 variant="outline"
+                size="sm"
                 className="flex items-center gap-2"
               >
                 <BarChart3 className="w-4 h-4" />
@@ -2384,6 +2386,7 @@ export default function QuizPage() {
                   setShowRecommendations(!showRecommendations);
                 }}
                 variant="outline"
+                size="sm"
                 className="flex items-center gap-2"
               >
                 {showRecommendations ? (
@@ -2407,6 +2410,7 @@ export default function QuizPage() {
                   setShowProgressCharts(!showProgressCharts);
                 }}
                 variant="outline"
+                size="sm"
                 className="flex items-center gap-2"
               >
                 {showProgressCharts ? (
@@ -2430,6 +2434,7 @@ export default function QuizPage() {
                   setShowStudyReminders(!showStudyReminders);
                 }}
                 variant="outline"
+                size="sm"
                 className="flex items-center gap-2"
               >
                 {showStudyReminders ? (

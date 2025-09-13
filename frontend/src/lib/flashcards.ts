@@ -7,8 +7,6 @@ export interface CreateFlashcardData {
   example: string;
   partOfSpeech: string;
   difficulty: string;
-  category: string;
-  tags: string[];
 }
 
 export interface UpdateFlashcardData extends Partial<CreateFlashcardData> {
@@ -19,7 +17,6 @@ export interface FlashcardFilters {
   page?: number;
   limit?: number;
   search?: string;
-  category?: string;
   difficulty?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
@@ -44,7 +41,6 @@ export const flashcardService = {
     if (filters.page) params.append('page', filters.page.toString());
     if (filters.limit) params.append('limit', filters.limit.toString());
     if (filters.search) params.append('search', filters.search);
-    if (filters.category) params.append('category', filters.category);
     if (filters.difficulty) params.append('difficulty', filters.difficulty);
     if (filters.sortBy) params.append('sortBy', filters.sortBy);
     if (filters.sortOrder) params.append('sortOrder', filters.sortOrder);
@@ -92,10 +88,6 @@ export const flashcardService = {
     return response.data.data;
   },
 
-  // Get flashcards by category
-  async getFlashcardsByCategory(category: string, page: number = 1, limit: number = 10): Promise<FlashcardResponse> {
-    return this.getFlashcards({ category, page, limit });
-  },
 
   // Get flashcards by difficulty
   async getFlashcardsByDifficulty(difficulty: string, page: number = 1, limit: number = 10): Promise<FlashcardResponse> {

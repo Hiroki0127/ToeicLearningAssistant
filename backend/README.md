@@ -126,7 +126,6 @@ Get all flashcards with pagination and filtering.
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 10)
 - `search`: Search term
-- `category`: Filter by category
 - `difficulty`: Filter by difficulty
 - `sortBy`: Sort field (createdAt, updatedAt, word, difficulty)
 - `sortOrder`: Sort order (asc, desc)
@@ -144,9 +143,7 @@ Create a new flashcard (requires authentication).
   "definition": "The process of obtaining goods or services",
   "example": "The procurement department handles all vendor contracts.",
   "partOfSpeech": "noun",
-  "difficulty": "hard",
-  "category": "business",
-  "tags": ["business", "purchasing", "management"]
+  "difficulty": "hard"
 }
 ```
 

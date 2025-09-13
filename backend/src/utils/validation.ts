@@ -32,8 +32,6 @@ export const createFlashcardSchema = z.object({
   example: z.string().min(1, 'Example is required').max(300, 'Example must be less than 300 characters'),
   partOfSpeech: z.enum(['noun', 'verb', 'adjective', 'adverb', 'preposition', 'conjunction', 'interjection']),
   difficulty: z.enum(['easy', 'medium', 'hard']),
-  category: z.string().min(1, 'Category is required').max(50, 'Category must be less than 50 characters'),
-  tags: z.array(z.string()).max(10, 'Maximum 10 tags allowed'),
 });
 
 export const updateFlashcardSchema = createFlashcardSchema.partial().extend({

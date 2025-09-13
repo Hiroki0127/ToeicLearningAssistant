@@ -54,8 +54,6 @@ export const useFlashcards = () => {
     example: string;
     partOfSpeech: string;
     difficulty: string;
-    category: string;
-    tags: string[];
   }) => {
     try {
       setLoading(true);
@@ -123,9 +121,6 @@ export const useFlashcards = () => {
     return fetchFlashcards({ search: searchTerm, page, limit: 10 });
   };
 
-  const getFlashcardsByCategory = async (category: string, page: number = 1) => {
-    return fetchFlashcards({ category, page, limit: 10 });
-  };
 
   const getFlashcardsByDifficulty = async (difficulty: string, page: number = 1) => {
     return fetchFlashcards({ difficulty, page, limit: 10 });
@@ -147,7 +142,6 @@ export const useFlashcards = () => {
     deleteFlashcard: deleteFlashcardById,
     reviewFlashcard,
     searchFlashcards,
-    getFlashcardsByCategory,
     getFlashcardsByDifficulty,
     clearError,
   };

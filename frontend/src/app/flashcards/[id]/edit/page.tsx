@@ -19,8 +19,7 @@ export default function EditFlashcardPage() {
     definition: '',
     example: '',
     partOfSpeech: 'noun',
-    difficulty: 'beginner',
-    tags: ''
+    difficulty: 'easy'
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -36,8 +35,7 @@ export default function EditFlashcardPage() {
             definition: flashcard.definition,
             example: flashcard.example,
             partOfSpeech: flashcard.partOfSpeech || 'noun',
-            difficulty: flashcard.difficulty || 'beginner',
-            tags: flashcard.tags?.join(', ') || ''
+            difficulty: flashcard.difficulty || 'easy'
           });
         }
       } catch (error) {
@@ -90,10 +88,7 @@ export default function EditFlashcardPage() {
     }
 
     try {
-      const flashcardData = {
-        ...formData,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-      };
+      const flashcardData = formData;
 
       await updateFlashcard(flashcardId, flashcardData);
       router.push('/flashcards');
@@ -256,29 +251,10 @@ export default function EditFlashcardPage() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
                 </select>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
-                  Tags
-                </label>
-                <input
-                  type="text"
-                  id="tags"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter tags separated by commas (e.g., business, finance, TOEIC)"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Add tags to help organize your flashcards
-                </p>
               </div>
 
               {/* Submit Button */}

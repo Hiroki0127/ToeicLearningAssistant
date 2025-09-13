@@ -30,7 +30,7 @@ export const createFlashcard = async (req: Request, res: Response): Promise<void
 
 export const getFlashcards = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { page = 1, limit = 10, search, category, difficulty, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const { page = 1, limit = 10, search, difficulty, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
     
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
@@ -42,12 +42,7 @@ export const getFlashcards = async (req: Request, res: Response): Promise<void> 
       where.OR = [
         { word: { contains: search as string, mode: 'insensitive' } },
         { definition: { contains: search as string, mode: 'insensitive' } },
-        { category: { contains: search as string, mode: 'insensitive' } },
       ];
-    }
-
-    if (category) {
-      where.category = category;
     }
 
     if (difficulty) {

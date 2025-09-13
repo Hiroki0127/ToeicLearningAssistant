@@ -21,8 +21,6 @@ export class RAGService {
           definition: true,
           example: true,
           partOfSpeech: true,
-          category: true,
-          tags: true,
         },
       });
 

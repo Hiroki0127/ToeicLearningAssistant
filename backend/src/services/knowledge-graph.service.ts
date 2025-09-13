@@ -150,7 +150,6 @@ export class KnowledgeGraphService {
         OR: [
           { word: { in: conceptTitles } },
           { definition: { contains: concept } },
-          { tags: { contains: concept } },
         ],
       },
       take: 10,

@@ -19,8 +19,7 @@ async function viewFlashcards() {
       console.log(`${index + 1}. ${card.word.toUpperCase()}`);
       console.log(`   Definition: ${card.definition}`);
       console.log(`   Example: ${card.example}`);
-      console.log(`   Category: ${card.category} | Difficulty: ${card.difficulty}`);
-      console.log(`   Tags: ${card.tags}`);
+      console.log(`   Part of Speech: ${card.partOfSpeech} | Difficulty: ${card.difficulty}`);
       console.log(`   Created: ${card.createdAt.toLocaleDateString()}`);
       console.log('');
     });

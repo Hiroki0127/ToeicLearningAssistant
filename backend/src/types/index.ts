@@ -24,8 +24,6 @@ export interface Flashcard {
   example: string;
   partOfSpeech: 'noun' | 'verb' | 'adjective' | 'adverb' | 'preposition' | 'conjunction' | 'interjection';
   difficulty: 'easy' | 'medium' | 'hard';
-  category: string;
-  tags: string[];
   createdAt: Date;
   updatedAt: Date;
   userId?: string;
@@ -168,8 +166,6 @@ export interface CreateFlashcardRequest {
   example: string;
   partOfSpeech: string;
   difficulty: string;
-  category: string;
-  tags: string[];
 }
 
 export interface UpdateFlashcardRequest extends Partial<CreateFlashcardRequest> {
@@ -211,8 +207,6 @@ export interface DatabaseFlashcard {
   example: string;
   partOfSpeech: string;
   difficulty: string;
-  category: string;
-  tags: string[];
   createdAt: Date;
   updatedAt: Date;
   userId?: string;

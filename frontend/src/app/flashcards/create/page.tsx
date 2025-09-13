@@ -15,8 +15,7 @@ export default function CreateFlashcardPage() {
     definition: '',
     example: '',
     partOfSpeech: 'noun',
-    difficulty: 'beginner',
-    tags: ''
+    difficulty: 'easy'
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -45,6 +44,10 @@ export default function CreateFlashcardPage() {
       newErrors.example = 'Example sentence is required';
     }
 
+    if (!formData.partOfSpeech.trim()) {
+      newErrors.partOfSpeech = 'Part of speech is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -57,12 +60,7 @@ export default function CreateFlashcardPage() {
     }
 
     try {
-      const flashcardData = {
-        ...formData,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-      };
-
-      await createFlashcard(flashcardData);
+      await createFlashcard(formData);
       router.push('/flashcards');
     } catch (error) {
       console.error('Error creating flashcard:', error);
@@ -158,14 +156,16 @@ export default function CreateFlashcardPage() {
               {/* Part of Speech */}
               <div>
                 <label htmlFor="partOfSpeech" className="block text-sm font-medium text-gray-700 mb-2">
-                  Part of Speech
+                  Part of Speech *
                 </label>
                 <select
                   id="partOfSpeech"
                   name="partOfSpeech"
                   value={formData.partOfSpeech}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.partOfSpeech ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 >
                   <option value="noun">Noun</option>
                   <option value="verb">Verb</option>
@@ -176,6 +176,9 @@ export default function CreateFlashcardPage() {
                   <option value="pronoun">Pronoun</option>
                   <option value="interjection">Interjection</option>
                 </select>
+                {errors.partOfSpeech && (
+                  <p className="mt-1 text-sm text-red-600">{errors.partOfSpeech}</p>
+                )}
               </div>
 
               {/* Difficulty */}
@@ -190,29 +193,10 @@ export default function CreateFlashcardPage() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
                 </select>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
-                  Tags
-                </label>
-                <input
-                  type="text"
-                  id="tags"
-                  name="tags"
-                  value={formData.tags}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter tags separated by commas (e.g., business, finance, TOEIC)"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Add tags to help organize your flashcards
-                </p>
               </div>
 
               {/* Submit Button */}

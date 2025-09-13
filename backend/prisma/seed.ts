@@ -13,8 +13,6 @@ async function main() {
       example: 'The procurement department handles all vendor contracts.',
       partOfSpeech: 'noun',
       difficulty: 'hard',
-      category: 'business',
-      tags: 'business,purchasing,management',
     },
     {
       word: 'invoice',
@@ -22,8 +20,6 @@ async function main() {
       example: 'Please send me the invoice for the consulting services.',
       partOfSpeech: 'noun',
       difficulty: 'medium',
-      category: 'business',
-      tags: 'business,finance,documentation',
     },
     {
       word: 'efficient',
@@ -31,8 +27,6 @@ async function main() {
       example: 'The new system is much more efficient than the old one.',
       partOfSpeech: 'adjective',
       difficulty: 'easy',
-      category: 'general',
-      tags: 'productivity,performance,optimization',
     },
     {
       word: 'deadline',
@@ -40,8 +34,6 @@ async function main() {
       example: 'The project deadline is next Friday.',
       partOfSpeech: 'noun',
       difficulty: 'easy',
-      category: 'business',
-      tags: 'business,time,project',
     },
     {
       word: 'negotiate',
@@ -49,8 +41,6 @@ async function main() {
       example: 'We need to negotiate the terms of the contract.',
       partOfSpeech: 'verb',
       difficulty: 'medium',
-      category: 'business',
-      tags: 'business,agreement,discussion',
     },
     {
       word: 'revenue',
@@ -58,8 +48,6 @@ async function main() {
       example: 'The company\'s revenue increased by 15% this year.',
       partOfSpeech: 'noun',
       difficulty: 'medium',
-      category: 'business',
-      tags: 'business,finance,income',
     },
     {
       word: 'implement',
@@ -67,8 +55,6 @@ async function main() {
       example: 'We will implement the new software next month.',
       partOfSpeech: 'verb',
       difficulty: 'medium',
-      category: 'general',
-      tags: 'action,execution,planning',
     },
     {
       word: 'strategy',
@@ -76,8 +62,6 @@ async function main() {
       example: 'The company developed a new marketing strategy.',
       partOfSpeech: 'noun',
       difficulty: 'medium',
-      category: 'business',
-      tags: 'business,planning,goal',
     },
     {
       word: 'collaborate',
@@ -85,8 +69,6 @@ async function main() {
       example: 'The teams will collaborate on this project.',
       partOfSpeech: 'verb',
       difficulty: 'medium',
-      category: 'general',
-      tags: 'teamwork,cooperation,project',
     },
     {
       word: 'innovation',
@@ -94,8 +76,6 @@ async function main() {
       example: 'The company is known for its innovation in technology.',
       partOfSpeech: 'noun',
       difficulty: 'medium',
-      category: 'business',
-      tags: 'business,creativity,technology',
     },
     {
       word: 'sustainable',
@@ -103,8 +83,6 @@ async function main() {
       example: 'We need to find sustainable solutions for energy.',
       partOfSpeech: 'adjective',
       difficulty: 'medium',
-      category: 'general',
-      tags: 'environment,maintenance,long-term',
     },
     {
       word: 'leverage',
@@ -112,8 +90,6 @@ async function main() {
       example: 'We can leverage our existing technology.',
       partOfSpeech: 'verb',
       difficulty: 'hard',
-      category: 'business',
-      tags: 'business,advantage,utilization',
     },
     {
       word: 'paradigm',
@@ -121,8 +97,6 @@ async function main() {
       example: 'This represents a paradigm shift in our industry.',
       partOfSpeech: 'noun',
       difficulty: 'hard',
-      category: 'general',
-      tags: 'pattern,example,model',
     },
     {
       word: 'synergy',
@@ -130,8 +104,6 @@ async function main() {
       example: 'The merger created great synergy between the two companies.',
       partOfSpeech: 'noun',
       difficulty: 'hard',
-      category: 'business',
-      tags: 'business,interaction,combination',
     },
     {
       word: 'optimize',
@@ -139,8 +111,6 @@ async function main() {
       example: 'We need to optimize our production process.',
       partOfSpeech: 'verb',
       difficulty: 'medium',
-      category: 'general',
-      tags: 'improvement,efficiency,process',
     },
   ];
 
