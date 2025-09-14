@@ -4,18 +4,25 @@ import { successResponse, badRequestResponse } from '../utils/response';
 
 export const generateQuestion = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('Generate question request body:', req.body);
     const { topic, difficulty = 'medium' } = req.body;
 
     if (!topic) {
+      console.log('No topic provided');
       badRequestResponse(res, 'Topic is required');
       return;
     }
 
+    console.log('Generating question for topic:', topic, 'difficulty:', difficulty);
     const question = await AIService.generateTOEICQuestion(topic, difficulty);
+    console.log('Generated question:', question);
+    
     successResponse(res, question, 'Question generated successfully');
   } catch (error) {
     console.error('Generate question error:', error);
-    badRequestResponse(res, 'Failed to generate question');
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    badRequestResponse(res, `Failed to generate question: ${error.message}`);
   }
 };
 

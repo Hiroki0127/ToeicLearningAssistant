@@ -36,10 +36,17 @@ export default function AIChat() {
 
     try {
       const token = localStorage.getItem('auth-token');
+      console.log('Auth token:', token ? 'Found' : 'Not found');
+      
       const headers = {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` }),
       };
+      
+      console.log('Request headers:', headers);
+      console.log('Request body:', activeTab === 'question' ? { topic: input, difficulty: 'medium' } : 
+                  activeTab === 'grammar' ? { question: input, userAnswer: 'A' } : 
+                  { word: input });
 
       let response;
       if (activeTab === 'vocabulary') {
@@ -62,17 +69,152 @@ export default function AIChat() {
         });
       }
 
-      const data = await response.json();
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      let data;
+      try {
+        data = await response.json();
+        console.log('Response data:', data);
+      } catch (jsonError) {
+        console.error('Failed to parse JSON response:', jsonError);
+        const textResponse = await response.text();
+        console.log('Raw response text:', textResponse);
+        
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: `❌ **Error:** Invalid response from server (${response.status} ${response.statusText})\n\nRaw response: ${textResponse}`,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, aiMessage]);
+        return;
+      }
+      
+      // Check for errors first
+      if (!response.ok) {
+        const errorMessage = data.message || data.error || `HTTP ${response.status}: ${response.statusText}`;
+        const validationErrors = data.validationErrors ? `\n\nValidation errors: ${JSON.stringify(data.validationErrors, null, 2)}` : '';
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'ai',
+          content: `❌ **Error:** ${errorMessage}${validationErrors}\n\nPlease make sure you are logged in and try again.`,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, aiMessage]);
+        return;
+      }
       
       let aiContent = '';
       
       if (activeTab === 'question' && data.data) {
-        // Format the generated TOEIC question nicely
-        if (data.data.question && data.data.options) {
-          const partInfo = data.data.part ? `**TOEIC Part ${data.data.part}** - ${data.data.questionType || 'Question'}\n\n` : '';
-          aiContent = `${partInfo}**Question:**\n${data.data.question}\n\n**Options:**\n${data.data.options.map((option: string, index: number) => `${String.fromCharCode(65 + index)}. ${option}`).join('\n')}\n\n**Correct Answer:** ${data.data.correctAnswer}\n\n**Explanation:**\n${data.data.explanation || 'No explanation provided'}`;
-        } else {
-          aiContent = data.data.question || 'Sorry, I could not generate a question.';
+        // Format the generated TOEIC question nicely with fallback handling
+        try {
+          console.log('Formatting question data:', data.data);
+          
+          // Check for Part 6 format (passage with multiple questions)
+          if (data.data.part === '6' && data.data.passage && data.data.questions) {
+            const partInfo = `**TOEIC Part ${data.data.part}** - ${data.data.questionType || 'Text Completion'}\n\n`;
+            let questionsText = '';
+            
+            const questions = Array.isArray(data.data.questions) ? data.data.questions : [];
+            questions.forEach((q: any, index: number) => {
+              const questionNum = q.number || (131 + index);
+              
+              if (q.options && Array.isArray(q.options)) {
+                // Get the correct answer before shuffling
+                const originalCorrectAnswer = q.correctAnswer || 'A';
+                const correctAnswerIndex = ['A', 'B', 'C', 'D'].indexOf(originalCorrectAnswer);
+                const correctOption = q.options[correctAnswerIndex];
+                
+                // Shuffle options to randomize correct answer position
+                const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+                
+                // Find the new position of the correct answer
+                const newCorrectIndex = shuffledOptions.findIndex(option => option === correctOption);
+                const newCorrectAnswer = ['A', 'B', 'C', 'D'][newCorrectIndex];
+                
+                questionsText += `**${questionNum}.** ${q.question}\n`;
+                questionsText += shuffledOptions.map((option: string, optIndex: number) => 
+                  `${String.fromCharCode(65 + optIndex)}. ${option}`
+                ).join('\n') + '\n\n';
+                questionsText += `**Answer:** ${newCorrectAnswer}\n\n`;
+              } else {
+                questionsText += `**${questionNum}.** ${q.question}\nA. [Option A]\nB. [Option B]\nC. [Option C]\nD. [Option D]\n\n**Answer:** ${q.correctAnswer || 'A'}\n\n`;
+              }
+            });
+            
+            aiContent = `${partInfo}**Passage:**\n${data.data.passage}\n\n**Questions:**\n${questionsText}**Explanation:**\n${data.data.explanation || 'No explanation provided'}`;
+            
+          } 
+          // Check for Part 7 format (passage with multiple questions)
+          else if (data.data.part === '7' && data.data.passage && data.data.questions) {
+            const partInfo = `**TOEIC Part ${data.data.part}** - ${data.data.questionType || 'Reading Comprehension'}\n\n`;
+            let questionsText = '';
+            
+            const questions = Array.isArray(data.data.questions) ? data.data.questions : [];
+            questions.forEach((q: any, index: number) => {
+              const questionNum = q.number || (161 + index);
+              
+              if (q.options && Array.isArray(q.options)) {
+                // Get the correct answer before shuffling
+                const originalCorrectAnswer = q.correctAnswer || 'A';
+                const correctAnswerIndex = ['A', 'B', 'C', 'D'].indexOf(originalCorrectAnswer);
+                const correctOption = q.options[correctAnswerIndex];
+                
+                // Shuffle options to randomize correct answer position
+                const shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+                
+                // Find the new position of the correct answer
+                const newCorrectIndex = shuffledOptions.findIndex(option => option === correctOption);
+                const newCorrectAnswer = ['A', 'B', 'C', 'D'][newCorrectIndex];
+                
+                questionsText += `**${questionNum}.** ${q.question}\n`;
+                questionsText += shuffledOptions.map((option: string, optIndex: number) => 
+                  `${String.fromCharCode(65 + optIndex)}. ${option}`
+                ).join('\n') + '\n\n';
+                questionsText += `**Answer:** ${newCorrectAnswer}\n\n`;
+              } else {
+                questionsText += `**${questionNum}.** ${q.question}\nA. [Option A]\nB. [Option B]\nC. [Option C]\nD. [Option D]\n\n**Answer:** ${q.correctAnswer || 'A'}\n\n`;
+              }
+            });
+            
+            aiContent = `${partInfo}**Passage:**\n${data.data.passage}\n\n**Questions:**\n${questionsText}**Explanation:**\n${data.data.explanation || 'No explanation provided'}`;
+            
+          }
+          // Check for Part 5 format (single question with options)
+          else if (data.data.part === '5' && data.data.question && data.data.options) {
+            const partInfo = `**TOEIC Part ${data.data.part}** - ${data.data.questionType || 'Incomplete Sentences'}\n\n`;
+            
+            // Get the correct answer before shuffling
+            const originalCorrectAnswer = data.data.correctAnswer || 'A';
+            const options = Array.isArray(data.data.options) ? data.data.options : ['Option A', 'Option B', 'Option C', 'Option D'];
+            const correctAnswerIndex = ['A', 'B', 'C', 'D'].indexOf(originalCorrectAnswer);
+            const correctOption = options[correctAnswerIndex];
+            
+            // Shuffle options to randomize correct answer position
+            const shuffledOptions = [...options].sort(() => Math.random() - 0.5);
+            
+            // Find the new position of the correct answer
+            const newCorrectIndex = shuffledOptions.findIndex(option => option === correctOption);
+            const newCorrectAnswer = ['A', 'B', 'C', 'D'][newCorrectIndex];
+            
+            // Format the question to highlight the blank if it's Part 5
+            const questionText = data.data.question.includes('_____') 
+              ? data.data.question.replace('_____', '**_____**') 
+              : data.data.question;
+            
+            aiContent = `${partInfo}**Question:**\n${questionText}\n\n**Options:**\n${shuffledOptions.map((option: string, index: number) => `${String.fromCharCode(65 + index)}. ${option}`).join('\n')}\n\n**Correct Answer:** ${newCorrectAnswer}\n\n**Explanation:**\n${data.data.explanation || 'No explanation provided'}`;
+            
+          } else {
+            // Generic fallback for unexpected formats
+            console.log('Unexpected format, data structure:', data.data);
+            aiContent = `**Generated Content:**\n${JSON.stringify(data.data, null, 2)}\n\n*Note: This response had an unexpected format. Please try again.*`;
+          }
+        } catch (formatError) {
+          console.error('Error formatting question:', formatError);
+          const errorMessage = formatError instanceof Error ? formatError.message : String(formatError);
+          aiContent = `**Error formatting question:** ${errorMessage}\n\n**Raw data:** ${JSON.stringify(data.data, null, 2)}`;
         }
       } else {
         aiContent = data.data?.explanation || data.data?.question || 'Sorry, I could not process your request.';
@@ -102,9 +244,9 @@ export default function AIChat() {
           <h2 className="text-xl font-semibold">AI Study Assistant</h2>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-4">
           <Button
-            variant={activeTab === 'vocabulary' ? 'default' : 'outline'}
+            variant={activeTab === 'vocabulary' ? 'primary' : 'outline'}
             size="sm"
             onClick={() => setActiveTab('vocabulary')}
           >
@@ -112,7 +254,7 @@ export default function AIChat() {
             Vocabulary
           </Button>
           <Button
-            variant={activeTab === 'grammar' ? 'default' : 'outline'}
+            variant={activeTab === 'grammar' ? 'primary' : 'outline'}
             size="sm"
             onClick={() => setActiveTab('grammar')}
           >
@@ -120,7 +262,7 @@ export default function AIChat() {
             Grammar
           </Button>
           <Button
-            variant={activeTab === 'question' ? 'default' : 'outline'}
+            variant={activeTab === 'question' ? 'primary' : 'outline'}
             size="sm"
             onClick={() => setActiveTab('question')}
           >
@@ -128,6 +270,7 @@ export default function AIChat() {
             Generate Question
           </Button>
         </div>
+        
       </CardHeader>
 
       <CardContent>
@@ -141,7 +284,7 @@ export default function AIChat() {
                 <p className="text-sm mt-2">
                   {activeTab === 'vocabulary' && 'Type any vocabulary word to get a detailed explanation'}
                   {activeTab === 'grammar' && 'Ask about specific grammar rules or concepts'}
-                  {activeTab === 'question' && 'Type a topic (e.g., "prepositions", "business email", "verb tenses", "office memo") to generate a TOEIC Reading Part 5, 6, or 7 practice question'}
+                  {activeTab === 'question' && 'Type a topic (e.g., "prepositions", "business email", "company news") to generate a TOEIC question'}
                 </p>
               </div>
             ) : (

@@ -21,7 +21,7 @@ An AI-powered study app with vocab flashcards, daily reminders, and progress tra
 - **Frontend**: React + Next.js
 - **Backend**: Node.js + Express
 - **Database**: PostgreSQL
-- **AI/NLP**: LangChain, OpenAI API
+- **AI/NLP**: LangChain, Groq API
 - **Vector Database**: FAISS/Weaviate
 - **Knowledge Graph**: Neo4j
 - **Hosting**: Vercel (Frontend), Railway (Backend)

@@ -60,7 +60,7 @@ ToeicLearningAssistant/
 - **Knowledge Graph**: Neo4j for concept relationships
 
 ### AI Integration
-- **RAG Pipeline**: LangChain + OpenAI for dynamic Q&A
+- **RAG Pipeline**: LangChain + Groq API for dynamic Q&A
 - **Vector Database**: FAISS for semantic search
 - **Knowledge Graph**: Neo4j for concept relationships
 - **Memory System**: Redis for user learning patterns
@@ -77,5 +77,5 @@ ToeicLearningAssistant/
 - **Frontend**: Vercel for Next.js hosting
 - **Backend**: Railway for Node.js hosting
 - **Database**: Supabase for PostgreSQL
-- **AI Services**: OpenAI API, Pinecone for vectors
+- **AI Services**: Groq API, FAISS for vectors
 - **Monitoring**: Vercel Analytics + custom logging
