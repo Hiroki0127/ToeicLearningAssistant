@@ -67,6 +67,7 @@ export default function QuizPage() {
   const [insightsData, setInsightsData] = useState<any>(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [showCustomQuizCreator, setShowCustomQuizCreator] = useState(false);
+  const [showSampleQuizzes, setShowSampleQuizzes] = useState(false);
   const [customQuizData, setCustomQuizData] = useState({
     title: '',
     description: '',
@@ -5015,13 +5016,8 @@ export default function QuizPage() {
                 <h2 className="text-2xl font-bold text-gray-900">My TOEIC Quizzes</h2>
               </div>
               
-              <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => {
-                // Show sample quizzes or navigate to a sample quiz section
-                const sampleQuizzes = filteredQuizzes.filter(quiz => !quiz.isCustom);
-                if (sampleQuizzes.length > 0) {
-                  startQuiz(sampleQuizzes[0]); // Start first sample quiz
-                }
-              }}>
+              {/* Sample Quizzes Header - Clickable to expand/collapse */}
+              <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setShowSampleQuizzes(!showSampleQuizzes)}>
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -5029,7 +5025,7 @@ export default function QuizPage() {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        ▶ Explore 9 Sample Quizzes
+                        {showSampleQuizzes ? '▼' : '▶'} Explore {filteredQuizzes.filter(quiz => !quiz.isCustom).length} Sample Quizzes
                       </h3>
                       <p className="text-gray-600">
                         Practice real TOEIC-style questions!
@@ -5044,6 +5040,58 @@ export default function QuizPage() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Expanded Sample Quizzes List */}
+              {showSampleQuizzes && (
+                <div className="mt-4 space-y-2">
+                  {filteredQuizzes.filter(quiz => !quiz.isCustom).map((quiz, index) => (
+                    <Card key={quiz.id} className="hover:shadow-md transition-shadow bg-white border-l-4 border-l-blue-500">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 flex-1">
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <span className="text-sm font-bold text-blue-600">#{index + 1}</span>
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                {quiz.title}
+                              </h3>
+                              <div className="flex items-center gap-4 text-sm text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  📚 {quiz.type}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  📊 {quiz.questions.length} Questions
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  ⏱️ {quiz.timeLimit} min
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  🎯 {quiz.difficulty}
+                                </span>
+                              </div>
+                              {quiz.description && (
+                                <p className="text-sm text-gray-500 mt-1">{quiz.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent card click
+                              startQuiz(quiz);
+                            }}
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            Start Quiz
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* My Created Quizzes Section */}
