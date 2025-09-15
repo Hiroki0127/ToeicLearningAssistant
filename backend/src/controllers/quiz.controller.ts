@@ -267,11 +267,85 @@ export const getQuizStats = async (req: Request, res: Response): Promise<void> =
       _count: { id: true },
     });
 
+    // Get detailed quiz attempts with quiz information
+    const quizAttempts = await prisma.quizAttempt.findMany({
+      where: { userId: req.user.userId },
+      include: {
+        quiz: {
+          select: {
+            difficulty: true,
+            type: true
+          }
+        }
+      }
+    });
+
+    // Process difficulty data
+    const difficultyStats = {
+      easy: { count: 0, averageScore: 0 },
+      medium: { count: 0, averageScore: 0 },
+      hard: { count: 0, averageScore: 0 }
+    };
+
+    // Process category data
+    const categoryStats = {
+      vocabulary: { count: 0, averageScore: 0 },
+      grammar: { count: 0, averageScore: 0 },
+      reading: { count: 0, averageScore: 0 },
+      listening: { count: 0, averageScore: 0 }
+    };
+
+    // Process the data
+    quizAttempts.forEach(attempt => {
+      const difficulty = attempt.quiz.difficulty;
+      const category = attempt.quiz.type;
+      
+      // Update difficulty stats
+      if (difficultyStats[difficulty as keyof typeof difficultyStats]) {
+        difficultyStats[difficulty as keyof typeof difficultyStats].count++;
+        difficultyStats[difficulty as keyof typeof difficultyStats].averageScore = 
+          (difficultyStats[difficulty as keyof typeof difficultyStats].averageScore * 
+           (difficultyStats[difficulty as keyof typeof difficultyStats].count - 1) + 
+           attempt.score) / difficultyStats[difficulty as keyof typeof difficultyStats].count;
+      }
+      
+      // Update category stats
+      if (categoryStats[category as keyof typeof categoryStats]) {
+        categoryStats[category as keyof typeof categoryStats].count++;
+        categoryStats[category as keyof typeof categoryStats].averageScore = 
+          (categoryStats[category as keyof typeof categoryStats].averageScore * 
+           (categoryStats[category as keyof typeof categoryStats].count - 1) + 
+           attempt.score) / categoryStats[category as keyof typeof categoryStats].count;
+      }
+    });
+
+    // Round average scores
+    Object.keys(difficultyStats).forEach(key => {
+      difficultyStats[key as keyof typeof difficultyStats].averageScore = 
+        Math.round(difficultyStats[key as keyof typeof difficultyStats].averageScore);
+    });
+    
+    Object.keys(categoryStats).forEach(key => {
+      categoryStats[key as keyof typeof categoryStats].averageScore = 
+        Math.round(categoryStats[key as keyof typeof categoryStats].averageScore);
+    });
+
     successResponse(res, {
       totalQuizzes,
       averageScore: Math.round(averageScore._avg.score || 0),
       bestScore: bestScore._max.score || 0,
       quizTypesCount: quizTypes.length,
+      quizzesByDifficulty: {
+        easy: difficultyStats.easy.count,
+        medium: difficultyStats.medium.count,
+        hard: difficultyStats.hard.count
+      },
+      quizzesByCategory: {
+        vocabulary: categoryStats.vocabulary.count,
+        grammar: categoryStats.grammar.count,
+        reading: categoryStats.reading.count,
+        listening: categoryStats.listening.count
+      },
     }, 'Quiz statistics retrieved successfully');
   } catch (error) {
     console.error('Get quiz stats error:', error);

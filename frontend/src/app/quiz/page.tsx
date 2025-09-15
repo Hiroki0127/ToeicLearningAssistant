@@ -27,6 +27,7 @@ export default function QuizPage() {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [score, setScore] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isQuizActive, setIsQuizActive] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -662,20 +663,11 @@ export default function QuizPage() {
       
       // Get quiz history for streak analysis
       const history = await getQuizHistory();
+      console.log('Streak data - Quiz history:', history);
       
       if (history.length === 0) {
-        setStreakData({
-          currentStreak: 0,
-          longestStreak: 0,
-          totalStreaks: 0,
-          streakHistory: [],
-          achievements: [],
-          nextMilestone: null,
-          streakMultiplier: 1,
-          totalPoints: 0,
-          weeklyStreak: 0,
-          monthlyStreak: 0
-        });
+        console.log('No quiz history found, setting default streak data');
+        setStreakData(null);
         return;
       }
       
@@ -776,7 +768,7 @@ export default function QuizPage() {
       if (currentStreak >= 100) achievements.push({ name: 'Century Champion', icon: '💎', description: '100-day streak' });
       if (longestStreak >= 365) achievements.push({ name: 'Year Rounder', icon: '🌟', description: '365-day streak' });
       
-      setStreakData({
+      const finalStreakData = {
         currentStreak,
         longestStreak,
         totalStreaks,
@@ -787,7 +779,10 @@ export default function QuizPage() {
         totalPoints: Math.round(totalPoints),
         weeklyStreak,
         monthlyStreak
-      });
+      };
+      
+      console.log('Final streak data:', finalStreakData);
+      setStreakData(finalStreakData);
       
     } catch (error) {
       console.error('Failed to load streak data:', error);
@@ -2143,6 +2138,7 @@ export default function QuizPage() {
     setSelectedAnswer(null);
     setShowExplanation(false);
     setScore(0);
+    setCorrectAnswers(0);
     setTimeLeft(quiz.timeLimit * 60); // Convert minutes to seconds
     setIsQuizActive(true);
   };
@@ -2157,6 +2153,7 @@ export default function QuizPage() {
     const currentQuestion = selectedQuiz.questions[currentQuestionIndex];
     if (answer === currentQuestion.correctAnswer) {
       setScore(prev => prev + currentQuestion.points);
+      setCorrectAnswers(prev => prev + 1);
     }
   };
 
@@ -2179,11 +2176,14 @@ export default function QuizPage() {
     
     // Submit quiz results to API
     try {
+      const totalPossiblePoints = selectedQuiz.questions.reduce((sum, q) => sum + q.points, 0);
+      const percentageScore = totalPossiblePoints > 0 ? Math.round((score / totalPossiblePoints) * 100) : 0;
+      
       const quizResult: QuizResult = {
         quizId: selectedQuiz.id,
-        score: Math.round((score / (selectedQuiz.questions.reduce((sum, q) => sum + q.points, 0))) * 100),
+        score: percentageScore,
         totalQuestions: selectedQuiz.questions.length,
-        correctAnswers: Math.round(score / 5), // Assuming 5 points per question
+        correctAnswers: correctAnswers, // Use the actual count of correct answers
         timeSpent: (selectedQuiz.timeLimit * 60) - timeLeft, // Time spent in seconds
         answers: {}, // This would be populated with actual answers
       };
@@ -3690,7 +3690,7 @@ export default function QuizPage() {
                         value={customQuizData.title}
                         onChange={(e) => setCustomQuizData(prev => ({ ...prev, title: e.target.value }))}
                         placeholder="Enter quiz title..."
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
                       />
                     </div>
                     
@@ -3699,7 +3699,7 @@ export default function QuizPage() {
                       <select
                         value={customQuizData.type}
                         onChange={(e) => setCustomQuizData(prev => ({ ...prev, type: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
                       >
                         <option value="vocabulary">📚 Vocabulary</option>
                         <option value="grammar">📝 Grammar</option>
@@ -3713,7 +3713,7 @@ export default function QuizPage() {
                       <select
                         value={customQuizData.difficulty}
                         onChange={(e) => setCustomQuizData(prev => ({ ...prev, difficulty: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
                       >
                         <option value="easy">🟢 Easy</option>
                         <option value="medium">🟡 Medium</option>
@@ -3729,7 +3729,7 @@ export default function QuizPage() {
                         max="60"
                         value={customQuizData.timeLimit}
                         onChange={(e) => setCustomQuizData(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 15 }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
                       />
                     </div>
                   </div>
@@ -3741,7 +3741,7 @@ export default function QuizPage() {
                       onChange={(e) => setCustomQuizData(prev => ({ ...prev, description: e.target.value }))}
                       placeholder="Describe what this quiz covers..."
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
                     />
                   </div>
                 </div>
@@ -3758,7 +3758,7 @@ export default function QuizPage() {
                         onChange={(e) => setCurrentQuestion(prev => ({ ...prev, question: e.target.value }))}
                         placeholder="Enter your question..."
                         rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
                       />
                     </div>
                     
@@ -3776,7 +3776,7 @@ export default function QuizPage() {
                                 setCurrentQuestion(prev => ({ ...prev, options: newOptions }));
                               }}
                               placeholder={`Option ${index + 1}`}
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
                             />
                             <input
                               type="radio"
@@ -3798,7 +3798,7 @@ export default function QuizPage() {
                             onChange={(e) => setCurrentQuestion(prev => ({ ...prev, explanation: e.target.value }))}
                             placeholder="Explain why this answer is correct..."
                             rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
                           />
                         </div>
                         
@@ -3810,7 +3810,7 @@ export default function QuizPage() {
                             max="10"
                             value={currentQuestion.points}
                             onChange={(e) => setCurrentQuestion(prev => ({ ...prev, points: parseInt(e.target.value) || 1 }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
                           />
                         </div>
                       </div>

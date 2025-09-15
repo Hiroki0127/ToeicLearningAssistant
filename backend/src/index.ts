@@ -26,7 +26,12 @@ const PORT = process.env['PORT'] || 3001;
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({
-  origin: process.env['FRONTEND_URL'] || 'http://localhost:3000',
+  origin: [
+    process.env['FRONTEND_URL'] || 'http://localhost:3000',
+    'http://172.20.10.2:3000',
+    'http://172.20.10.2:3006',
+    'http://localhost:3006'
+  ],
   credentials: true,
 }));
 app.use(morgan('combined')); // Logging
@@ -114,10 +119,11 @@ app.use('*', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🔗 API docs: http://localhost:${PORT}/api`);
+  console.log(`🌐 Network access: http://172.20.10.2:${PORT}`);
 });
 
 export default app;
