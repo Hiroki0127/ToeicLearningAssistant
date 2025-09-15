@@ -274,11 +274,21 @@ export const getQuizStats = async (req: Request, res: Response): Promise<void> =
         quiz: {
           select: {
             difficulty: true,
-            type: true
+            type: true,
+            title: true
           }
         }
-      }
+      },
+      orderBy: { completedAt: 'desc' },
+      take: 10 // Get last 10 attempts for recent performance
     });
+
+    // Get recent performance data (last 5 attempts)
+    const recentPerformance = quizAttempts.slice(0, 5).map(attempt => ({
+      quizTitle: attempt.quiz.title,
+      score: attempt.score,
+      completedAt: attempt.completedAt
+    }));
 
     // Process difficulty data
     const difficultyStats = {
@@ -346,6 +356,7 @@ export const getQuizStats = async (req: Request, res: Response): Promise<void> =
         reading: categoryStats.reading.count,
         listening: categoryStats.listening.count
       },
+      recentPerformance: recentPerformance,
     }, 'Quiz statistics retrieved successfully');
   } catch (error) {
     console.error('Get quiz stats error:', error);
