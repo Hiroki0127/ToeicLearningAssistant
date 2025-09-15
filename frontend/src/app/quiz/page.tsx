@@ -105,6 +105,7 @@ export default function QuizPage() {
   const [showGamification, setShowGamification] = useState(false);
   const [gamificationData, setGamificationData] = useState<any>(null);
   const [gamificationLoading, setGamificationLoading] = useState(false);
+  const [showAdvancedFeatures, setShowAdvancedFeatures] = useState(false);
   const [showRewards, setShowRewards] = useState(false);
   const [unlockedRewards, setUnlockedRewards] = useState<any[]>([]);
   const [showBadgeCollection, setShowBadgeCollection] = useState(false);
@@ -160,7 +161,7 @@ export default function QuizPage() {
     if (showStudyCalendar) {
       loadCalendarData();
     }
-  }, [selectedMonth, showStudyCalendar]);
+  }, [selectedMonth]);
 
   // Load insights when toggled
   useEffect(() => {
@@ -182,6 +183,49 @@ export default function QuizPage() {
       loadGamificationData();
     }
   }, [showGamification]);
+
+  // Load progress data when toggled
+  useEffect(() => {
+    if (showProgressCharts) {
+      loadProgressData();
+    }
+  }, [showProgressCharts]);
+
+  // Load study reminder data when toggled
+  useEffect(() => {
+    if (showStudyReminders) {
+      loadReminderData();
+    }
+  }, [showStudyReminders]);
+
+  // Load streak data when toggled
+  useEffect(() => {
+    if (showLearningStreaks) {
+      loadStreakData();
+    }
+  }, [showLearningStreaks]);
+
+  // Load calendar data when toggled
+  useEffect(() => {
+    if (showStudyCalendar) {
+      loadCalendarData();
+    }
+  }, [showStudyCalendar]);
+
+  // Close advanced features dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (showAdvancedFeatures && !target.closest('.relative')) {
+        setShowAdvancedFeatures(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showAdvancedFeatures]);
 
   // Load quiz analytics
   const loadQuizAnalytics = async () => {
@@ -2228,7 +2272,12 @@ export default function QuizPage() {
                     } ${selectedAnswer !== null ? 'cursor-default' : 'cursor-pointer'}`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-gray-900">{option}</span>
+                      <span className="font-medium text-gray-900">
+                        <span className="text-gray-700 font-semibold mr-2">
+                          {String.fromCharCode(65 + index)}.
+                        </span>
+                        {option}
+                      </span>
                       {selectedAnswer === option && (
                         option === currentQuestion.correctAnswer ? (
                           <CheckCircle className="h-5 w-5 text-green-600" />
@@ -2337,241 +2386,201 @@ export default function QuizPage() {
   return (
     <Layout>
       <div className="max-w-6xl mx-auto p-6">
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">TOEIC Quizzes</h1>
               <p className="text-gray-600">Test your knowledge with our interactive TOEIC-style quizzes</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+          </div>
+          
+          {/* Hamburger Navigation */}
+          <div className="mt-4 flex justify-end">
+            <div className="relative">
               <Button
-                onClick={() => {
-                  if (!showAnalytics) {
-                    loadQuizAnalytics();
-                  }
-                  setShowAnalytics(!showAnalytics);
-                }}
+                onClick={() => setShowAdvancedFeatures(!showAdvancedFeatures)}
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-2"
               >
-                {showAnalytics ? (
-                  <>
-                    <BookOpen className="w-4 h-4" />
-                    Hide Analytics
-                  </>
-                ) : (
-                  <>
-                    <BarChart3 className="w-4 h-4" />
-                    Show Analytics
-                  </>
-                )}
+                <div className="flex flex-col gap-1">
+                  <div className="w-4 h-0.5 bg-gray-600"></div>
+                  <div className="w-4 h-0.5 bg-gray-600"></div>
+                  <div className="w-4 h-0.5 bg-gray-600"></div>
+                </div>
+                <span>More Features</span>
               </Button>
               
-              <Button
-                onClick={() => router.push('/quiz/history')}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                <BarChart3 className="w-4 h-4" />
-                View History
-              </Button>
-              
-              <Button
-                onClick={() => {
-                  if (!showRecommendations) {
-                    generateRecommendations();
-                  }
-                  setShowRecommendations(!showRecommendations);
-                }}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                {showRecommendations ? (
-                  <>
-                    <Target className="w-4 h-4" />
-                    Hide Recommendations
-                  </>
-                ) : (
-                  <>
-                    <Target className="w-4 h-4" />
-                    Get Recommendations
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={() => {
-                  if (!showProgressCharts) {
-                    loadProgressData();
-                  }
-                  setShowProgressCharts(!showProgressCharts);
-                }}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                {showProgressCharts ? (
-                  <>
-                    <LineChart className="w-4 h-4" />
-                    Hide Charts
-                  </>
-                ) : (
-                  <>
-                    <LineChart className="w-4 h-4" />
-                    Show Progress
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={() => {
-                  if (!showStudyReminders) {
-                    loadReminderData();
-                  }
-                  setShowStudyReminders(!showStudyReminders);
-                }}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                {showStudyReminders ? (
-                  <>
-                    <Bell className="w-4 h-4" />
-                    Hide Reminders
-                  </>
-                ) : (
-                  <>
-                    <Bell className="w-4 h-4" />
-                    Study Reminders
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={() => {
-                  if (!showLearningStreaks) {
-                    loadStreakData();
-                  }
-                  setShowLearningStreaks(!showLearningStreaks);
-                }}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                {showLearningStreaks ? (
-                  <>
-                    <Zap className="w-4 h-4" />
-                    Hide Streaks
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4" />
-                    Learning Streaks
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={() => {
-                  if (!showStudyCalendar) {
-                    loadCalendarData();
-                  }
-                  setShowStudyCalendar(!showStudyCalendar);
-                }}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                {showStudyCalendar ? (
-                  <>
-                    <Calendar className="w-4 h-4" />
-                    Hide Calendar
-                  </>
-                ) : (
-                  <>
-                    <Calendar className="w-4 h-4" />
-                    Study Calendar
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={() => setShowPerformanceInsights(!showPerformanceInsights)}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                {showPerformanceInsights ? (
-                  <>
-                    <TrendingUp className="w-4 h-4" />
-                    Hide Insights
-                  </>
-                ) : (
-                  <>
-                    <TrendingUp className="w-4 h-4" />
-                    Performance Insights
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={() => setShowCustomQuizCreator(!showCustomQuizCreator)}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                {showCustomQuizCreator ? (
-                  <>
-                    <BookOpen className="w-4 h-4" />
-                    Hide Creator
-                  </>
-                ) : (
-                  <>
-                    <BookOpen className="w-4 h-4" />
-                    Create Quiz
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={() => setShowQuizSharing(!showQuizSharing)}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                {showQuizSharing ? (
-                  <>
-                    <Share2 className="w-4 h-4" />
-                    Hide Sharing
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="w-4 h-4" />
-                    Quiz Sharing
-                  </>
-                )}
-              </Button>              
-              <Button
-                onClick={() => setShowGamification(!showGamification)}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                {showGamification ? (
-                  <>
-                    <Trophy className="w-4 h-4" />
-                    Hide Rewards
-                  </>
-                ) : (
-                  <>
-                    <Trophy className="w-4 h-4" />
-                    Rewards & Levels
-                  </>
-                )}
-              </Button>
+              {/* Dropdown Menu */}
+              {showAdvancedFeatures && (
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-50">
+                  <div className="p-2 space-y-1">
+                    <Button
+                      onClick={() => {
+                        if (!showAnalytics) {
+                          loadQuizAnalytics();
+                        }
+                        setShowAnalytics(!showAnalytics);
+                        setShowAdvancedFeatures(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      {showAnalytics ? 'Hide Analytics' : 'Show Analytics'}
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        router.push('/quiz/history');
+                        setShowAdvancedFeatures(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      View History
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        if (!showRecommendations) {
+                          generateRecommendations();
+                        }
+                        setShowRecommendations(!showRecommendations);
+                        setShowAdvancedFeatures(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <Target className="w-4 h-4 mr-2" />
+                      {showRecommendations ? 'Hide Recommendations' : 'Get Recommendations'}
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        setShowProgressCharts(!showProgressCharts);
+                        setShowAdvancedFeatures(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <LineChart className="w-4 h-4 mr-2" />
+                      {showProgressCharts ? 'Hide Progress Charts' : 'Show Progress Charts'}
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        if (!showStudyReminders) {
+                          loadReminderData();
+                        }
+                        setShowStudyReminders(!showStudyReminders);
+                        setShowAdvancedFeatures(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <Bell className="w-4 h-4 mr-2" />
+                      {showStudyReminders ? 'Hide Study Reminders' : 'Study Reminders'}
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        if (!showLearningStreaks) {
+                          loadStreakData();
+                        }
+                        setShowLearningStreaks(!showLearningStreaks);
+                        setShowAdvancedFeatures(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <Zap className="w-4 h-4 mr-2" />
+                      {showLearningStreaks ? 'Hide Learning Streaks' : 'Learning Streaks'}
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        if (!showStudyCalendar) {
+                          loadCalendarData();
+                        }
+                        setShowStudyCalendar(!showStudyCalendar);
+                        setShowAdvancedFeatures(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {showStudyCalendar ? 'Hide Study Calendar' : 'Study Calendar'}
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        setShowPerformanceInsights(!showPerformanceInsights);
+                        setShowAdvancedFeatures(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      {showPerformanceInsights ? 'Hide Performance Insights' : 'Performance Insights'}
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        setShowCustomQuizCreator(!showCustomQuizCreator);
+                        setShowAdvancedFeatures(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      {showCustomQuizCreator ? 'Hide Quiz Creator' : 'Create Quiz'}
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        setShowQuizSharing(!showQuizSharing);
+                        setShowAdvancedFeatures(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <Share2 className="w-4 h-4 mr-2" />
+                      {showQuizSharing ? 'Hide Quiz Sharing' : 'Quiz Sharing'}
+                    </Button>
+                    
+                    <Button
+                      onClick={() => {
+                        setShowGamification(!showGamification);
+                        setShowAdvancedFeatures(false);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                    >
+                      <Trophy className="w-4 h-4 mr-2" />
+                      {showGamification ? 'Hide Rewards & Levels' : 'Rewards & Levels'}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
@@ -2675,16 +2684,16 @@ export default function QuizPage() {
                         <CardContent className="pt-0">
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-gray-500">Type:</span>
-                              <span className="font-medium capitalize">{quiz.type}</span>
+                              <span className="text-gray-700">Type:</span>
+                              <span className="font-medium text-gray-900 capitalize">{quiz.type}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-500">Difficulty:</span>
-                              <span className="font-medium capitalize">{quiz.difficulty}</span>
+                              <span className="text-gray-700">Difficulty:</span>
+                              <span className="font-medium text-gray-900 capitalize">{quiz.difficulty}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-500">Questions:</span>
-                              <span className="font-medium">{quiz.questions.length}</span>
+                              <span className="text-gray-700">Questions:</span>
+                              <span className="font-medium text-gray-900">{quiz.questions.length}</span>
                             </div>
                           </div>
                         </CardContent>
@@ -4929,20 +4938,20 @@ export default function QuizPage() {
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Type:</span>
-                    <span className="font-medium capitalize">{quiz.type}</span>
+                    <span className="text-gray-700">Type:</span>
+                    <span className="font-medium text-gray-900 capitalize">{quiz.type}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Difficulty:</span>
-                    <span className="font-medium capitalize">{quiz.difficulty}</span>
+                    <span className="text-gray-700">Difficulty:</span>
+                    <span className="font-medium text-gray-900 capitalize">{quiz.difficulty}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Time Limit:</span>
-                    <span className="font-medium">{quiz.timeLimit} minutes</span>
+                    <span className="text-gray-700">Time Limit:</span>
+                    <span className="font-medium text-gray-900">{quiz.timeLimit} minutes</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Questions:</span>
-                    <span className="font-medium">{quiz.questions.length}</span>
+                    <span className="text-gray-700">Questions:</span>
+                    <span className="font-medium text-gray-900">{quiz.questions.length}</span>
                   </div>
                 </div>
               </CardContent>

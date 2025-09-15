@@ -65,8 +65,8 @@ export default function QuizHistoryPage() {
     // Apply search
     if (searchTerm) {
       filtered = filtered.filter(attempt => 
-        attempt.quizTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        attempt.quizType.toLowerCase().includes(searchTerm.toLowerCase())
+        attempt.quiz?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        attempt.quiz?.type?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -78,9 +78,9 @@ export default function QuizHistoryPage() {
         case 'score':
           return b.score - a.score;
         case 'time':
-          return a.completionTime - b.completionTime;
+          return a.timeSpent - b.timeSpent;
         case 'title':
-          return a.quizTitle.localeCompare(b.quizTitle);
+          return a.quiz?.title?.localeCompare(b.quiz?.title || '') || 0;
         default:
           return 0;
       }
@@ -130,7 +130,7 @@ export default function QuizHistoryPage() {
       filteredHistory.reduce((sum, attempt) => sum + attempt.score, 0) / totalAttempts
     );
     const bestScore = Math.max(...filteredHistory.map(a => a.score));
-    const totalTime = filteredHistory.reduce((sum, attempt) => sum + attempt.completionTime, 0);
+    const totalTime = filteredHistory.reduce((sum, attempt) => sum + attempt.timeSpent, 0);
     const averageTime = Math.round(totalTime / totalAttempts);
 
     return { totalAttempts, averageScore, bestScore, averageTime };
@@ -287,15 +287,15 @@ export default function QuizHistoryPage() {
                         
                         <div className="flex-1">
                           <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                            {attempt.quizTitle}
+                            {attempt.quiz?.title || 'Unknown Quiz'}
                           </h3>
                           <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                             <span className="flex items-center gap-1">
                               <Calendar className="w-4 h-4" />
                               {formatDate(attempt.completedAt)}
                             </span>
-                            <span className="capitalize">{attempt.quizType}</span>
-                            <span className="capitalize">{attempt.difficulty}</span>
+                            <span className="capitalize">{attempt.quiz?.type || 'Unknown'}</span>
+                            <span className="capitalize">{attempt.quiz?.difficulty || 'Unknown'}</span>
                           </div>
                           <div className="mt-2">
                             <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getScoreColor(attempt.score)}`}>
@@ -310,7 +310,7 @@ export default function QuizHistoryPage() {
                     <div className="flex flex-col items-end gap-2 text-sm">
                       <div className="text-right">
                         <div className="text-gray-500">Completion Time</div>
-                        <div className="font-medium text-gray-900">{formatTime(attempt.completionTime)}</div>
+                        <div className="font-medium text-gray-900">{formatTime(attempt.timeSpent)}</div>
                       </div>
                       
                       <div className="text-right">
@@ -320,12 +320,6 @@ export default function QuizHistoryPage() {
                         </div>
                       </div>
 
-                      {attempt.experienceGained && (
-                        <div className="text-right">
-                          <div className="text-gray-500">Experience</div>
-                          <div className="font-medium text-green-600">+{attempt.experienceGained}</div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </CardContent>
