@@ -132,18 +132,34 @@ export default function QuizPage() {
   };
 
   useEffect(() => {
-    // Load quizzes from API
+    // Load quizzes from API and combine with custom quizzes from localStorage
     const loadQuizzes = async () => {
       try {
         setLoading(true);
-        const quizzesData = await getQuizzes();
-        setQuizzes(quizzesData);
-        setFilteredQuizzes(filterQuizzes(quizzesData, selectedDifficulty, selectedCategory));
+        
+        // Load quizzes from API
+        const apiQuizzes = await getQuizzes();
+        
+        // Load custom quizzes from localStorage
+        const customQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+        
+        // Combine both sources - API quizzes first, then custom quizzes
+        const allQuizzes = [...apiQuizzes, ...customQuizzes];
+        
+        setQuizzes(allQuizzes);
+        setFilteredQuizzes(filterQuizzes(allQuizzes, selectedDifficulty, selectedCategory));
       } catch (error) {
         console.error('Failed to load quizzes:', error);
-        // Fallback to sample data if API fails
-        setQuizzes([]);
-        setFilteredQuizzes([]);
+        // Fallback: try to load only custom quizzes from localStorage
+        try {
+          const customQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+          setQuizzes(customQuizzes);
+          setFilteredQuizzes(filterQuizzes(customQuizzes, selectedDifficulty, selectedCategory));
+        } catch (localError) {
+          console.error('Failed to load custom quizzes:', localError);
+          setQuizzes([]);
+          setFilteredQuizzes([]);
+        }
       } finally {
         setLoading(false);
       }
@@ -1354,6 +1370,17 @@ export default function QuizPage() {
       
       savedQuizzes.push(newQuiz);
       localStorage.setItem('customQuizzes', JSON.stringify(savedQuizzes));
+      
+      // Refresh the quiz list to show the newly created quiz
+      try {
+        const apiQuizzes = await getQuizzes();
+        const updatedCustomQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+        const allQuizzes = [...apiQuizzes, ...updatedCustomQuizzes];
+        setQuizzes(allQuizzes);
+        setFilteredQuizzes(filterQuizzes(allQuizzes, selectedDifficulty, selectedCategory));
+      } catch (error) {
+        console.error('Failed to refresh quiz list:', error);
+      }
       
       // Reset form
       setCustomQuizData({
@@ -4912,60 +4939,225 @@ export default function QuizPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {searchTerm && searchResults.length === 0 ? (
-            <div className="col-span-full text-center py-12">
-              <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No quizzes found</h3>
-              <p className="text-gray-600 mb-4">
-                No quizzes match your search for "{searchTerm}"
-              </p>
-              <Button
-                onClick={clearSearch}
-                variant="outline"
-                className="flex items-center gap-2 mx-auto"
-              >
-                <Search className="w-4 h-4" />
-                Try a different search term
-              </Button>
+        {/* New Quiz UI Layout */}
+        {searchTerm ? (
+          // Search Results
+          <div className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Search Results</h2>
+              <p className="text-gray-600">Results for "{searchTerm}"</p>
             </div>
-          ) : (searchTerm ? searchResults : filteredQuizzes).map((quiz) => (
-            <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <h3 className="text-xl font-semibold text-gray-900">{quiz.title}</h3>
-                <p className="text-gray-600">{quiz.description}</p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-700">Type:</span>
-                    <span className="font-medium text-gray-900 capitalize">{quiz.type}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-700">Difficulty:</span>
-                    <span className="font-medium text-gray-900 capitalize">{quiz.difficulty}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-700">Time Limit:</span>
-                    <span className="font-medium text-gray-900">{quiz.timeLimit} minutes</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-700">Questions:</span>
-                    <span className="font-medium text-gray-900">{quiz.questions.length}</span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
+            
+            {searchResults.length === 0 ? (
+              <div className="text-center py-12">
+                <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No quizzes found</h3>
+                <p className="text-gray-600 mb-4">
+                  No quizzes match your search for "{searchTerm}"
+                </p>
                 <Button
-                  onClick={() => startQuiz(quiz)}
-                  className="w-full"
+                  onClick={clearSearch}
+                  variant="outline"
+                  className="flex items-center gap-2 mx-auto"
                 >
-                  Start Quiz
+                  <Search className="w-4 h-4" />
+                  Try a different search term
                 </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {searchResults.map((quiz) => (
+                  <Card key={quiz.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <h3 className="text-xl font-semibold text-gray-900">{quiz.title}</h3>
+                      <p className="text-gray-600">{quiz.description}</p>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-700">Type:</span>
+                          <span className="font-medium text-gray-900 capitalize">{quiz.type}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-700">Difficulty:</span>
+                          <span className="font-medium text-gray-900 capitalize">{quiz.difficulty}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-700">Time Limit:</span>
+                          <span className="font-medium text-gray-900">{quiz.timeLimit} minutes</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-700">Questions:</span>
+                          <span className="font-medium text-gray-900">{quiz.questions.length}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button
+                        onClick={() => startQuiz(quiz)}
+                        className="w-full"
+                      >
+                        Start Quiz
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          // Main Quiz Layout
+          <div className="space-y-8">
+            {/* Sample Quizzes Section */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1 h-8 bg-blue-500 rounded"></div>
+                <h2 className="text-2xl font-bold text-gray-900">My TOEIC Quizzes</h2>
+              </div>
+              
+              <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => {
+                // Show sample quizzes or navigate to a sample quiz section
+                const sampleQuizzes = filteredQuizzes.filter(quiz => !quiz.isCustom);
+                if (sampleQuizzes.length > 0) {
+                  startQuiz(sampleQuizzes[0]); // Start first sample quiz
+                }
+              }}>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <BookOpen className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        ▶ Explore 9 Sample Quizzes
+                      </h3>
+                      <p className="text-gray-600">
+                        Practice real TOEIC-style questions!
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-500 mb-1">Available</div>
+                      <div className="text-lg font-bold text-blue-600">
+                        {filteredQuizzes.filter(quiz => !quiz.isCustom).length} Quizzes
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* My Created Quizzes Section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-8 bg-green-500 rounded"></div>
+                  <h2 className="text-2xl font-bold text-gray-900">My Created Quizzes</h2>
+                </div>
+                <Button
+                  onClick={() => setShowCustomQuizCreator(true)}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                >
+                  <span className="text-lg">+</span>
+                  Create New Quiz
+                </Button>
+              </div>
+              
+              {filteredQuizzes.filter(quiz => quiz.isCustom).length === 0 ? (
+                <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No custom quizzes yet</h3>
+                  <p className="text-gray-600 mb-4">
+                    Create your first custom quiz to get started!
+                  </p>
+                  <Button
+                    onClick={() => setShowCustomQuizCreator(true)}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Create Your First Quiz
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredQuizzes.filter(quiz => quiz.isCustom).map((quiz) => (
+                    <Card key={quiz.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 flex-1">
+                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                              <BookOpen className="w-5 h-5 text-green-600" />
+                            </div>
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                {quiz.title}
+                              </h3>
+                              <div className="flex items-center gap-4 text-sm text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  🏷️ Created: {new Date(quiz.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  📊 {quiz.questions.length} Questions
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  ⏱️ {quiz.timeLimit} min
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  🎯 {quiz.difficulty}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <Button
+                              onClick={() => startQuiz(quiz)}
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Start Quiz
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                // Edit quiz functionality
+                                console.log('Edit quiz:', quiz.id);
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="flex items-center gap-1"
+                            >
+                              ✏️
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                // Delete quiz functionality
+                                if (confirm('Are you sure you want to delete this quiz?')) {
+                                  const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+                                  const updatedQuizzes = savedQuizzes.filter((q: any) => q.id !== quiz.id);
+                                  localStorage.setItem('customQuizzes', JSON.stringify(updatedQuizzes));
+                                  
+                                  // Refresh the quiz list
+                                  const apiQuizzes = filteredQuizzes.filter(q => !q.isCustom);
+                                  const newCustomQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
+                                  const allQuizzes = [...apiQuizzes, ...newCustomQuizzes];
+                                  setQuizzes(allQuizzes);
+                                  setFilteredQuizzes(filterQuizzes(allQuizzes, selectedDifficulty, selectedCategory));
+                                }
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                            >
+                              🗑️
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
