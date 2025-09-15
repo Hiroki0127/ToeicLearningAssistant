@@ -1,7 +1,7 @@
 import Groq from 'groq-sdk';
 import { RAGService } from './rag.service';
 
-console.log('GROQ_API_KEY:', process.env['GROQ_API_KEY'] ? 'Found' : 'Not found');
+// Initialize Groq client
 
 const groq = new Groq({
   apiKey: process.env['GROQ_API_KEY'],
@@ -11,7 +11,7 @@ export class AIService {
 
   static async generateTOEICQuestion(topic: string, difficulty: 'easy' | 'medium' | 'hard' = 'medium') {
     try {
-      console.log(`Generating TOEIC question for topic: ${topic}, difficulty: ${difficulty}`);
+      // Generate TOEIC question
       
       // Enhanced prompt that automatically selects the appropriate TOEIC part based on topic
       const prompt = `Generate a unique TOEIC Reading question specifically about "${topic}" at ${difficulty} difficulty level.

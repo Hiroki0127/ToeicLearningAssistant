@@ -1,103 +1,283 @@
-# TOEIC Learning Assistant
+# 🎯 TOEIC Learning Assistant
 
-An AI-powered study app with vocab flashcards, daily reminders, and progress tracking. Enhanced learning through Retrieval-Augmented Generation (RAG) for grammar/vocab questions and knowledge graphs to link related concepts for comprehensive understanding.
+A comprehensive web application designed to help users prepare for the TOEIC exam through interactive quizzes, flashcards, and AI-powered learning assistance.
 
-## 🚀 Features
+![TOEIC Learning Assistant](https://img.shields.io/badge/TOEIC-Learning%20Assistant-blue?style=for-the-badge&logo=book)
+![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
+![Prisma](https://img.shields.io/badge/Prisma-5-purple?style=for-the-badge&logo=prisma)
 
-### Core (MVP) Features
-- ✅ Vocab flashcards (add, edit, review words)
-- ✅ Daily reminder/notifications (study streaks, push/local notifications)
-- ✅ Progress reports (track correct/incorrect answers, study time, streaks)
-- ✅ Quizzes/tests (multiple choice, fill-in-the-blank, timed practice)
-- ✅ User authentication (optional: login, profiles, track progress per user)
+## ✨ Features
 
-### Advanced AI Features (Coming Soon)
-- 🔄 RAG (Retrieval-Augmented Generation)
-- 🔄 Knowledge Graphs
-- 🔄 Smart Recommendations (AI-powered suggestions based on learning patterns)
+### 🧠 **Smart Learning System**
+- **Interactive Quizzes**: 9+ sample TOEIC-style quizzes with multiple difficulty levels
+- **Custom Quiz Creator**: Create your own quizzes with personalized questions
+- **Flashcard System**: Spaced repetition learning with progress tracking
+- **AI-Powered Assistance**: Get explanations and recommendations using advanced AI
 
-## 🛠️ Tech Stack
+### 📊 **Progress Tracking**
+- **Real-time Analytics**: Track your performance with detailed statistics
+- **Experience Points**: Gamified learning with XP and leveling system
+- **Study Streaks**: Maintain daily learning habits with streak tracking
+- **Performance Insights**: Identify strengths and areas for improvement
 
-- **Frontend**: React + Next.js
-- **Backend**: Node.js + Express
-- **Database**: PostgreSQL
-- **AI/NLP**: LangChain, Groq API
-- **Vector Database**: FAISS/Weaviate
-- **Knowledge Graph**: Neo4j
-- **Hosting**: Vercel (Frontend), Railway (Backend)
+### 🎮 **Gamification**
+- **Achievement System**: Unlock badges and rewards for milestones
+- **Leaderboards**: Compare progress with other learners
+- **Daily Goals**: Set and track personal learning objectives
+- **Rewards**: Earn points and unlock special features
 
-## 📁 Project Structure
+### 🤖 **AI Integration**
+- **Smart Recommendations**: AI suggests quizzes based on your performance
+- **Vocabulary Assistant**: Get detailed explanations for difficult words
+- **Question Generation**: AI creates new TOEIC-style questions
+- **Personalized Learning**: Adaptive content based on your learning patterns
 
-```
-ToeicLearningAssistant/
-├── frontend/          # Next.js React app
-├── backend/           # Express.js API server
-├── shared/            # Shared types and utilities
-├── docs/              # Documentation
-└── scripts/           # Build and deployment scripts
-```
-
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 18+ 
 - npm or yarn
-- PostgreSQL
-- Git
+- PostgreSQL database
+- GROQ API key (for AI features)
 
 ### Installation
 
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd ToeicLearningAssistant
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/toeic-learning-assistant.git
+   cd toeic-learning-assistant
+   ```
+
+2. **Install dependencies**
+   ```bash
+   # Install root dependencies
+   npm install
+   
+   # Install backend dependencies
+   cd backend && npm install
+   
+   # Install frontend dependencies
+   cd ../frontend && npm install
+   ```
+
+3. **Environment Setup**
+   
+   Create `.env` files in the backend directory:
+   ```bash
+   # backend/.env
+   DATABASE_URL="postgresql://username:password@localhost:5432/toeic_db"
+   JWT_SECRET="your-super-secret-jwt-key"
+   GROQ_API_KEY="your-groq-api-key"
+   PORT=5000
+   ```
+
+4. **Database Setup**
+   ```bash
+   cd backend
+   npx prisma migrate dev
+   npx prisma db seed
+   ```
+
+5. **Start the application**
+   ```bash
+   # Start backend (from backend directory)
+   npm run dev
+   
+   # Start frontend (from frontend directory)
+   npm run dev
+   ```
+
+6. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5000
+   - Database Studio: http://localhost:5555 (run `npx prisma studio`)
+
+## 🏗️ Project Structure
+
+```
+TOEicLearningAssistant/
+├── backend/                 # Express.js API server
+│   ├── src/
+│   │   ├── controllers/     # API route handlers
+│   │   ├── services/        # Business logic
+│   │   ├── routes/          # API routes
+│   │   ├── middleware/      # Authentication & validation
+│   │   └── utils/           # Helper functions
+│   ├── prisma/              # Database schema & migrations
+│   └── scripts/             # Database seeding & utilities
+├── frontend/                # Next.js React application
+│   ├── src/
+│   │   ├── app/             # App router pages
+│   │   ├── components/      # Reusable UI components
+│   │   ├── hooks/           # Custom React hooks
+│   │   ├── lib/             # API clients & utilities
+│   │   └── types/           # TypeScript type definitions
+└── docs/                    # Documentation
 ```
 
-2. Install dependencies
+## 🛠️ Technology Stack
+
+### Frontend
+- **Next.js 14** - React framework with App Router
+- **TypeScript** - Type-safe JavaScript
+- **Tailwind CSS** - Utility-first CSS framework
+- **Lucide React** - Beautiful icon library
+- **Custom Components** - Reusable UI components
+
+### Backend
+- **Express.js** - Web application framework
+- **TypeScript** - Type-safe server-side code
+- **Prisma** - Modern database ORM
+- **PostgreSQL** - Relational database
+- **JWT** - Authentication tokens
+- **GROQ** - AI/LLM integration
+
+### AI & Machine Learning
+- **GROQ API** - Fast LLM inference
+- **RAG (Retrieval-Augmented Generation)** - Enhanced AI responses
+- **Knowledge Graph** - Concept relationships
+- **Smart Recommendations** - Personalized learning paths
+
+## 📚 API Documentation
+
+### Authentication Endpoints
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login
+- `POST /auth/logout` - User logout
+
+### Quiz Endpoints
+- `GET /quiz` - Get all quizzes
+- `GET /quiz/:id` - Get specific quiz
+- `POST /quiz/submit` - Submit quiz results
+- `GET /quiz/history` - Get user's quiz history
+- `GET /quiz/stats` - Get user's quiz statistics
+
+### Flashcard Endpoints
+- `GET /flashcards` - Get user's flashcards
+- `POST /flashcards` - Create new flashcard
+- `PUT /flashcards/:id` - Update flashcard
+- `DELETE /flashcards/:id` - Delete flashcard
+
+### AI Endpoints
+- `POST /ai/generate-question` - Generate TOEIC questions
+- `POST /ai/explain-vocabulary` - Get vocabulary explanations
+- `GET /ai/recommendations` - Get learning recommendations
+
+## 🎯 Usage Guide
+
+### Getting Started
+1. **Register** for a new account or **login** with existing credentials
+2. **Explore** the dashboard to see your learning progress
+3. **Take quizzes** from the sample collection or create your own
+4. **Study flashcards** to build vocabulary
+5. **Use AI assistant** for explanations and recommendations
+
+### Creating Custom Quizzes
+1. Navigate to the Quiz page
+2. Click "Create Quiz" button
+3. Fill in quiz details (title, description, difficulty)
+4. Add questions with multiple choice answers
+5. Set correct answers and explanations
+6. Save and share your quiz
+
+### Tracking Progress
+- View your **Dashboard** for overall progress
+- Check **Quiz Analytics** for detailed performance metrics
+- Monitor **Study Streaks** to maintain consistency
+- Unlock **Achievements** as you reach milestones
+
+## 🔧 Development
+
+### Running in Development Mode
 ```bash
-# Install frontend dependencies
+# Backend
+cd backend
+npm run dev
+
+# Frontend  
 cd frontend
-npm install
-
-# Install backend dependencies
-cd ../backend
-npm install
-```
-
-3. Set up environment variables
-```bash
-# Copy environment files
-cp frontend/.env.example frontend/.env.local
-cp backend/.env.example backend/.env
-```
-
-4. Start development servers
-```bash
-# Start backend (from backend directory)
-npm run dev
-
-# Start frontend (from frontend directory)
 npm run dev
 ```
 
-## 📝 Development Roadmap
+### Database Management
+```bash
+# Generate Prisma client
+npx prisma generate
 
-- [x] Project setup and structure
-- [ ] Frontend: Basic UI components
-- [ ] Backend: Express server setup
-- [ ] Database: PostgreSQL schema
-- [ ] Authentication system
-- [ ] Flashcard CRUD operations
-- [ ] Progress tracking
-- [ ] Quiz system
-- [ ] AI integration (RAG)
-- [ ] Knowledge graph implementation
-- [ ] Smart recommendations system
+# Run migrations
+npx prisma migrate dev
+
+# Seed database
+npx prisma db seed
+
+# Open database studio
+npx prisma studio
+```
+
+### Code Quality
+```bash
+# Run TypeScript checks
+npm run type-check
+
+# Run linting
+npm run lint
+
+# Format code
+npm run format
+```
+
+## 🚀 Deployment
+
+### Backend Deployment
+1. Set up PostgreSQL database
+2. Configure environment variables
+3. Run database migrations
+4. Deploy to your preferred platform (Railway, Heroku, etc.)
+
+### Frontend Deployment
+1. Build the application: `npm run build`
+2. Deploy to Vercel, Netlify, or your preferred platform
+3. Configure environment variables for API endpoints
 
 ## 🤝 Contributing
 
-This is a personal project for learning and development purposes.
+We welcome contributions! Please follow these steps:
 
-## 📄 License
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-MIT License
+### Development Guidelines
+- Follow TypeScript best practices
+- Write meaningful commit messages
+- Add tests for new features
+- Update documentation as needed
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **TOEIC** - For providing the exam format and content guidelines
+- **GROQ** - For providing fast AI inference capabilities
+- **Prisma** - For excellent database tooling
+- **Next.js** - For the amazing React framework
+- **Tailwind CSS** - For beautiful utility-first styling
+
+## 📞 Support
+
+If you encounter any issues or have questions:
+
+- 📧 Email: support@toeicassistant.com
+- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/toeic-learning-assistant/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/toeic-learning-assistant/discussions)
+
+---
+
+**Happy Learning! 🎓✨**
+
+*Built with ❤️ for TOEIC learners worldwide*

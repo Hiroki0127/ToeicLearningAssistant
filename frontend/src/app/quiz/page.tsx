@@ -5,7 +5,28 @@ import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import Layout from '@/components/layout/Layout';
-import { CheckCircle, XCircle, Clock, Trophy, Target, BarChart3, TrendingUp, Award, BookOpen, Search, LineChart, Activity, Bell, Calendar, Zap, Star, Flame, Crown, Gift, Share2 } from 'lucide-react';
+import { 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  Trophy, 
+  Target, 
+  BarChart3, 
+  TrendingUp, 
+  Award, 
+  BookOpen, 
+  Search, 
+  LineChart, 
+  Activity, 
+  Bell, 
+  Calendar, 
+  Zap, 
+  Star, 
+  Flame, 
+  Crown, 
+  Gift, 
+  Share2 
+} from 'lucide-react';
 import { getQuizzes, submitQuizResult, getQuizStats, getQuizHistory, type Quiz, type QuizResult, type QuizAttempt } from '@/lib/quiz';
 
 interface Question {
@@ -680,10 +701,8 @@ export default function QuizPage() {
       
       // Get quiz history for streak analysis
       const history = await getQuizHistory();
-      console.log('Streak data - Quiz history:', history);
       
       if (history.length === 0) {
-        console.log('No quiz history found, setting default streak data');
         setStreakData(null);
         return;
       }
@@ -798,7 +817,6 @@ export default function QuizPage() {
         monthlyStreak
       };
       
-      console.log('Final streak data:', finalStreakData);
       setStreakData(finalStreakData);
       
     } catch (error) {
@@ -5165,8 +5183,8 @@ export default function QuizPage() {
                             </Button>
                             <Button
                               onClick={() => {
-                                // Edit quiz functionality
-                                console.log('Edit quiz:', quiz.id);
+                                // TODO: Implement edit quiz functionality
+                                alert('Edit functionality coming soon!');
                               }}
                               size="sm"
                               variant="outline"

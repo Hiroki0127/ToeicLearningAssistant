@@ -108,7 +108,7 @@ export default function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Link href="/flashcards">
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-6">
@@ -143,22 +143,6 @@ export default function DashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/progress">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <TrendingUp className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-semibold text-gray-900">View Progress</h3>
-                    <p className="text-gray-600">Track your learning journey</p>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-gray-400 ml-auto" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

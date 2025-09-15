@@ -12,7 +12,6 @@ import {
   User, 
   LogOut, 
   Home,
-  BarChart3,
   HelpCircle,
   Brain
 } from 'lucide-react';
@@ -65,12 +64,6 @@ export default function Navigation() {
                   className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   Quizzes
-                </Link>
-                <Link 
-                  href="/progress" 
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Progress
                 </Link>
                 <Link 
                   href="/ai" 
@@ -178,14 +171,6 @@ export default function Navigation() {
                   >
                     <HelpCircle className="h-5 w-5 mr-3" />
                     Quizzes
-                  </Link>
-                  <Link
-                    href="/progress"
-                    className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-base font-medium transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <BarChart3 className="h-5 w-5 mr-3" />
-                    Progress
                   </Link>
                   <Link
                     href="/ai"

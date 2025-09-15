@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/database';
 import { successResponse, badRequestResponse, notFoundResponse } from '../utils/response';
-// Remove unused import
 
 export interface QuizResult {
   quizId: string;
