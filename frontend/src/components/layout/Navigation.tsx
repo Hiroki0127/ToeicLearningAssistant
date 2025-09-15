@@ -43,8 +43,55 @@ export default function Navigation() {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          {/* Medium Screen Navigation (shows fewer items) */}
+          <div className="hidden md:flex lg:hidden items-center space-x-4">
+            {isAuthenticated ? (
+              <>
+                <Link 
+                  href="/dashboard" 
+                  className="text-gray-700 hover:text-blue-600 px-2 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Dashboard
+                </Link>
+                <Link 
+                  href="/flashcards" 
+                  className="text-gray-700 hover:text-blue-600 px-2 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Flashcards
+                </Link>
+                <Link 
+                  href="/quiz" 
+                  className="text-gray-700 hover:text-blue-600 px-2 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Quizzes
+                </Link>
+                <Link 
+                  href="/ai" 
+                  className="text-gray-700 hover:text-blue-600 px-2 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  AI
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link 
+                  href="/" 
+                  className="text-gray-700 hover:text-blue-600 px-2 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Home
+                </Link>
+                <Link 
+                  href="/flashcards" 
+                  className="text-gray-700 hover:text-blue-600 px-2 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Flashcards
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Desktop Navigation (shows all items) */}
+          <div className="hidden lg:flex items-center space-x-6">
             {isAuthenticated ? (
               <>
                 <Link 
@@ -96,8 +143,41 @@ export default function Navigation() {
             )}
           </div>
 
-          {/* User Menu / Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
+          {/* Medium Screen User Menu */}
+          <div className="hidden md:flex lg:hidden items-center space-x-2">
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
+                  <User className="h-4 w-4 text-gray-500" />
+                  <span className="text-xs text-gray-700 truncate max-w-20">{user?.name}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center px-2"
+                >
+                  <LogOut className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link href="/login">
+                  <Button variant="ghost" size="sm" className="px-2">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button size="sm" className="px-2">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop User Menu / Auth Buttons */}
+          <div className="hidden lg:flex items-center space-x-4">
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
@@ -131,7 +211,7 @@ export default function Navigation() {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <Button
               variant="ghost"
               size="sm"
@@ -149,7 +229,7 @@ export default function Navigation() {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
               {isAuthenticated ? (
                 <>
