@@ -9,7 +9,7 @@ import Layout from '@/components/layout/Layout';
 import { useAppStore } from '@/lib/store';
 import { useFlashcards } from '@/hooks/useFlashcards';
 import type { Flashcard as FlashcardType } from '@/types';
-import { BookOpen, Plus, Settings, HelpCircle } from 'lucide-react';
+import { BookOpen, Plus, Settings } from 'lucide-react';
 
 export default function FlashcardsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -130,12 +130,6 @@ export default function FlashcardsPage() {
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
-            <Link href="/quiz">
-              <Button variant="outline" size="sm">
-                <HelpCircle className="h-4 w-4 mr-2" />
-                Take Quiz
-              </Button>
-            </Link>
             <Link href="/flashcards/create">
               <Button size="sm">
                 <Plus className="h-4 w-4 mr-2" />
