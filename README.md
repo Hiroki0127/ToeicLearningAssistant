@@ -1,4 +1,4 @@
-# 🎯 TOEIC Learning Assistant
+# TOEIC Learning Assistant
 
 A comprehensive web application designed to help users prepare for the TOEIC exam through interactive quizzes, flashcards, and AI-powered learning assistance.
 
@@ -7,33 +7,33 @@ A comprehensive web application designed to help users prepare for the TOEIC exa
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
 ![Prisma](https://img.shields.io/badge/Prisma-5-purple?style=for-the-badge&logo=prisma)
 
-## ✨ Features
+## Features
 
-### 🧠 **Smart Learning System**
+### **Smart Learning System**
 - **Interactive Quizzes**: 9+ sample TOEIC-style quizzes with multiple difficulty levels
 - **Custom Quiz Creator**: Create your own quizzes with personalized questions
 - **Flashcard System**: Spaced repetition learning with progress tracking
 - **AI-Powered Assistance**: Get explanations and recommendations using advanced AI
 
-### 📊 **Progress Tracking**
+### **Progress Tracking**
 - **Real-time Analytics**: Track your performance with detailed statistics
 - **Experience Points**: Gamified learning with XP and leveling system
 - **Study Streaks**: Maintain daily learning habits with streak tracking
 - **Performance Insights**: Identify strengths and areas for improvement
 
-### 🎮 **Gamification**
+### **Gamification**
 - **Achievement System**: Unlock badges and rewards for milestones
 - **Leaderboards**: Compare progress with other learners
 - **Daily Goals**: Set and track personal learning objectives
 - **Rewards**: Earn points and unlock special features
 
-### 🤖 **AI Integration**
+### **AI Integration**
 - **Smart Recommendations**: AI suggests quizzes based on your performance
 - **Vocabulary Assistant**: Get detailed explanations for difficult words
 - **Question Generation**: AI creates new TOEIC-style questions
 - **Personalized Learning**: Adaptive content based on your learning patterns
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+ 
@@ -116,7 +116,7 @@ TOEicLearningAssistant/
 └── docs/                    # Documentation
 ```
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend
 - **Next.js 14** - React framework with App Router
@@ -139,7 +139,7 @@ TOEicLearningAssistant/
 - **Knowledge Graph** - Concept relationships
 - **Smart Recommendations** - Personalized learning paths
 
-## 📚 API Documentation
+## API Documentation
 
 ### Authentication Endpoints
 - `POST /auth/register` - User registration
@@ -164,7 +164,7 @@ TOEicLearningAssistant/
 - `POST /ai/explain-vocabulary` - Get vocabulary explanations
 - `GET /ai/recommendations` - Get learning recommendations
 
-## 🎯 Usage Guide
+## Usage Guide
 
 ### Getting Started
 1. **Register** for a new account or **login** with existing credentials
@@ -227,7 +227,7 @@ npm run lint
 npm run format
 ```
 
-## 🚀 Deployment
+## Deployment
 
 ### Backend Deployment
 1. Set up PostgreSQL database
@@ -240,7 +240,7 @@ npm run format
 2. Deploy to Vercel, Netlify, or your preferred platform
 3. Configure environment variables for API endpoints
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please follow these steps:
 
@@ -256,11 +256,11 @@ We welcome contributions! Please follow these steps:
 - Add tests for new features
 - Update documentation as needed
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **TOEIC** - For providing the exam format and content guidelines
 - **GROQ** - For providing fast AI inference capabilities
@@ -268,16 +268,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Next.js** - For the amazing React framework
 - **Tailwind CSS** - For beautiful utility-first styling
 
-## 📞 Support
+## Support
 
 If you encounter any issues or have questions:
 
-- 📧 Email: support@toeicassistant.com
-- 🐛 Issues: [GitHub Issues](https://github.com/yourusername/toeic-learning-assistant/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/yourusername/toeic-learning-assistant/discussions)
-
----
-
-**Happy Learning! 🎓✨**
-
-*Built with ❤️ for TOEIC learners worldwide*
+- Email: support@toeicassistant.com
+- Issues: [GitHub Issues](https://github.com/yourusername/toeic-learning-assistant/issues)
+- Discussions: [GitHub Discussions](https://github.com/yourusername/toeic-learning-assistant/discussions)
