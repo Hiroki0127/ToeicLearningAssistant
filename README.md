@@ -93,7 +93,7 @@ A comprehensive web application designed to help users prepare for the TOEIC exa
    - Backend API: http://localhost:5000
    - Database Studio: http://localhost:5555 (run `npx prisma studio`)
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 TOEicLearningAssistant/
@@ -187,7 +187,7 @@ TOEicLearningAssistant/
 - Monitor **Study Streaks** to maintain consistency
 - Unlock **Achievements** as you reach milestones
 
-## 🔧 Development
+## Development
 
 ### Running in Development Mode
 ```bash
