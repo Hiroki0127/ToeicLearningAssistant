@@ -2,6 +2,26 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User, Flashcard, UserProgress, StudySession, Quiz } from '@/types';
 
+interface DailyProgress {
+  date: string;
+  studied: number;
+  goal: number;
+}
+
+interface QuizAttempt {
+  quizId: string;
+  score: number;
+  date: string;
+  answers: Record<string, string>;
+}
+
+interface Notification {
+  id: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  timestamp: Date;
+}
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -27,36 +47,36 @@ interface FlashcardState {
 
 interface ProgressState {
   progress: UserProgress | null;
-  dailyProgress: any[];
+  dailyProgress: DailyProgress[];
   studySessions: StudySession[];
   setProgress: (progress: UserProgress) => void;
   updateProgress: (updates: Partial<UserProgress>) => void;
   addStudySession: (session: StudySession) => void;
-  updateDailyProgress: (progress: any) => void;
+  updateDailyProgress: (progress: DailyProgress) => void;
 }
 
 interface QuizState {
   currentQuiz: Quiz | null;
-  quizHistory: any[];
+  quizHistory: QuizAttempt[];
   isQuizActive: boolean;
   currentQuestionIndex: number;
-  answers: Record<string, any>;
+  answers: Record<string, string>;
   setCurrentQuiz: (quiz: Quiz) => void;
   startQuiz: (quiz: Quiz) => void;
   endQuiz: () => void;
-  answerQuestion: (questionId: string, answer: any) => void;
+  answerQuestion: (questionId: string, answer: string) => void;
   nextQuestion: () => void;
   previousQuestion: () => void;
-  addQuizToHistory: (attempt: any) => void;
+  addQuizToHistory: (attempt: QuizAttempt) => void;
 }
 
 interface UIState {
   sidebarOpen: boolean;
   theme: 'light' | 'dark';
-  notifications: any[];
+  notifications: Notification[];
   toggleSidebar: () => void;
   setTheme: (theme: 'light' | 'dark') => void;
-  addNotification: (notification: any) => void;
+  addNotification: (notification: Notification) => void;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
 }
@@ -65,7 +85,7 @@ type AppState = AuthState & FlashcardState & ProgressState & QuizState & UIState
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       // Auth State
       user: null,
       isAuthenticated: false,
@@ -123,7 +143,7 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           studySessions: [...state.studySessions, session],
         })),
-      updateDailyProgress: (progress: any) =>
+      updateDailyProgress: (progress: DailyProgress) =>
         set((state) => ({
           dailyProgress: [...state.dailyProgress, progress],
         })),
@@ -148,7 +168,7 @@ export const useAppStore = create<AppState>()(
           currentQuestionIndex: 0,
           answers: {},
         }),
-      answerQuestion: (questionId: string, answer: any) =>
+      answerQuestion: (questionId: string, answer: string) =>
         set((state) => ({
           answers: { ...state.answers, [questionId]: answer },
         })),
@@ -163,7 +183,7 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           currentQuestionIndex: Math.max(state.currentQuestionIndex - 1, 0),
         })),
-      addQuizToHistory: (attempt: any) =>
+      addQuizToHistory: (attempt: QuizAttempt) =>
         set((state) => ({
           quizHistory: [...state.quizHistory, attempt],
         })),
@@ -175,7 +195,7 @@ export const useAppStore = create<AppState>()(
       toggleSidebar: () =>
         set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setTheme: (theme: 'light' | 'dark') => set({ theme }),
-      addNotification: (notification: any) =>
+      addNotification: (notification: Notification) =>
         set((state) => ({
           notifications: [...state.notifications, notification],
         })),
