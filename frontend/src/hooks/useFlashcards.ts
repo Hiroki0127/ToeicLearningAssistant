@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useAppStore } from '@/lib/store';
 import { flashcardService } from '@/lib/flashcards';
 import type { Flashcard, FlashcardFilters, FlashcardResponse } from '@/lib/flashcards';
@@ -22,8 +22,9 @@ export const useFlashcards = () => {
       setFlashcards(response.flashcards);
       setPagination(response.pagination);
       return response;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to fetch flashcards';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Failed to fetch flashcards';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -39,8 +40,9 @@ export const useFlashcards = () => {
       setFlashcards(response.flashcards);
       setPagination(response.pagination);
       return response;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to fetch user flashcards';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Failed to fetch user flashcards';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -61,8 +63,9 @@ export const useFlashcards = () => {
       const newFlashcard = await flashcardService.createFlashcard(data);
       addFlashcard(newFlashcard);
       return newFlashcard;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to create flashcard';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Failed to create flashcard';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -77,8 +80,9 @@ export const useFlashcards = () => {
       const updatedFlashcard = await flashcardService.updateFlashcard(id, data);
       updateFlashcard(id, updatedFlashcard);
       return updatedFlashcard;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to update flashcard';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Failed to update flashcard';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -92,8 +96,9 @@ export const useFlashcards = () => {
       setError(null);
       await flashcardService.deleteFlashcard(id);
       deleteFlashcard(id);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to delete flashcard';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Failed to delete flashcard';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -110,8 +115,9 @@ export const useFlashcards = () => {
         responseTime,
       });
       return review;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to review flashcard';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Failed to review flashcard';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
