@@ -52,9 +52,10 @@ export const useDashboard = () => {
       } else {
         throw new Error(response.data.message || 'Failed to fetch dashboard stats');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching dashboard stats:', err);
-      setError(err.response?.data?.message || err.message || 'An error occurred');
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      setError(error.response?.data?.message || error.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
