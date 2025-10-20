@@ -14,7 +14,6 @@ interface Message {
 }
 
 export default function AIChat() {
-  const { isAuthenticated } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -118,7 +117,7 @@ export default function AIChat() {
             let questionsText = '';
             
             const questions = Array.isArray(data.data.questions) ? data.data.questions : [];
-            questions.forEach((q: any, index: number) => {
+            questions.forEach((q: { question: string; options?: string[]; correctAnswer?: string; number?: number }, index: number) => {
               const questionNum = q.number || (131 + index);
               
               if (q.options && Array.isArray(q.options)) {
@@ -153,7 +152,7 @@ export default function AIChat() {
             let questionsText = '';
             
             const questions = Array.isArray(data.data.questions) ? data.data.questions : [];
-            questions.forEach((q: any, index: number) => {
+            questions.forEach((q: { question: string; options?: string[]; correctAnswer?: string; number?: number }, index: number) => {
               const questionNum = q.number || (161 + index);
               
               if (q.options && Array.isArray(q.options)) {
