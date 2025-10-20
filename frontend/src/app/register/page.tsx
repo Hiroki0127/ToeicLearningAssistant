@@ -91,7 +91,7 @@ export default function RegisterPage() {
         password: formData.password,
       });
       router.push('/dashboard');
-    } catch (err) {
+    } catch {
       // Error is handled by useAuth hook
     }
   };
