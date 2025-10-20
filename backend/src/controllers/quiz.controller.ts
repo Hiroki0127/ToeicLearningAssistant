@@ -130,6 +130,9 @@ export const submitQuizResult = async (req: Request, res: Response): Promise<voi
     // Update user progress (add experience points)
     const experienceGained = Math.floor(score / 10) * 10; // 10 XP per 10% score
     
+    // Calculate streak based on study activity
+    const newStreak = await calculateStreak(req.user.userId);
+    
     // Update or create user progress
     await prisma.userProgress.upsert({
       where: { userId: req.user.userId },
@@ -137,6 +140,8 @@ export const submitQuizResult = async (req: Request, res: Response): Promise<voi
         experience: {
           increment: experienceGained,
         },
+        currentStreak: newStreak.currentStreak,
+        longestStreak: Math.max(0, newStreak.currentStreak), // Will be updated properly in flashcard controller
       },
       create: {
         userId: req.user.userId,
@@ -144,8 +149,8 @@ export const submitQuizResult = async (req: Request, res: Response): Promise<voi
         totalCardsStudied: 0,
         totalCorrectAnswers: 0,
         totalIncorrectAnswers: 0,
-        currentStreak: 0,
-        longestStreak: 0,
+        currentStreak: newStreak.currentStreak,
+        longestStreak: newStreak.currentStreak,
         totalStudyTime: 0,
         level: 'beginner',
       },
@@ -235,6 +240,63 @@ export const getQuizHistory = async (req: Request, res: Response): Promise<void>
   } catch (error) {
     console.error('Get quiz history error:', error);
     badRequestResponse(res, 'Failed to retrieve quiz history');
+  }
+};
+
+// Calculate streak based on daily study activity
+const calculateStreak = async (userId: string): Promise<{ currentStreak: number }> => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    let currentStreak = 0;
+    let checkDate = new Date(today);
+
+    // Check each day going backwards
+    for (let i = 0; i < 365; i++) { // Check up to 1 year back
+      const dayStart = new Date(checkDate);
+      dayStart.setHours(0, 0, 0, 0);
+      
+      const dayEnd = new Date(checkDate);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      // Check if user studied on this day (either flashcards or quizzes)
+      const studiedToday = await prisma.dailyProgress.findFirst({
+        where: {
+          userId,
+          date: {
+            gte: dayStart,
+            lte: dayEnd,
+          },
+          cardsStudied: { gt: 0 }, // Must have studied at least 1 card
+        },
+      });
+
+      // Also check for quiz attempts on this day
+      const quizToday = await prisma.quizAttempt.findFirst({
+        where: {
+          userId,
+          completedAt: {
+            gte: dayStart,
+            lte: dayEnd,
+          },
+        },
+      });
+
+      if (studiedToday || quizToday) {
+        currentStreak++;
+        // Move to previous day
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        // No study activity on this day, streak ends
+        break;
+      }
+    }
+
+    return { currentStreak };
+  } catch (error) {
+    console.error('Calculate streak error:', error);
+    return { currentStreak: 0 };
   }
 };
 

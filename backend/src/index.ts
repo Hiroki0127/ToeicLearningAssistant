@@ -30,9 +30,12 @@ app.use(cors({
     process.env['FRONTEND_URL'] || 'http://localhost:3000',
     'http://172.20.10.2:3000',
     'http://172.20.10.2:3006',
-    'http://localhost:3006'
+    'http://localhost:3006',
+    'http://localhost:3000'
   ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(morgan('combined')); // Logging
 app.use(express.json({ limit: '10mb' }));

@@ -287,12 +287,17 @@ const updateUserProgress = async (userId: string, isCorrect: boolean): Promise<v
     });
 
     if (progress) {
+      // Calculate streak based on study activity
+      const newStreak = await calculateStreak(userId);
+      
       await prisma.userProgress.update({
         where: { userId },
         data: {
           totalCardsStudied: progress.totalCardsStudied + 1,
           totalCorrectAnswers: progress.totalCorrectAnswers + (isCorrect ? 1 : 0),
           totalIncorrectAnswers: progress.totalIncorrectAnswers + (isCorrect ? 0 : 1),
+          currentStreak: newStreak.currentStreak,
+          longestStreak: Math.max(progress.longestStreak, newStreak.currentStreak),
           lastStudyDate: new Date(),
           updatedAt: new Date(),
         },
@@ -300,5 +305,57 @@ const updateUserProgress = async (userId: string, isCorrect: boolean): Promise<v
     }
   } catch (error) {
     console.error('Update user progress error:', error);
+  }
+};
+
+// Calculate streak based on daily study activity
+const calculateStreak = async (userId: string): Promise<{ currentStreak: number }> => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Get all daily progress records for this user, ordered by date
+    const dailyProgress = await prisma.dailyProgress.findMany({
+      where: { userId },
+      orderBy: { date: 'desc' },
+    });
+
+    let currentStreak = 0;
+    let checkDate = new Date(today);
+
+    // Check each day going backwards
+    for (let i = 0; i < 365; i++) { // Check up to 1 year back
+      const dayStart = new Date(checkDate);
+      dayStart.setHours(0, 0, 0, 0);
+      
+      const dayEnd = new Date(checkDate);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      // Check if user studied on this day
+      const studiedToday = await prisma.dailyProgress.findFirst({
+        where: {
+          userId,
+          date: {
+            gte: dayStart,
+            lte: dayEnd,
+          },
+          cardsStudied: { gt: 0 }, // Must have studied at least 1 card
+        },
+      });
+
+      if (studiedToday) {
+        currentStreak++;
+        // Move to previous day
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        // No study activity on this day, streak ends
+        break;
+      }
+    }
+
+    return { currentStreak };
+  } catch (error) {
+    console.error('Calculate streak error:', error);
+    return { currentStreak: 0 };
   }
 };

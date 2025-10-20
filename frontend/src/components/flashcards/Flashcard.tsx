@@ -129,7 +129,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
                     Example:
                   </h4>
                   <p className="text-gray-600 italic">
-                    "{flashcard.example}"
+                    &ldquo;{flashcard.example}&rdquo;
                   </p>
                 </div>
               )}
