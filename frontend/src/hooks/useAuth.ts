@@ -35,8 +35,9 @@ export const useAuth = () => {
       const { user: userData } = await authService.login(credentials);
       storeLogin(userData);
       return userData;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Login failed';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Login failed';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -51,8 +52,9 @@ export const useAuth = () => {
       const { user: userData } = await authService.register(data);
       storeLogin(userData);
       return userData;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Registration failed';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Registration failed';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -72,8 +74,9 @@ export const useAuth = () => {
       const updatedUser = await authService.updateProfile(data);
       storeLogin(updatedUser);
       return updatedUser;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Profile update failed';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Profile update failed';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -86,8 +89,9 @@ export const useAuth = () => {
       setLocalLoading(true);
       setError(null);
       await authService.changePassword(currentPassword, newPassword);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Password change failed';
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Password change failed';
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
