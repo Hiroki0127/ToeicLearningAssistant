@@ -7,6 +7,12 @@ A comprehensive web application designed to help users prepare for the TOEIC exa
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
 ![Prisma](https://img.shields.io/badge/Prisma-5-purple?style=for-the-badge&logo=prisma)
 
+## 🌐 Live Demo
+
+**Try the app now:** [https://toeic-learning-assistant-frontend-a.vercel.app/](https://toeic-learning-assistant-frontend-a.vercel.app/)
+
+> **Note:** The frontend is deployed on Vercel. The backend API needs to be running separately for full functionality.
+
 ## Features
 
 ### **Smart Learning System**
