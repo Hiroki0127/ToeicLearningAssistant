@@ -1,9 +1,3 @@
-// @ts-nocheck
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react/no-unescaped-entities */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable prefer-const */
 'use client';
 
 import { useState, useEffect } from 'react';

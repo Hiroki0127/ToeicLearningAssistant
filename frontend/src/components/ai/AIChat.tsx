@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Brain, MessageCircle, BookOpen, Lightbulb } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 
 interface Message {
   id: string;

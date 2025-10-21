@@ -4,7 +4,7 @@ import { authService } from '@/lib/auth';
 import type { User, LoginCredentials, RegisterData } from '@/types';
 
 export const useAuth = () => {
-  const { user, isAuthenticated, login: storeLogin, logout: storeLogout, setLoading } = useAppStore();
+  const { user, isAuthenticated, login: storeLogin, logout: storeLogout } = useAppStore();
   const [loading, setLocalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
