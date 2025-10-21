@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useFlashcards } from '@/hooks/useFlashcards';
-import { ArrowLeft, Plus, Save } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 
 export default function CreateFlashcardPage() {
   const router = useRouter();

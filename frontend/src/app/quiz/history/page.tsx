@@ -12,7 +12,6 @@ import {
   Calendar, 
   BarChart3, 
   RefreshCw,
-  Filter,
   Search
 } from 'lucide-react';
 import { getQuizHistory, type QuizAttempt } from '@/lib/quiz';
@@ -272,7 +271,7 @@ export default function QuizHistoryPage() {
               </p>
             </div>
           ) : (
-            filteredHistory.map((attempt, index) => (
+            filteredHistory.map((attempt) => (
               <Card key={attempt.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

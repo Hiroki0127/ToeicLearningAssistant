@@ -10,10 +10,6 @@ import { useFlashcards } from '@/hooks/useFlashcards';
 import { useDashboard } from '@/hooks/useDashboard';
 import { 
   BookOpen, 
-  TrendingUp, 
-  Clock, 
-  Target, 
-  Calendar,
   ArrowRight,
   Brain,
   Trophy,
@@ -22,7 +18,7 @@ import {
 
 export default function DashboardPage() {
   const { user, isAuthenticated, loading } = useAuth();
-  const { fetchUserFlashcards, flashcards, pagination } = useFlashcards();
+  const { fetchUserFlashcards } = useFlashcards();
   const { dashboardData, loading: dashboardLoading, error: dashboardError } = useDashboard();
   const router = useRouter();
 

@@ -4,11 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Flashcard } from '@/components/flashcards/Flashcard';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader } from '@/components/ui/Card';
+import { Card, CardContent } from '@/components/ui/Card';
 import Layout from '@/components/layout/Layout';
 import { useAppStore } from '@/lib/store';
 import { useFlashcards } from '@/hooks/useFlashcards';
-import type { Flashcard as FlashcardType } from '@/types';
 import { BookOpen, Plus, Settings } from 'lucide-react';
 
 export default function FlashcardsPage() {
