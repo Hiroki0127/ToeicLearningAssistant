@@ -1,10 +1,17 @@
 import { PrismaClient } from '@prisma/client';
-import { Groq } from 'groq-sdk';
 
 const prisma = new PrismaClient();
-const groq = new Groq({
-  apiKey: process.env['GROQ_API_KEY'],
-});
+
+// Initialize Groq client only if API key is available
+const getGroqClient = () => {
+  const apiKey = process.env['GROQ_API_KEY'];
+  if (!apiKey) {
+    throw new Error('GROQ_API_KEY environment variable is not set');
+  }
+  // Dynamic import to avoid loading Groq SDK at module load time
+  const { Groq } = require('groq-sdk');
+  return new Groq({ apiKey });
+};
 
 export class RAGService {
   private static flashcardData: any[] = [];
@@ -130,6 +137,7 @@ export class RAGService {
       IMPORTANT: If flashcards are provided below, use their exact definitions and examples in your response.
       ${context}`;
 
+      const groq = getGroqClient();
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
         messages: [{ role: "user", content: prompt }],

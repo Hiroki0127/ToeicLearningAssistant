@@ -1,11 +1,15 @@
-import Groq from 'groq-sdk';
 import { RAGService } from './rag.service';
 
-// Initialize Groq client
-
-const groq = new Groq({
-  apiKey: process.env['GROQ_API_KEY'],
-});
+// Initialize Groq client only if API key is available
+const getGroqClient = () => {
+  const apiKey = process.env['GROQ_API_KEY'];
+  if (!apiKey) {
+    throw new Error('GROQ_API_KEY environment variable is not set');
+  }
+  // Dynamic import to avoid loading Groq SDK at module load time
+  const { default: Groq } = require('groq-sdk');
+  return new Groq({ apiKey });
+};
 
 export class AIService {
 
@@ -82,6 +86,7 @@ Return ONLY this exact JSON format:
 
 CRITICAL: Use ONLY the exact JSON format shown above. Do not add extra fields or nested objects.`;
 
+      const groq = getGroqClient();
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
         messages: [{ role: "user", content: prompt }],
@@ -141,6 +146,7 @@ CRITICAL: Use ONLY the exact JSON format shown above. Do not add extra fields or
     Provide a clear explanation of the correct grammar rule and why the answer is right or wrong.`;
 
     try {
+      const groq = getGroqClient();
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
         messages: [{ role: "user", content: prompt }],
@@ -205,6 +211,7 @@ CRITICAL RULES:
 5. Focus specifically on "${topic}" knowledge
 6. Use authentic business contexts and professional tone`;
 
+      const groq = getGroqClient();
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
         messages: [{ role: "user", content: prompt }],
@@ -299,6 +306,7 @@ CRITICAL RULES:
 6. Use authentic business scenarios and professional vocabulary
 7. Include numbered positions [1], [2], [3], [4] in passage for sentence insertion questions`;
 
+      const groq = getGroqClient();
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
         messages: [{ role: "user", content: prompt }],
@@ -347,6 +355,7 @@ CRITICAL RULES:
 
       try {
         console.log('Sending fallback request to Groq for word:', word);
+        const groq = getGroqClient();
         const completion = await groq.chat.completions.create({
           model: "llama-3.1-8b-instant",
           messages: [{ role: "user", content: prompt }],
