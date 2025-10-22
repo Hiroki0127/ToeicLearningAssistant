@@ -297,7 +297,8 @@ export default function QuizPage() {
     setIsSearching(true);
     const term = searchTerm.toLowerCase();
     
-    const results = quizzes.filter(quiz => {
+    const allQuizzes = [...sampleQuizzes, ...userQuizzes];
+    const results = allQuizzes.filter(quiz => {
       // Search in title
       if (quiz.title.toLowerCase().includes(term)) return true;
       
@@ -347,7 +348,8 @@ export default function QuizPage() {
   const getSearchSuggestions = () => {
     const suggestions = new Set<string>();
     
-    quizzes.forEach(quiz => {
+    const allQuizzes = [...sampleQuizzes, ...userQuizzes];
+    allQuizzes.forEach(quiz => {
       // Add quiz types
       suggestions.add(quiz.type);
       // Add difficulty levels
@@ -370,7 +372,8 @@ export default function QuizPage() {
       const stats = await getQuizStats();
       
       // Generate recommendations based on performance patterns
-      let recommendedQuizzes = [...quizzes];
+      const allQuizzes = [...sampleQuizzes, ...userQuizzes];
+      let recommendedQuizzes = [...allQuizzes];
       
       // If user has taken quizzes before, use performance data
       if (stats.totalQuizzes > 0) {
@@ -406,7 +409,8 @@ export default function QuizPage() {
         });
       } else {
         // New user - recommend a mix of easy quizzes from different categories
-        recommendedQuizzes = quizzes.filter(quiz => quiz.difficulty === 'easy');
+        const allQuizzes = [...sampleQuizzes, ...userQuizzes];
+        recommendedQuizzes = allQuizzes.filter(quiz => quiz.difficulty === 'easy');
         recommendedQuizzes.sort((a, b) => {
           // Prioritize different categories
           const categoryPriority = { vocabulary: 3, grammar: 2, reading: 2, listening: 1 };
@@ -420,7 +424,8 @@ export default function QuizPage() {
     } catch (error) {
       console.error('Failed to generate recommendations:', error);
       // Fallback to random selection
-      const shuffled = [...quizzes].sort(() => 0.5 - Math.random());
+      const allQuizzes = [...sampleQuizzes, ...userQuizzes];
+      const shuffled = [...allQuizzes].sort(() => 0.5 - Math.random());
       setRecommendations(shuffled.slice(0, 6));
     } finally {
       setRecommendationsLoading(false);
@@ -1391,13 +1396,13 @@ export default function QuizPage() {
         }))
       });
       
-      // Refresh the quiz list to show the newly created quiz
+      // Refresh the user quizzes list to show the newly created quiz
       try {
-        const apiQuizzes = await getQuizzes();
-        setQuizzes(apiQuizzes);
-        setFilteredQuizzes(filterQuizzes(apiQuizzes, selectedDifficulty, selectedCategory));
+        const userQuizzesData = await getUserQuizzes();
+        setUserQuizzes(userQuizzesData);
+        setFilteredUserQuizzes(filterQuizzes(userQuizzesData, selectedDifficulty, selectedCategory));
       } catch (error) {
-        console.error('Failed to refresh quiz list:', error);
+        console.error('Failed to refresh user quiz list:', error);
       }
       
       // Reset form
@@ -1538,10 +1543,10 @@ export default function QuizPage() {
       // Save to database via API
       await createQuiz(duplicatedQuiz);
       
-      // Refresh the quiz list
-      const apiQuizzes = await getQuizzes();
-      setQuizzes(apiQuizzes);
-      setFilteredQuizzes(filterQuizzes(apiQuizzes, selectedDifficulty, selectedCategory));
+      // Refresh the user quizzes list
+      const userQuizzesData = await getUserQuizzes();
+      setUserQuizzes(userQuizzesData);
+      setFilteredUserQuizzes(filterQuizzes(userQuizzesData, selectedDifficulty, selectedCategory));
       
       alert('Quiz duplicated successfully! You can find it in your quiz list.');
       
@@ -2624,7 +2629,7 @@ export default function QuizPage() {
           )}
 
           {/* Search Suggestions */}
-          {!searchTerm && quizzes.length > 0 && (
+          {!searchTerm && (sampleQuizzes.length > 0 || userQuizzes.length > 0) && (
             <div className="mt-3">
               <p className="text-sm text-gray-500 mb-2">Try searching for:</p>
               <div className="flex flex-wrap gap-2">
@@ -4021,13 +4026,14 @@ export default function QuizPage() {
                       <select
                         value={selectedQuizForSharing?.id || ''}
                         onChange={(e) => {
-                          const quiz = quizzes.find((q: any) => q.id === e.target.value);
+                          const allQuizzes = [...sampleQuizzes, ...userQuizzes];
+                          const quiz = allQuizzes.find((q: any) => q.id === e.target.value);
                           setSelectedQuizForSharing(quiz || null);
                         }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="">Choose a quiz...</option>
-                        {quizzes.map((quiz: any) => (
+                        {[...sampleQuizzes, ...userQuizzes].map((quiz: any) => (
                           <option key={quiz.id} value={quiz.id}>
                             {quiz.title} ({quiz.questions.length} questions)
                           </option>
@@ -4711,7 +4717,7 @@ export default function QuizPage() {
             </button>
           </div>
           <p className="text-sm text-gray-500 mt-2">
-            Showing {filteredQuizzes.length} quiz{filteredQuizzes.length !== 1 ? 'es' : ''}
+            Showing {filteredSampleQuizzes.length + filteredUserQuizzes.length} quiz{(filteredSampleQuizzes.length + filteredUserQuizzes.length) !== 1 ? 'es' : ''}
           </p>
         </div>
 
@@ -4992,7 +4998,7 @@ export default function QuizPage() {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        {showSampleQuizzes ? '▼' : '▶'} Explore {filteredQuizzes.filter(quiz => !quiz.isCustom).length} Sample Quizzes
+                        {showSampleQuizzes ? '▼' : '▶'} Explore {filteredSampleQuizzes.length} Sample Quizzes
                       </h3>
                       <p className="text-gray-600">
                         Practice real TOEIC-style questions!
@@ -5001,7 +5007,7 @@ export default function QuizPage() {
                     <div className="text-right">
                       <div className="text-sm text-gray-500 mb-1">Available</div>
                       <div className="text-lg font-bold text-blue-600">
-                        {filteredQuizzes.filter(quiz => !quiz.isCustom).length} Quizzes
+                        {filteredSampleQuizzes.length} Quizzes
                       </div>
                     </div>
                   </div>
@@ -5011,7 +5017,7 @@ export default function QuizPage() {
               {/* Expanded Sample Quizzes List */}
               {showSampleQuizzes && (
                 <div className="mt-4 space-y-2">
-                  {filteredQuizzes.filter(quiz => !quiz.isCustom).map((quiz, index) => (
+                  {filteredSampleQuizzes.map((quiz, index) => (
                     <Card key={quiz.id} className="hover:shadow-md transition-shadow bg-white border-l-4 border-l-blue-500">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -5077,7 +5083,7 @@ export default function QuizPage() {
                 </Button>
               </div>
               
-              {filteredQuizzes.filter(quiz => quiz.isCustom).length === 0 ? (
+              {filteredUserQuizzes.length === 0 ? (
                 <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                   <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No custom quizzes yet</h3>
@@ -5093,7 +5099,7 @@ export default function QuizPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {filteredQuizzes.filter(quiz => quiz.isCustom).map((quiz) => (
+                  {filteredUserQuizzes.map((quiz) => (
                     <Card key={quiz.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -5156,9 +5162,9 @@ export default function QuizPage() {
                                   try {
                                     await deleteQuiz(quiz.id);
                                     
-                                    // Update the quiz list
-                                    setQuizzes(prev => prev.filter(q => q.id !== quiz.id));
-                                    setFilteredQuizzes(prev => prev.filter(q => q.id !== quiz.id));
+                                    // Update the user quiz list
+                                    setUserQuizzes(prev => prev.filter(q => q.id !== quiz.id));
+                                    setFilteredUserQuizzes(prev => prev.filter(q => q.id !== quiz.id));
                                     
                                     alert('Quiz deleted successfully!');
                                   } catch (error) {
