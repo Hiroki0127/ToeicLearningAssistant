@@ -8,16 +8,12 @@ import {
   submitQuizResult,
   getQuizHistory,
   getQuizStats,
-  deleteTestQuizzes,
 } from '../controllers/quiz.controller';
 import { authenticateToken, optionalAuth } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
 import { quizValidationSchemas } from '../utils/validation';
 
 const router = Router();
-
-// Temporary admin route to delete test quizzes (no auth required for cleanup)
-router.delete('/admin/delete-test-quizzes', deleteTestQuizzes);
 
 // Public routes (optional authentication for user-specific data)
 router.get('/', optionalAuth, getQuizzes);
