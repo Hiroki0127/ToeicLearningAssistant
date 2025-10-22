@@ -5173,8 +5173,7 @@ export default function QuizPage() {
                             </Button>
                             <Button
                               onClick={() => {
-                                // TODO: Implement edit quiz functionality
-                                alert('Edit functionality coming soon!');
+                                router.push(`/quiz/${quiz.id}/edit`);
                               }}
                               size="sm"
                               variant="outline"

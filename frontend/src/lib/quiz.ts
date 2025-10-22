@@ -101,6 +101,19 @@ export const createQuiz = async (quizData: {
   return response.data.data;
 };
 
+// Update an existing quiz
+export const updateQuiz = async (id: string, quizData: {
+  title: string;
+  description: string;
+  type: string;
+  difficulty: string;
+  timeLimit?: number;
+  questions: Question[];
+}): Promise<Quiz> => {
+  const response = await api.put(`/quiz/${id}`, quizData);
+  return response.data.data;
+};
+
 // Submit quiz result
 export const submitQuizResult = async (result: QuizResult): Promise<{
   quizAttempt: QuizAttempt;

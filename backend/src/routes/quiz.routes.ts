@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getQuizzes,
   createQuiz,
+  updateQuiz,
   getQuizById,
   submitQuizResult,
   getQuizHistory,
@@ -25,7 +26,8 @@ router.post('/submit', validateBody(quizValidationSchemas.submitQuizResult), sub
 router.get('/history', getQuizHistory);
 router.get('/stats', getQuizStats);
 
-// This must be last to avoid catching other routes
+// Parameterized routes
+router.put('/:id', validateBody(quizValidationSchemas.createQuiz), updateQuiz);
 router.get('/:id', getQuizById);
 
 export default router;
