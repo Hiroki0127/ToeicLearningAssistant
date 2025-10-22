@@ -1372,27 +1372,21 @@ export default function QuizPage() {
     try {
       setCustomQuizLoading(true);
       
-      // For now, we'll save to localStorage as a demo
-      // In a real app, this would be sent to the backend
-      const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-      const newQuiz = {
-        ...customQuizData,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
-        createdBy: 'current-user', // In real app, get from auth context
-        isCustom: true
-      };
-      
-      savedQuizzes.push(newQuiz);
-      localStorage.setItem('customQuizzes', JSON.stringify(savedQuizzes));
+      // Create quiz via API
+      const newQuiz = await createQuiz({
+        title: customQuizData.title,
+        description: customQuizData.description,
+        type: customQuizData.type,
+        difficulty: customQuizData.difficulty,
+        timeLimit: customQuizData.timeLimit,
+        questions: customQuizData.questions
+      });
       
       // Refresh the quiz list to show the newly created quiz
       try {
         const apiQuizzes = await getQuizzes();
-        const updatedCustomQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-        const allQuizzes = [...apiQuizzes, ...updatedCustomQuizzes];
-        setQuizzes(allQuizzes);
-        setFilteredQuizzes(filterQuizzes(allQuizzes, selectedDifficulty, selectedCategory));
+        setQuizzes(apiQuizzes);
+        setFilteredQuizzes(filterQuizzes(apiQuizzes, selectedDifficulty, selectedCategory));
       } catch (error) {
         console.error('Failed to refresh quiz list:', error);
       }
