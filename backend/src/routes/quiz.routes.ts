@@ -18,11 +18,12 @@ router.get('/', getQuizzes);
 // Protected routes (authentication required)
 router.use(authenticateToken);
 
+// Specific routes must come before parameterized routes
 router.post('/submit', validateBody(quizValidationSchemas.submitQuizResult), submitQuizResult);
 router.get('/history', getQuizHistory);
 router.get('/stats', getQuizStats);
 
-// This must be last to avoid catching /history and /stats
+// This must be last to avoid catching other routes
 router.get('/:id', getQuizById);
 
 export default router;
