@@ -73,6 +73,51 @@ app.get('/api/stats', async (_req, res) => {
   }
 });
 
+// Cleanup endpoint to delete test quizzes
+app.get('/api/cleanup-test-quizzes', async (_req, res) => {
+  try {
+    const { prisma } = await import('./utils/database');
+    
+    const quizIdsToDelete = [
+      'cmh2j8ygw00011bsxdz23y6d3', // Test Quiz
+      'cmh2j36h800001bsxydv0oxtb', // efef
+      'cmh2fukqx00005kwuurzzl318'  // Console Test Quiz
+    ];
+
+    const deletedQuizzes = [];
+
+    for (const quizId of quizIdsToDelete) {
+      try {
+        const quiz = await prisma.quiz.findUnique({
+          where: { id: quizId },
+          select: { id: true, title: true }
+        });
+
+        if (quiz) {
+          await prisma.quiz.delete({
+            where: { id: quizId }
+          });
+          deletedQuizzes.push(quiz.title);
+        }
+      } catch (error) {
+        console.error(`Error deleting quiz ${quizId}:`, error);
+      }
+    }
+
+    res.json({
+      success: true,
+      data: { deletedQuizzes },
+      message: `Successfully deleted ${deletedQuizzes.length} test quizzes`
+    });
+  } catch (error) {
+    console.error('Error in cleanup endpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete test quizzes'
+    });
+  }
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/flashcards', flashcardRoutes);
