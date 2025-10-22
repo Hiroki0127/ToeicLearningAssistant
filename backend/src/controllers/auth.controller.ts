@@ -2,8 +2,8 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
-import { successResponse, createdResponse, badRequestResponse, conflictResponse, authErrorResponse } from '@/utils/response';
-import type { RegisterInput, LoginInput } from '@/utils/validation';
+import { successResponse, createdResponse, badRequestResponse, conflictResponse, authErrorResponse } from '../utils/response';
+import type { RegisterInput, LoginInput } from '../utils/validation';
 
 const prisma = new PrismaClient();
 

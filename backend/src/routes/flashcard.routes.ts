@@ -7,10 +7,10 @@ import {
   deleteFlashcard, 
   reviewFlashcard, 
   getUserFlashcards 
-} from '@/controllers/flashcard.controller';
-import { authenticateToken } from '@/middleware/auth';
-import { validateBody } from '@/middleware/validation';
-import { createFlashcardSchema, updateFlashcardSchema, flashcardReviewSchema } from '@/utils/validation';
+} from '../controllers/flashcard.controller';
+import { authenticateToken } from '../middleware/auth';
+import { validateBody } from '../middleware/validation';
+import { createFlashcardSchema, updateFlashcardSchema, flashcardReviewSchema } from '../utils/validation';
 
 const router = Router();
 

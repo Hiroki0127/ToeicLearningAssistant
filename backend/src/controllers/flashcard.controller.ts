@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { successResponse, createdResponse, badRequestResponse, notFoundResponse, databaseErrorResponse } from '@/utils/response';
-import type { CreateFlashcardInput, UpdateFlashcardInput, FlashcardReviewInput } from '@/utils/validation';
+import { successResponse, createdResponse, badRequestResponse, notFoundResponse, databaseErrorResponse } from '../utils/response';
+import type { CreateFlashcardInput, UpdateFlashcardInput, FlashcardReviewInput } from '../utils/validation';
 
 const prisma = new PrismaClient();
 

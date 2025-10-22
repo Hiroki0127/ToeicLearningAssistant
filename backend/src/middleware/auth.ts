@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { unauthorizedResponse } from '@/utils/response';
-import type { JWTPayload } from '@/types';
+import { unauthorizedResponse } from '../utils/response';
+import type { JWTPayload } from '../types';
 
 // Extend Express Request interface to include user
 declare global {

@@ -5,17 +5,17 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 
 // Import routes
-import authRoutes from '@/routes/auth.routes';
-import flashcardRoutes from '@/routes/flashcard.routes';
-import quizRoutes from '@/routes/quiz.routes';
-import notificationRoutes from '@/routes/notification.routes';
-import aiRoutes from '@/routes/ai.routes';
-import knowledgeGraphRoutes from '@/routes/knowledge-graph.routes';
-import smartRecommendationsRoutes from '@/routes/smart-recommendations.routes';
-import dashboardRoutes from '@/routes/dashboard.routes';
+import authRoutes from './routes/auth.routes';
+import flashcardRoutes from './routes/flashcard.routes';
+import quizRoutes from './routes/quiz.routes';
+import notificationRoutes from './routes/notification.routes';
+import aiRoutes from './routes/ai.routes';
+import knowledgeGraphRoutes from './routes/knowledge-graph.routes';
+import smartRecommendationsRoutes from './routes/smart-recommendations.routes';
+import dashboardRoutes from './routes/dashboard.routes';
 
 // Import database utilities
-import { checkDatabaseConnection, getDatabaseStats } from '@/utils/database';
+import { checkDatabaseConnection, getDatabaseStats } from './utils/database';
 
 // Load environment variables
 dotenv.config();
