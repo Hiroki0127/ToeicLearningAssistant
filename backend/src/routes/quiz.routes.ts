@@ -20,7 +20,7 @@ const router = Router();
 router.get('/', optionalAuth, getQuizzes);
 
 // Admin route to delete test quizzes (no auth required for cleanup)
-router.delete('/admin/cleanup-test-quizzes', deleteTestQuizzes);
+router.get('/admin/cleanup-test-quizzes', deleteTestQuizzes);
 
 // Protected routes (authentication required)
 router.use(authenticateToken);
