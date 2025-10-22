@@ -277,7 +277,7 @@ export class SmartRecommendationsService {
         orderBy: { date: 'desc' },
       }),
       
-      // Weak areas (flashcards with low accuracy) - simplified for SQLite
+      // Weak areas (flashcards with low accuracy) - simplified for PostgreSQL
       prisma.flashcardReview.findMany({
         where: {
           userId,
