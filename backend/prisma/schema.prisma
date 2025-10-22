@@ -8,7 +8,7 @@ generator client {
 /// @seed="tsx prisma/seed.ts"
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
