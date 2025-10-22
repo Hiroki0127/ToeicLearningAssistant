@@ -92,6 +92,59 @@ export const createQuiz = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+export const updateQuiz = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      badRequestResponse(res, 'Authentication required');
+      return;
+    }
+
+    const { id } = req.params;
+    const { title, description, type, difficulty, timeLimit, questions } = req.body;
+
+    // Validate required fields
+    if (!title || !description || !type || !difficulty || !questions) {
+      badRequestResponse(res, 'Missing required fields');
+      return;
+    }
+
+    // Check if quiz exists
+    const existingQuiz = await prisma.quiz.findUnique({
+      where: { id },
+    });
+
+    if (!existingQuiz) {
+      notFoundResponse(res, 'Quiz not found');
+      return;
+    }
+
+    // Update the quiz
+    const updatedQuiz = await prisma.quiz.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        type,
+        difficulty,
+        timeLimit: timeLimit || 600, // Default 10 minutes
+        questions: JSON.stringify(questions),
+        updatedAt: new Date(),
+      },
+    });
+
+    // Parse questions for response
+    const quizWithParsedQuestions = {
+      ...updatedQuiz,
+      questions: JSON.parse(updatedQuiz.questions),
+    };
+
+    successResponse(res, quizWithParsedQuestions, 'Quiz updated successfully');
+  } catch (error) {
+    console.error('Update quiz error:', error);
+    badRequestResponse(res, 'Failed to update quiz');
+  }
+};
+
 export const getQuizById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
