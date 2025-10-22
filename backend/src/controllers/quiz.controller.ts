@@ -14,12 +14,20 @@ export interface QuizResult {
 
 export const getQuizzes = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { type, difficulty, limit = 10, offset = 0 } = req.query;
+    const { type, difficulty, limit = 10, offset = 0, userOnly = false } = req.query;
 
     // Build filter conditions
     const where: any = {};
     if (type) where.type = type as string;
     if (difficulty) where.difficulty = difficulty as string;
+    
+    // If userOnly is true and user is authenticated, only return user's quizzes
+    // Otherwise, return sample quizzes (userId is null)
+    if (userOnly === 'true' && req.user) {
+      where.userId = req.user.userId;
+    } else {
+      where.userId = null; // Sample quizzes have no userId
+    }
 
     const quizzes = await prisma.quiz.findMany({
       where,
@@ -34,6 +42,7 @@ export const getQuizzes = async (req: Request, res: Response): Promise<void> => 
         difficulty: true,
         timeLimit: true,
         questions: true,
+        userId: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -76,6 +85,7 @@ export const createQuiz = async (req: Request, res: Response): Promise<void> => 
         difficulty,
         timeLimit: timeLimit || 600, // Default 10 minutes
         questions: JSON.stringify(questions),
+        userId: req.user.userId, // Associate quiz with the logged-in user
       },
     });
 

@@ -24,6 +24,7 @@ model User {
   // Relations
   flashcards      Flashcard[]
   flashcardReviews FlashcardReview[]
+  quizzes         Quiz[]
   quizAttempts    QuizAttempt[]
   progress        UserProgress?
   dailyProgress   DailyProgress[]
@@ -74,10 +75,12 @@ model Quiz {
   difficulty  String
   timeLimit   Int?
   questions   String
+  userId      String?  // Optional - null for sample quizzes, user ID for user-created quizzes
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
+  user     User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
   attempts QuizAttempt[]
 
   @@map("quizzes")

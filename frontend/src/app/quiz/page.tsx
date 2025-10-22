@@ -22,7 +22,7 @@ import {
   Zap, 
   Share2 
 } from 'lucide-react';
-import { getQuizzes, createQuiz, updateQuiz, deleteQuiz, submitQuizResult, getQuizStats, getQuizHistory, type Quiz, type QuizResult, type QuizAttempt } from '@/lib/quiz';
+import { getQuizzes, getSampleQuizzes, getUserQuizzes, createQuiz, updateQuiz, deleteQuiz, submitQuizResult, getQuizStats, getQuizHistory, type Quiz, type QuizResult, type QuizAttempt } from '@/lib/quiz';
 
 // Using flexible types for complex nested state objects
 type QuizStats = Record<string, unknown>;
@@ -37,8 +37,10 @@ type ReminderStats = Record<string, unknown>;
 
 export default function QuizPage() {
   const router = useRouter();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [filteredQuizzes, setFilteredQuizzes] = useState<Quiz[]>([]);
+  const [sampleQuizzes, setSampleQuizzes] = useState<Quiz[]>([]);
+  const [userQuizzes, setUserQuizzes] = useState<Quiz[]>([]);
+  const [filteredSampleQuizzes, setFilteredSampleQuizzes] = useState<Quiz[]>([]);
+  const [filteredUserQuizzes, setFilteredUserQuizzes] = useState<Quiz[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -150,20 +152,33 @@ export default function QuizPage() {
   };
 
   useEffect(() => {
-    // Load quizzes from API only
+    // Load quizzes from API - separate sample and user quizzes
     const loadQuizzes = async () => {
       try {
         setLoading(true);
         
-        // Load quizzes from API
-        const apiQuizzes = await getQuizzes();
+        // Load sample quizzes (public quizzes)
+        const sampleQuizzesData = await getSampleQuizzes();
+        setSampleQuizzes(sampleQuizzesData);
+        setFilteredSampleQuizzes(filterQuizzes(sampleQuizzesData, selectedDifficulty, selectedCategory));
         
-        setQuizzes(apiQuizzes);
-        setFilteredQuizzes(filterQuizzes(apiQuizzes, selectedDifficulty, selectedCategory));
+        // Load user's own quizzes (if authenticated)
+        try {
+          const userQuizzesData = await getUserQuizzes();
+          setUserQuizzes(userQuizzesData);
+          setFilteredUserQuizzes(filterQuizzes(userQuizzesData, selectedDifficulty, selectedCategory));
+        } catch (userError) {
+          // User might not be authenticated, that's okay
+          console.log('User not authenticated or no user quizzes');
+          setUserQuizzes([]);
+          setFilteredUserQuizzes([]);
+        }
       } catch (error) {
         console.error('Failed to load quizzes:', error);
-        setQuizzes([]);
-        setFilteredQuizzes([]);
+        setSampleQuizzes([]);
+        setUserQuizzes([]);
+        setFilteredSampleQuizzes([]);
+        setFilteredUserQuizzes([]);
       } finally {
         setLoading(false);
       }
@@ -174,8 +189,9 @@ export default function QuizPage() {
 
   // Update filtered quizzes when difficulty or category changes
   useEffect(() => {
-    setFilteredQuizzes(filterQuizzes(quizzes, selectedDifficulty, selectedCategory));
-  }, [selectedDifficulty, selectedCategory, quizzes]);
+    setFilteredSampleQuizzes(filterQuizzes(sampleQuizzes, selectedDifficulty, selectedCategory));
+    setFilteredUserQuizzes(filterQuizzes(userQuizzes, selectedDifficulty, selectedCategory));
+  }, [selectedDifficulty, selectedCategory, sampleQuizzes, userQuizzes]);
 
   // Reload calendar data when month changes
   useEffect(() => {

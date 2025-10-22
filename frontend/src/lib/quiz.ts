@@ -77,8 +77,35 @@ export const getQuizzes = async (params?: {
   difficulty?: string;
   limit?: number;
   offset?: number;
+  userOnly?: boolean;
 }): Promise<Quiz[]> => {
   const response = await api.get('/quiz', { params });
+  return response.data.data;
+};
+
+// Get sample quizzes (public quizzes)
+export const getSampleQuizzes = async (params?: {
+  type?: string;
+  difficulty?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<Quiz[]> => {
+  const response = await api.get('/quiz', { 
+    params: { ...params, userOnly: false }
+  });
+  return response.data.data;
+};
+
+// Get user's own quizzes
+export const getUserQuizzes = async (params?: {
+  type?: string;
+  difficulty?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<Quiz[]> => {
+  const response = await api.get('/quiz', { 
+    params: { ...params, userOnly: true }
+  });
   return response.data.data;
 };
 
