@@ -29,7 +29,8 @@ export const getQuizzes = async (req: Request, res: Response): Promise<void> => 
         where.userId = req.user.userId;
       } else {
         // User not authenticated, return empty array for user quizzes
-        return successResponse(res, { data: [] });
+        successResponse(res, { data: [] });
+        return;
       }
     } else {
       where.userId = null; // Sample quizzes have no userId
