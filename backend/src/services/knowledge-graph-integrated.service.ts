@@ -91,7 +91,7 @@ export class KnowledgeGraphIntegrated {
           OR: [
             { word: { in: conceptTitles } },
             { definition: { contains: word } },
-            { tags: { contains: word } },
+            // { tags: { contains: word } }, // Commented out as tags field doesn't exist
           ],
         },
         take: 10,
@@ -114,7 +114,7 @@ export class KnowledgeGraphIntegrated {
     minStrength?: number;
     includeDifficulty?: boolean;
   } = {}) {
-    const { maxLength = 5, minStrength = 0.5, includeDifficulty = true } = options;
+    const { maxLength = 5, minStrength = 0.5 } = options;
     
     console.log(`🛤️ Finding learning paths from: "${startWord}" to: "${endWord || 'any'}"`);
     
@@ -329,7 +329,7 @@ export class KnowledgeGraphIntegrated {
       take: 3,
     });
 
-    return relationships.map(rel => {
+    return relationships.map((rel: { sourceId: string; target: any; source: any; type: string; strength: number }) => {
       const relatedNode = rel.sourceId === nodeId ? rel.target : rel.source;
       return {
         concept: relatedNode.title,

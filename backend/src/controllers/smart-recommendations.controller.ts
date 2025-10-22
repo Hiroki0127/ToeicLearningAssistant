@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { SmartRecommendationsService } from '../services/smart-recommendations.service';
-import { sendResponse } from '../utils/response';
+import { successResponse } from '../utils/response';
 
 export class SmartRecommendationsController {
   
@@ -8,12 +8,13 @@ export class SmartRecommendationsController {
    * GET /api/recommendations
    * Get personalized flashcard recommendations for the authenticated user
    */
-  static async getRecommendations(req: Request, res: Response) {
+  static async getRecommendations(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as any).user?.id;
       
       if (!userId) {
-        return sendResponse(res, 401, false, 'User not authenticated');
+        successResponse(res, null, 'User not authenticated', 401);
+        return;
       }
 
       const { 
@@ -28,10 +29,10 @@ export class SmartRecommendationsController {
         difficulty: difficulty as 'easy' | 'medium' | 'hard' | 'all',
       });
 
-      sendResponse(res, 200, true, 'Recommendations generated successfully', result);
+      successResponse(res, result, 'Recommendations generated successfully');
     } catch (error) {
       console.error('Error getting recommendations:', error);
-      sendResponse(res, 500, false, 'Internal server error');
+      successResponse(res, null, 'Internal server error', 500);
     }
   }
 
@@ -39,12 +40,13 @@ export class SmartRecommendationsController {
    * GET /api/recommendations/daily
    * Get daily study recommendations
    */
-  static async getDailyRecommendations(req: Request, res: Response) {
+  static async getDailyRecommendations(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as any).user?.id;
       
       if (!userId) {
-        return sendResponse(res, 401, false, 'User not authenticated');
+        successResponse(res, null, 'User not authenticated', 401);
+        return;
       }
 
       const result = await SmartRecommendationsService.getRecommendations(userId, {
@@ -56,14 +58,14 @@ export class SmartRecommendationsController {
       // Add daily focus message
       const dailyMessage = this.generateDailyMessage(result.userStats);
       
-      sendResponse(res, 200, true, 'Daily recommendations generated', {
+      successResponse(res, {
         ...result,
         dailyMessage,
         focus: 'daily_study',
       });
     } catch (error) {
       console.error('Error getting daily recommendations:', error);
-      sendResponse(res, 500, false, 'Internal server error');
+      successResponse(res, null, 'Internal server error', 500);
     }
   }
 
@@ -71,12 +73,13 @@ export class SmartRecommendationsController {
    * GET /api/recommendations/weak-areas
    * Get recommendations focused on weak areas
    */
-  static async getWeakAreaRecommendations(req: Request, res: Response) {
+  static async getWeakAreaRecommendations(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as any).user?.id;
       
       if (!userId) {
-        return sendResponse(res, 401, false, 'User not authenticated');
+        successResponse(res, null, 'User not authenticated', 401);
+        return;
       }
 
       const result = await SmartRecommendationsService.getRecommendations(userId, {
@@ -90,14 +93,14 @@ export class SmartRecommendationsController {
         rec => rec.type === 'weak_area' || rec.type === 'spaced_repetition'
       );
 
-      sendResponse(res, 200, true, 'Weak area recommendations generated', {
+      successResponse(res, {
         ...result,
         recommendations: weakAreaRecommendations,
         focus: 'weak_areas',
       });
     } catch (error) {
       console.error('Error getting weak area recommendations:', error);
-      sendResponse(res, 500, false, 'Internal server error');
+      successResponse(res, null, 'Internal server error', 500);
     }
   }
 
@@ -105,12 +108,13 @@ export class SmartRecommendationsController {
    * GET /api/recommendations/related
    * Get recommendations based on knowledge graph relationships
    */
-  static async getRelatedRecommendations(req: Request, res: Response) {
+  static async getRelatedRecommendations(req: Request, res: Response): Promise<void> {
     try {
       const userId = (req as any).user?.id;
       
       if (!userId) {
-        return sendResponse(res, 401, false, 'User not authenticated');
+        successResponse(res, null, 'User not authenticated', 401);
+        return;
       }
 
       const result = await SmartRecommendationsService.getRecommendations(userId, {
@@ -124,14 +128,14 @@ export class SmartRecommendationsController {
         rec => rec.type === 'knowledge_graph' || rec.type === 'related_concept'
       );
 
-      sendResponse(res, 200, true, 'Related concept recommendations generated', {
+      successResponse(res, {
         ...result,
         recommendations: relatedRecommendations,
         focus: 'related_concepts',
       });
     } catch (error) {
       console.error('Error getting related recommendations:', error);
-      sendResponse(res, 500, false, 'Internal server error');
+      successResponse(res, null, 'Internal server error', 500);
     }
   }
 

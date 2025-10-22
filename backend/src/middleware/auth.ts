@@ -26,7 +26,7 @@ export const authenticateToken = (
   }
 
   try {
-    const secret = process.env.JWT_SECRET;
+    const secret = process.env['JWT_SECRET'];
     if (!secret) {
       throw new Error('JWT_SECRET not configured');
     }
@@ -47,7 +47,7 @@ export const authenticateToken = (
 
 export const optionalAuth = (
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): void => {
   const authHeader = req.headers.authorization;
@@ -59,7 +59,7 @@ export const optionalAuth = (
   }
 
   try {
-    const secret = process.env.JWT_SECRET;
+    const secret = process.env['JWT_SECRET'];
     if (!secret) {
       next();
       return;
@@ -125,7 +125,7 @@ export const validateUserAccess = (
   const userId = req.params.userId || req.body.userId;
   
   // Users can only access their own data (unless admin)
-  if (userId && req.user.userId !== userId && req.user.email !== 'admin@example.com') {
+  if (userId && req.user?.['userId'] !== userId && req.user?.email !== 'admin@example.com') {
     unauthorizedResponse(res, 'Access denied to this resource');
     return;
   }

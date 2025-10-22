@@ -315,7 +315,7 @@ const calculateStreak = async (userId: string): Promise<{ currentStreak: number 
     today.setHours(0, 0, 0, 0);
     
     // Get all daily progress records for this user, ordered by date
-    const dailyProgress = await prisma.dailyProgress.findMany({
+    await prisma.dailyProgress.findMany({
       where: { userId },
       orderBy: { date: 'desc' },
     });

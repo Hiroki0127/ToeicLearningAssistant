@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { successResponse, badRequestResponse, notFoundResponse } from '@/utils/response';
+import { successResponse, badRequestResponse } from '@/utils/response';
 
 const prisma = new PrismaClient();
 
@@ -103,14 +103,14 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
 
     // Format recent activity
     const recentActivity = [
-      ...recentReviews.map(review => ({
+      ...recentReviews.map((review: { id: string; flashcard: { word: string }; isCorrect: boolean; reviewedAt: Date }) => ({
         id: review.id,
         type: 'flashcard',
         word: review.flashcard.word,
         result: review.isCorrect ? 'correct' : 'incorrect',
         time: review.reviewedAt,
       })),
-      ...recentQuizAttempts.map(attempt => ({
+      ...recentQuizAttempts.map((attempt: { id: string; quiz: { title: string }; correctAnswers: number; totalQuestions: number; completedAt: Date }) => ({
         id: attempt.id,
         type: 'quiz',
         title: attempt.quiz.title,
@@ -183,7 +183,7 @@ async function calculateAverageQuizScore(userId: string): Promise<number> {
 
     if (quizAttempts.length === 0) return 0;
 
-    const totalScore = quizAttempts.reduce((sum, attempt) => sum + attempt.score, 0);
+    const totalScore = quizAttempts.reduce((sum: number, attempt: { score: number }) => sum + attempt.score, 0);
     return Math.round(totalScore / quizAttempts.length);
   } catch (error) {
     console.error('Error calculating average quiz score:', error);

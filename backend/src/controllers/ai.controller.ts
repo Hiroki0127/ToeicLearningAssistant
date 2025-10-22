@@ -20,9 +20,10 @@ export const generateQuestion = async (req: Request, res: Response): Promise<voi
     successResponse(res, question, 'Question generated successfully');
   } catch (error) {
     console.error('Generate question error:', error);
-    console.error('Error details:', error.message);
-    console.error('Error stack:', error.stack);
-    badRequestResponse(res, `Failed to generate question: ${error.message}`);
+    const err = error as Error;
+    console.error('Error details:', err.message);
+    console.error('Error stack:', err.stack);
+    badRequestResponse(res, `Failed to generate question: ${err.message}`);
   }
 };
 

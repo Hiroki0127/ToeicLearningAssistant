@@ -171,3 +171,6 @@ export const aiServiceErrorResponse = (
     503
   );
 };
+
+// Generic send response (alias for successResponse)
+export const sendResponse = successResponse;

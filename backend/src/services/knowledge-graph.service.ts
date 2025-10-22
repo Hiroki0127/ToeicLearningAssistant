@@ -73,7 +73,7 @@ export class KnowledgeGraphService {
       take: limit,
     });
 
-    return relationships.map(rel => {
+    return relationships.map((rel: { sourceId: string; targetId: string; target: any; source: any; type: string; strength: number }) => {
       const relatedNode = rel.sourceId === node.id ? rel.target : rel.source;
       return {
         id: relatedNode.id,
@@ -143,7 +143,7 @@ export class KnowledgeGraphService {
     
     if (relatedConcepts.length === 0) return [];
 
-    const conceptTitles = relatedConcepts.map(c => c.title);
+    const conceptTitles = relatedConcepts.map((c: { title: string }) => c.title);
     
     return await prisma.flashcard.findMany({
       where: {

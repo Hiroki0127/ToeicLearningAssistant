@@ -3,7 +3,6 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { successResponse, createdResponse, badRequestResponse, conflictResponse, authErrorResponse } from '@/utils/response';
-import { registerSchema, loginSchema } from '@/utils/validation';
 import type { RegisterInput, LoginInput } from '@/utils/validation';
 
 const prisma = new PrismaClient();
@@ -23,7 +22,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Hash password
-    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
+    const saltRounds = parseInt(process.env['BCRYPT_ROUNDS'] || '12');
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Create user
@@ -215,7 +214,7 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
     }
 
     // Hash new password
-    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
+    const saltRounds = parseInt(process.env['BCRYPT_ROUNDS'] || '12');
     const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
     // Update password
@@ -236,21 +235,16 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
 
 // Helper function to generate JWT token
 const generateToken = (userId: string, email: string): string => {
-  const secret = process.env.JWT_SECRET;
-  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+  const secret = process.env['JWT_SECRET'];
+  const expiresIn = process.env['JWT_EXPIRES_IN'] || '7d';
 
   if (!secret) {
     throw new Error('JWT_SECRET not configured');
   }
 
   return jwt.sign(
-    {
-      userId,
-      email,
-    },
+    { userId, email },
     secret,
-    {
-      expiresIn,
-    }
+    { expiresIn: expiresIn as any }
   );
 };

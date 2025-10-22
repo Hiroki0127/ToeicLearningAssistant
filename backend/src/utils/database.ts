@@ -7,7 +7,7 @@ declare global {
 // Use a singleton pattern to prevent multiple Prisma Client instances
 export const prisma = globalThis.__prisma || new PrismaClient();
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env['NODE_ENV'] !== 'production') {
   globalThis.__prisma = prisma;
 }
 

@@ -4,14 +4,13 @@ import {
   explainGrammar,
   explainVocabulary,
 } from '../controllers/ai.controller';
-import { authenticateToken } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
 import { z } from 'zod';
 
 const router = Router();
 
 // Test endpoint without authentication
-router.get('/test', async (req, res) => {
+router.get('/test', async (_req, res) => {
   try {
     res.json({ 
       success: true, 
@@ -19,10 +18,11 @@ router.get('/test', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
+    const err = error as Error;
     res.status(500).json({ 
       success: false, 
       error: 'AI service test failed',
-      message: error.message 
+      message: err.message 
     });
   }
 });

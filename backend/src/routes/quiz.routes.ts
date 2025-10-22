@@ -7,7 +7,7 @@ import {
   getQuizStats,
 } from '../controllers/quiz.controller';
 import { authenticateToken } from '../middleware/auth';
-import { validateRequest, validateBody } from '../middleware/validation';
+import { validateBody } from '../middleware/validation';
 import { quizValidationSchemas } from '../utils/validation';
 
 const router = Router();

@@ -1,14 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 import { Groq } from 'groq-sdk';
-import * as faiss from 'faiss-node';
 
 const prisma = new PrismaClient();
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: process.env['GROQ_API_KEY'],
 });
 
 export class RAGService {
-  private static index: any = null;
   private static flashcardData: any[] = [];
 
   // Initialize vector database with existing flashcards
@@ -30,8 +28,8 @@ export class RAGService {
       }
 
       // Generate embeddings for all flashcards
-      const embeddings = await this.generateEmbeddings(
-        flashcards.map(card => `${card.word}: ${card.definition} ${card.example}`)
+      await this.generateEmbeddings(
+        flashcards.map((card: { word: string; definition: string; example: string }) => `${card.word}: ${card.definition} ${card.example}`)
       );
 
       // Skip FAISS for now - use simple text matching instead
@@ -138,7 +136,7 @@ export class RAGService {
         temperature: 0.5,
       });
 
-      return completion.choices[0].message.content || 'Sorry, I could not process your request.';
+      return completion.choices[0]?.message?.content || 'Sorry, I could not process your request.';
     } catch (error) {
       console.error('Error in RAG vocabulary explanation:', error);
       throw new Error('Failed to generate vocabulary explanation');

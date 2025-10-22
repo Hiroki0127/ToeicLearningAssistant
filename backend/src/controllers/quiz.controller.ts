@@ -40,7 +40,7 @@ export const getQuizzes = async (req: Request, res: Response): Promise<void> => 
     });
 
     // Parse questions JSON string to array
-    const quizzesWithParsedQuestions = quizzes.map(quiz => ({
+    const quizzesWithParsedQuestions = quizzes.map((quiz: { questions: string }) => ({
       ...quiz,
       questions: JSON.parse(quiz.questions),
     }));
@@ -345,7 +345,7 @@ export const getQuizStats = async (req: Request, res: Response): Promise<void> =
     });
 
     // Get recent performance data (last 5 attempts)
-    const recentPerformance = quizAttempts.slice(0, 5).map(attempt => ({
+    const recentPerformance = quizAttempts.slice(0, 5).map((attempt: { quiz: { title: string }; score: number; completedAt: Date }) => ({
       quizTitle: attempt.quiz.title,
       score: attempt.score,
       completedAt: attempt.completedAt
@@ -367,7 +367,7 @@ export const getQuizStats = async (req: Request, res: Response): Promise<void> =
     };
 
     // Process the data
-    quizAttempts.forEach(attempt => {
+    quizAttempts.forEach((attempt: { quiz: { difficulty: string; type: string }; score: number }) => {
       const difficulty = attempt.quiz.difficulty;
       const category = attempt.quiz.type;
       

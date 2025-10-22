@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { KnowledgeGraphIntegrated } from '../services/knowledge-graph-integrated.service';
-import { sendResponse } from '../utils/response';
+import { successResponse } from '../utils/response';
 
 export class KnowledgeGraphController {
   
@@ -8,12 +8,13 @@ export class KnowledgeGraphController {
    * GET /api/knowledge-graph/related-concepts
    * Find related concepts for a given word
    */
-  static async getRelatedConcepts(req: Request, res: Response) {
+  static async getRelatedConcepts(req: Request, res: Response): Promise<void> {
     try {
       const { word, maxDepth = 1, limit = 10, includeFlashcards = true } = req.query;
       
       if (!word || typeof word !== 'string') {
-        return sendResponse(res, 400, false, 'Word parameter is required');
+        successResponse(res, null, 'Word parameter is required', 400);
+        return;
       }
 
       const result = await KnowledgeGraphIntegrated.findRelatedConcepts(word, {
@@ -22,10 +23,10 @@ export class KnowledgeGraphController {
         includeFlashcards: includeFlashcards === 'true',
       });
 
-      sendResponse(res, 200, true, 'Related concepts found', result);
+      successResponse(res, result, 'Related concepts found');
     } catch (error) {
       console.error('Error getting related concepts:', error);
-      sendResponse(res, 500, false, 'Internal server error');
+      successResponse(res, null, 'Internal server error', 500);
     }
   }
 
@@ -33,7 +34,7 @@ export class KnowledgeGraphController {
    * GET /api/knowledge-graph/learning-paths
    * Find learning paths between concepts
    */
-  static async getLearningPaths(req: Request, res: Response) {
+  static async getLearningPaths(req: Request, res: Response): Promise<void> {
     try {
       const { 
         startWord, 
@@ -44,7 +45,8 @@ export class KnowledgeGraphController {
       } = req.query;
       
       if (!startWord || typeof startWord !== 'string') {
-        return sendResponse(res, 400, false, 'Start word parameter is required');
+        successResponse(res, null, 'Start word parameter is required', 400);
+        return;
       }
 
       const result = await KnowledgeGraphIntegrated.findLearningPaths(
@@ -57,10 +59,10 @@ export class KnowledgeGraphController {
         }
       );
 
-      sendResponse(res, 200, true, 'Learning paths found', { paths: result });
+      successResponse(res, { paths: result }, 'Learning paths found');
     } catch (error) {
       console.error('Error getting learning paths:', error);
-      sendResponse(res, 500, false, 'Internal server error');
+      successResponse(res, null, 'Internal server error', 500);
     }
   }
 
@@ -68,7 +70,7 @@ export class KnowledgeGraphController {
    * GET /api/knowledge-graph/similar-concepts
    * Find similar concepts based on relationship patterns
    */
-  static async getSimilarConcepts(req: Request, res: Response) {
+  static async getSimilarConcepts(req: Request, res: Response): Promise<void> {
     try {
       const { 
         word, 
@@ -78,7 +80,8 @@ export class KnowledgeGraphController {
       } = req.query;
       
       if (!word || typeof word !== 'string') {
-        return sendResponse(res, 400, false, 'Word parameter is required');
+        successResponse(res, null, 'Word parameter is required', 400);
+        return;
       }
 
       const result = await KnowledgeGraphIntegrated.findSimilarConcepts(word, {
@@ -87,10 +90,10 @@ export class KnowledgeGraphController {
         includeContext: includeContext === 'true',
       });
 
-      sendResponse(res, 200, true, 'Similar concepts found', { concepts: result });
+      successResponse(res, { concepts: result }, 'Similar concepts found');
     } catch (error) {
       console.error('Error getting similar concepts:', error);
-      sendResponse(res, 500, false, 'Internal server error');
+      successResponse(res, null, 'Internal server error', 500);
     }
   }
 
@@ -98,20 +101,21 @@ export class KnowledgeGraphController {
    * POST /api/knowledge-graph/enhance-rag
    * Enhance RAG with knowledge graph context
    */
-  static async enhanceRAG(req: Request, res: Response) {
+  static async enhanceRAG(req: Request, res: Response): Promise<void> {
     try {
       const { query } = req.body;
       
       if (!query || typeof query !== 'string') {
-        return sendResponse(res, 400, false, 'Query parameter is required');
+        successResponse(res, null, 'Query parameter is required', 400);
+        return;
       }
 
       const result = await KnowledgeGraphIntegrated.enhanceRAGWithKnowledgeGraph(query);
 
-      sendResponse(res, 200, true, 'RAG enhanced with knowledge graph', result);
+      successResponse(res, result, 'RAG enhanced with knowledge graph');
     } catch (error) {
       console.error('Error enhancing RAG:', error);
-      sendResponse(res, 500, false, 'Internal server error');
+      successResponse(res, null, 'Internal server error', 500);
     }
   }
 
@@ -119,12 +123,13 @@ export class KnowledgeGraphController {
    * GET /api/knowledge-graph/concept/:word
    * Get comprehensive information about a concept
    */
-  static async getConceptInfo(req: Request, res: Response) {
+  static async getConceptInfo(req: Request, res: Response): Promise<void> {
     try {
       const { word } = req.params;
       
       if (!word) {
-        return sendResponse(res, 400, false, 'Word parameter is required');
+        successResponse(res, null, 'Word parameter is required', 400);
+        return;
       }
 
       // Get all information about the concept
@@ -159,10 +164,10 @@ export class KnowledgeGraphController {
         },
       };
 
-      sendResponse(res, 200, true, 'Concept information retrieved', result);
+      successResponse(res, result, 'Concept information retrieved');
     } catch (error) {
       console.error('Error getting concept info:', error);
-      sendResponse(res, 500, false, 'Internal server error');
+      successResponse(res, null, 'Internal server error', 500);
     }
   }
 
@@ -170,7 +175,7 @@ export class KnowledgeGraphController {
    * GET /api/knowledge-graph/stats
    * Get knowledge graph statistics
    */
-  static async getStats(req: Request, res: Response) {
+  static async getStats(_req: Request, res: Response): Promise<void> {
     try {
       const { PrismaClient } = require('@prisma/client');
       const prisma = new PrismaClient();
@@ -189,10 +194,10 @@ export class KnowledgeGraphController {
         graphDensity: relationshipCount / ((nodeCount * (nodeCount - 1)) / 2 || 1),
       };
 
-      sendResponse(res, 200, true, 'Knowledge graph statistics', stats);
+      successResponse(res, stats, 'Knowledge graph statistics');
     } catch (error) {
       console.error('Error getting stats:', error);
-      sendResponse(res, 500, false, 'Internal server error');
+      successResponse(res, null, 'Internal server error', 500);
     }
   }
 }

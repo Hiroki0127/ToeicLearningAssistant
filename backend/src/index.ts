@@ -21,7 +21,7 @@ import { checkDatabaseConnection, getDatabaseStats } from '@/utils/database';
 dotenv.config();
 
 const app = express();
-const PORT = process.env['PORT'] || 3001;
+const PORT = process.env['PORT'] ? parseInt(process.env['PORT']) : 3001;
 
 // Middleware
 app.use(helmet()); // Security headers
@@ -42,7 +42,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
-app.get('/health', async (req, res) => {
+app.get('/health', async (_req, res) => {
   const dbConnected = await checkDatabaseConnection();
   
   res.json({
@@ -57,7 +57,7 @@ app.get('/health', async (req, res) => {
 });
 
 // Database stats endpoint
-app.get('/api/stats', async (req, res) => {
+app.get('/api/stats', async (_req, res) => {
   const stats = await getDatabaseStats();
   
   if (stats) {
@@ -84,7 +84,7 @@ app.use('/api/recommendations', smartRecommendationsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
 // API info endpoint
-app.get('/api', (req, res) => {
+app.get('/api', (_req, res) => {
   res.json({
     message: 'TOEIC Learning Assistant API',
     version: '1.0.0',
@@ -103,7 +103,7 @@ app.get('/api', (req, res) => {
 });
 
 // Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err.stack);
   res.status(500).json({
     success: false,

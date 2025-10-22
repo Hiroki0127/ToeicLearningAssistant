@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: toeic-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: toeic-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+
+databases:
+  - name: toeic-db
+    plan: free
+    databaseName: toeic_learning_assistant
+    user: toeic_user
+

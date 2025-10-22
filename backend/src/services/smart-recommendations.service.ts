@@ -13,7 +13,7 @@ export class SmartRecommendationsService {
     includeReasons?: boolean;
     difficulty?: 'easy' | 'medium' | 'hard' | 'all';
   } = {}) {
-    const { limit = 10, includeReasons = true, difficulty = 'all' } = options;
+    const { limit = 10, includeReasons = true } = options;
     
     console.log(`🎯 Getting smart recommendations for user: ${userId}`);
     
@@ -90,7 +90,7 @@ export class SmartRecommendationsService {
    */
   private static async getWeakAreaRecommendations(
     userFlashcards: any[],
-    userProgress: any,
+    _userProgress: any,
     limit: number
   ): Promise<any[]> {
     const recommendations: any[] = [];
@@ -106,7 +106,7 @@ export class SmartRecommendationsService {
       });
       
       if (reviews.length > 0) {
-        const accuracy = reviews.filter(r => r.isCorrect).length / reviews.length;
+        const accuracy = reviews.filter((r: { isCorrect: boolean }) => r.isCorrect).length / reviews.length;
         
         if (accuracy < 0.6) { // Less than 60% accuracy
           recommendations.push({
@@ -128,7 +128,7 @@ export class SmartRecommendationsService {
    */
   private static async getRelatedRecommendations(
     userFlashcards: any[],
-    userProgress: any,
+    _userProgress: any,
     limit: number
   ): Promise<any[]> {
     const recommendations: any[] = [];
@@ -162,7 +162,7 @@ export class SmartRecommendationsService {
    */
   private static async getSpacedRepetitionRecommendations(
     userFlashcards: any[],
-    userProgress: any,
+    _userProgress: any,
     limit: number
   ): Promise<any[]> {
     const recommendations: any[] = [];
@@ -175,6 +175,7 @@ export class SmartRecommendationsService {
       
       if (reviews.length > 0) {
         const lastReview = reviews[0];
+        if (!lastReview) continue;
         const daysSinceReview = Math.floor(
           (Date.now() - lastReview.reviewedAt.getTime()) / (1000 * 60 * 60 * 24)
         );
@@ -182,7 +183,7 @@ export class SmartRecommendationsService {
         // Simple spaced repetition: review again after 1, 3, 7, 14 days
         const intervals = [1, 3, 7, 14];
         const reviewCount = reviews.length;
-        const expectedInterval = intervals[Math.min(reviewCount - 1, intervals.length - 1)];
+        const expectedInterval = intervals[Math.min(reviewCount - 1, intervals.length - 1)] || 1;
         
         if (daysSinceReview >= expectedInterval) {
           recommendations.push({
@@ -204,7 +205,7 @@ export class SmartRecommendationsService {
    */
   private static async getKnowledgeGraphRecommendations(
     userFlashcards: any[],
-    userProgress: any,
+    _userProgress: any,
     limit: number
   ): Promise<any[]> {
     const recommendations: any[] = [];
@@ -221,7 +222,7 @@ export class SmartRecommendationsService {
       take: 10,
     });
     
-    const recentWords = recentReviews.map(r => r.flashcard.word);
+    const recentWords = recentReviews.map((r: { flashcard: { word: string } }) => r.flashcard.word);
     
     // Find related concepts using knowledge graph
     for (const word of recentWords) {
@@ -291,7 +292,7 @@ export class SmartRecommendationsService {
     
     // Calculate weak areas manually
     const weakAreaMap = new Map<string, { correct: number; total: number }>();
-    weakAreas.forEach(review => {
+    weakAreas.forEach((review: { flashcardId: string; isCorrect: boolean }) => {
       const existing = weakAreaMap.get(review.flashcardId) || { correct: 0, total: 0 };
       existing.total++;
       if (review.isCorrect) existing.correct++;
@@ -326,9 +327,9 @@ export class SmartRecommendationsService {
     // Sort by score and priority
     return unique
       .sort((a, b) => {
-        const priorityOrder = { high: 3, medium: 2, low: 1 };
+        const priorityOrder: Record<string, number> = { high: 3, medium: 2, low: 1 };
         if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-          return priorityOrder[b.priority] - priorityOrder[a.priority];
+          return (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
         }
         return b.score - a.score;
       })
