@@ -105,9 +105,6 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
                 {flashcard.word}
               </h2>
-              <p className="text-gray-600 text-lg">
-                Click to see definition
-              </p>
             </div>
 
             {/* Back Side */}
