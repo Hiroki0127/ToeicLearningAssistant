@@ -4,6 +4,7 @@ import {
   createQuiz,
   updateQuiz,
   deleteQuiz,
+  deleteTestQuizzes,
   getQuizById,
   submitQuizResult,
   getQuizHistory,
@@ -18,6 +19,9 @@ const router = Router();
 // Public routes (optional authentication for user-specific data)
 router.get('/', optionalAuth, getQuizzes);
 
+// Admin route to delete test quizzes (no auth required for cleanup)
+router.delete('/admin/cleanup-test-quizzes', deleteTestQuizzes);
+
 // Protected routes (authentication required)
 router.use(authenticateToken);
 
@@ -27,7 +31,7 @@ router.post('/submit', validateBody(quizValidationSchemas.submitQuizResult), sub
 router.get('/history', getQuizHistory);
 router.get('/stats', getQuizStats);
 
-// Parameterized routes (must come after specific routes)
+// Parameterized routes
 router.put('/:id', validateBody(quizValidationSchemas.createQuiz), updateQuiz);
 router.delete('/:id', deleteQuiz);
 router.get('/:id', getQuizById);

@@ -162,6 +162,45 @@ export const updateQuiz = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+// Admin endpoint to delete test quizzes
+export const deleteTestQuizzes = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const quizIdsToDelete = [
+      'cmh2j8ygw00011bsxdz23y6d3', // Test Quiz
+      'cmh2j36h800001bsxydv0oxtb', // efef
+      'cmh2fukqx00005kwuurzzl318'  // Console Test Quiz
+    ];
+
+    const deletedQuizzes = [];
+
+    for (const quizId of quizIdsToDelete) {
+      try {
+        const quiz = await prisma.quiz.findUnique({
+          where: { id: quizId },
+          select: { id: true, title: true }
+        });
+
+        if (quiz) {
+          await prisma.quiz.delete({
+            where: { id: quizId }
+          });
+          deletedQuizzes.push(quiz.title);
+        }
+      } catch (error) {
+        console.error(`Error deleting quiz ${quizId}:`, error);
+      }
+    }
+
+    successResponse(res, { 
+      data: { deletedQuizzes },
+      message: `Successfully deleted ${deletedQuizzes.length} test quizzes`
+    });
+  } catch (error) {
+    console.error('Error in deleteTestQuizzes:', error);
+    badRequestResponse(res, 'Failed to delete test quizzes');
+  }
+};
+
 export const deleteQuiz = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
@@ -565,4 +604,3 @@ export const getQuizStats = async (req: Request, res: Response): Promise<void> =
     badRequestResponse(res, 'Failed to retrieve quiz statistics');
   }
 };
-
