@@ -27,7 +27,7 @@ const PORT = process.env['PORT'] ? parseInt(process.env['PORT']) : 3001;
 app.use(helmet()); // Security headers
 app.use(cors({
   origin: [
-    process.env['FRONTEND_URL'] || 'http://localhost:3000',
+    process.env['FRONTEND_URL'] || 'https://toeiclearningassistant.onrender.com',
     'http://172.20.10.2:3000',
     'http://172.20.10.2:3006',
     'http://localhost:3006',
