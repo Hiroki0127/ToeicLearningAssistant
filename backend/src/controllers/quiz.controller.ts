@@ -163,7 +163,7 @@ export const updateQuiz = async (req: Request, res: Response): Promise<void> => 
 };
 
 // Admin endpoint to delete test quizzes
-export const deleteTestQuizzes = async (req: Request, res: Response): Promise<void> => {
+export const deleteTestQuizzes = async (_req: Request, res: Response): Promise<void> => {
   try {
     const quizIdsToDelete = [
       'cmh2j8ygw00011bsxdz23y6d3', // Test Quiz
