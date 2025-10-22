@@ -22,7 +22,7 @@ import {
   Zap, 
   Share2 
 } from 'lucide-react';
-import { getQuizzes, createQuiz, submitQuizResult, getQuizStats, getQuizHistory, type Quiz, type QuizResult, type QuizAttempt } from '@/lib/quiz';
+import { getQuizzes, createQuiz, updateQuiz, deleteQuiz, submitQuizResult, getQuizStats, getQuizHistory, type Quiz, type QuizResult, type QuizAttempt } from '@/lib/quiz';
 
 // Using flexible types for complex nested state objects
 type QuizStats = Record<string, unknown>;
@@ -150,7 +150,7 @@ export default function QuizPage() {
   };
 
   useEffect(() => {
-    // Load quizzes from API and combine with custom quizzes from localStorage
+    // Load quizzes from API only
     const loadQuizzes = async () => {
       try {
         setLoading(true);
@@ -158,26 +158,12 @@ export default function QuizPage() {
         // Load quizzes from API
         const apiQuizzes = await getQuizzes();
         
-        // Load custom quizzes from localStorage
-        const customQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-        
-        // Combine both sources - API quizzes first, then custom quizzes
-        const allQuizzes = [...apiQuizzes, ...customQuizzes];
-        
-        setQuizzes(allQuizzes);
-        setFilteredQuizzes(filterQuizzes(allQuizzes, selectedDifficulty, selectedCategory));
+        setQuizzes(apiQuizzes);
+        setFilteredQuizzes(filterQuizzes(apiQuizzes, selectedDifficulty, selectedCategory));
       } catch (error) {
         console.error('Failed to load quizzes:', error);
-        // Fallback: try to load only custom quizzes from localStorage
-        try {
-          const customQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-          setQuizzes(customQuizzes);
-          setFilteredQuizzes(filterQuizzes(customQuizzes, selectedDifficulty, selectedCategory));
-        } catch (localError) {
-          console.error('Failed to load custom quizzes:', localError);
-          setQuizzes([]);
-          setFilteredQuizzes([]);
-        }
+        setQuizzes([]);
+        setFilteredQuizzes([]);
       } finally {
         setLoading(false);
       }
@@ -1457,12 +1443,9 @@ export default function QuizPage() {
     try {
       setSharingLoading(true);
       
-      // Load custom quizzes from localStorage
-      const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-      const publicQuizzes = savedQuizzes.filter((quiz: any) => quiz.isPublic);
-      
-      // In a real app, this would fetch from backend API
-      setSharedQuizzes(publicQuizzes);
+      // For now, sharing functionality is disabled
+      // In the future, this would fetch shared quizzes from backend API
+      setSharedQuizzes([]);
       
     } catch (error) {
       console.error('Failed to load shared quizzes:', error);
@@ -1476,42 +1459,9 @@ export default function QuizPage() {
     try {
       setSharingLoading(true);
       
-      // Update quiz sharing settings
-      const updatedQuiz = {
-        ...quiz,
-        isPublic: shareSettings.isPublic,
-        shareSettings: { ...shareSettings },
-        sharedAt: new Date().toISOString(),
-        shareId: `share_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      };
-      
-      // Update in localStorage
-      const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-      const updatedQuizzes = savedQuizzes.map((q: any) => 
-        q.id === quiz.id ? updatedQuiz : q
-      );
-      localStorage.setItem('customQuizzes', JSON.stringify(updatedQuizzes));
-      
-      // Generate share link
-      const shareLink = `${window.location.origin}/quiz/shared/${updatedQuiz.shareId}`;
-      
-      // Copy to clipboard
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareLink);
-        alert('Share link copied to clipboard!');
-      } else {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = shareLink;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        alert('Share link copied to clipboard!');
-      }
-      
-      // Refresh shared quizzes list
-      await loadSharedQuizzes();
+      // For now, sharing functionality is disabled
+      // In the future, this would update quiz sharing settings via API
+      alert('Quiz sharing functionality is not yet implemented.');
       
     } catch (error) {
       console.error('Failed to share quiz:', error);
@@ -1529,26 +1479,9 @@ export default function QuizPage() {
     try {
       setSharingLoading(true);
       
-      // Update quiz to private
-      const updatedQuiz = {
-        ...quiz,
-        isPublic: false,
-        shareSettings: null,
-        sharedAt: null,
-        shareId: null
-      };
-      
-      // Update in localStorage
-      const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-      const updatedQuizzes = savedQuizzes.map((q: any) => 
-        q.id === quiz.id ? updatedQuiz : q
-      );
-      localStorage.setItem('customQuizzes', JSON.stringify(updatedQuizzes));
-      
-      // Refresh shared quizzes list
-      await loadSharedQuizzes();
-      
-      alert('Quiz unshared successfully!');
+      // For now, sharing functionality is disabled
+      // In the future, this would update quiz sharing settings via API
+      alert('Quiz sharing functionality is not yet implemented.');
       
     } catch (error) {
       console.error('Failed to unshare quiz:', error);
@@ -1562,25 +1495,25 @@ export default function QuizPage() {
     try {
       setSharingLoading(true);
       
-      // Create a copy of the quiz
+      // Create a copy of the quiz via API
       const duplicatedQuiz = {
-        ...quiz,
-        id: Date.now().toString(),
         title: `${quiz.title} (Copy)`,
-        createdAt: new Date().toISOString(),
-        createdBy: 'current-user', // In real app, get from auth context
-        isPublic: false,
-        shareSettings: null,
-        sharedAt: null,
-        shareId: null
+        description: quiz.description,
+        type: quiz.type,
+        difficulty: quiz.difficulty,
+        timeLimit: quiz.timeLimit,
+        questions: quiz.questions
       };
       
-      // Save to localStorage
-      const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-      savedQuizzes.push(duplicatedQuiz);
-      localStorage.setItem('customQuizzes', JSON.stringify(savedQuizzes));
+      // Save to database via API
+      await createQuiz(duplicatedQuiz);
       
-      alert('Quiz duplicated successfully! You can find it in your custom quizzes.');
+      // Refresh the quiz list
+      const apiQuizzes = await getQuizzes();
+      setQuizzes(apiQuizzes);
+      setFilteredQuizzes(filterQuizzes(apiQuizzes, selectedDifficulty, selectedCategory));
+      
+      alert('Quiz duplicated successfully! You can find it in your quiz list.');
       
     } catch (error) {
       console.error('Failed to duplicate quiz:', error);
@@ -4058,21 +3991,17 @@ export default function QuizPage() {
                       <select
                         value={selectedQuizForSharing?.id || ''}
                         onChange={(e) => {
-                          const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-                          const quiz = savedQuizzes.find((q: any) => q.id === e.target.value);
+                          const quiz = quizzes.find((q: any) => q.id === e.target.value);
                           setSelectedQuizForSharing(quiz || null);
                         }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="">Choose a quiz...</option>
-                        {(() => {
-                          const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-                          return savedQuizzes.map((quiz: any) => (
-                            <option key={quiz.id} value={quiz.id}>
-                              {quiz.title} ({quiz.questions.length} questions)
-                            </option>
-                          ));
-                        })()}
+                        {quizzes.map((quiz: any) => (
+                          <option key={quiz.id} value={quiz.id}>
+                            {quiz.title} ({quiz.questions.length} questions)
+                          </option>
+                        ))}
                       </select>
                     </div>
                     
@@ -5173,7 +5102,16 @@ export default function QuizPage() {
                             </Button>
                             <Button
                               onClick={() => {
-                                router.push(`/quiz/${quiz.id}/edit`);
+                                console.log('Edit button clicked!', { quizId: quiz.id, quizTitle: quiz.title });
+                                
+                                // Navigate to edit page
+                                try {
+                                  router.push(`/quiz/${quiz.id}/edit`);
+                                } catch (error) {
+                                  console.error('Router push failed:', error);
+                                  // Fallback to window.location
+                                  window.location.href = `/quiz/${quiz.id}/edit`;
+                                }
                               }}
                               size="sm"
                               variant="outline"
@@ -5182,19 +5120,21 @@ export default function QuizPage() {
                               ✏️
                             </Button>
                             <Button
-                              onClick={() => {
+                              onClick={async () => {
                                 // Delete quiz functionality
                                 if (confirm('Are you sure you want to delete this quiz?')) {
-                                  const savedQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-                                  const updatedQuizzes = savedQuizzes.filter((q: any) => q.id !== quiz.id);
-                                  localStorage.setItem('customQuizzes', JSON.stringify(updatedQuizzes));
-                                  
-                                  // Refresh the quiz list
-                                  const apiQuizzes = filteredQuizzes.filter(q => !q.isCustom);
-                                  const newCustomQuizzes = JSON.parse(localStorage.getItem('customQuizzes') || '[]');
-                                  const allQuizzes = [...apiQuizzes, ...newCustomQuizzes];
-                                  setQuizzes(allQuizzes);
-                                  setFilteredQuizzes(filterQuizzes(allQuizzes, selectedDifficulty, selectedCategory));
+                                  try {
+                                    await deleteQuiz(quiz.id);
+                                    
+                                    // Update the quiz list
+                                    setQuizzes(prev => prev.filter(q => q.id !== quiz.id));
+                                    setFilteredQuizzes(prev => prev.filter(q => q.id !== quiz.id));
+                                    
+                                    alert('Quiz deleted successfully!');
+                                  } catch (error) {
+                                    console.error('Failed to delete quiz:', error);
+                                    alert('Failed to delete quiz. Please try again.');
+                                  }
                                 }
                               }}
                               size="sm"

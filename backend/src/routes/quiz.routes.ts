@@ -3,6 +3,7 @@ import {
   getQuizzes,
   createQuiz,
   updateQuiz,
+  deleteQuiz,
   getQuizById,
   submitQuizResult,
   getQuizHistory,
@@ -28,6 +29,7 @@ router.get('/stats', getQuizStats);
 
 // Parameterized routes
 router.put('/:id', validateBody(quizValidationSchemas.createQuiz), updateQuiz);
+router.delete('/:id', deleteQuiz);
 router.get('/:id', getQuizById);
 
 export default router;

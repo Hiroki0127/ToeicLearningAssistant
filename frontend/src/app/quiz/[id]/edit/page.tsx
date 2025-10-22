@@ -29,6 +29,7 @@ export default function EditQuizPage() {
   useEffect(() => {
     const loadQuiz = async () => {
       try {
+        // Load quiz from API
         const quiz = await getQuizById(quizId);
         if (quiz) {
           setFormData({
@@ -145,7 +146,9 @@ export default function EditQuizPage() {
         questions
       };
 
+      // Update quiz via API
       await updateQuiz(quizId, quizData);
+      
       router.push('/quiz');
     } catch (error) {
       console.error('Error updating quiz:', error);

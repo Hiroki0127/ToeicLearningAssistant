@@ -145,6 +145,37 @@ export const updateQuiz = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+export const deleteQuiz = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      badRequestResponse(res, 'Authentication required');
+      return;
+    }
+
+    const { id } = req.params;
+
+    // Check if quiz exists
+    const existingQuiz = await prisma.quiz.findUnique({
+      where: { id },
+    });
+
+    if (!existingQuiz) {
+      notFoundResponse(res, 'Quiz not found');
+      return;
+    }
+
+    // Delete the quiz
+    await prisma.quiz.delete({
+      where: { id },
+    });
+
+    successResponse(res, null, 'Quiz deleted successfully');
+  } catch (error) {
+    console.error('Delete quiz error:', error);
+    badRequestResponse(res, 'Failed to delete quiz');
+  }
+};
+
 export const getQuizById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;

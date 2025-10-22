@@ -114,6 +114,11 @@ export const updateQuiz = async (id: string, quizData: {
   return response.data.data;
 };
 
+// Delete a quiz
+export const deleteQuiz = async (id: string): Promise<void> => {
+  await api.delete(`/quiz/${id}`);
+};
+
 // Submit quiz result
 export const submitQuizResult = async (result: QuizResult): Promise<{
   quizAttempt: QuizAttempt;
