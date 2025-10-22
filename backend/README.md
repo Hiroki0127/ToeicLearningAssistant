@@ -57,7 +57,7 @@ JWT_EXPIRES_IN=7d
 # Server
 PORT=3001
 NODE_ENV=development
-FRONTEND_URL=https://toeiclearningassistant.onrender.com
+FRONTEND_URL=https://toeic-learning-assistant-frontend-a.vercel.app/
 ```
 
 ### 3. Database Setup
@@ -215,7 +215,7 @@ npm run lint:fix     # Fix ESLint errors
 | `DATABASE_URL` | PostgreSQL connection string | Required |
 | `JWT_SECRET` | JWT signing secret | Required |
 | `JWT_EXPIRES_IN` | JWT expiration time | `7d` |
-| `FRONTEND_URL` | Frontend URL for CORS | `https://toeiclearningassistant.onrender.com` |
+| `FRONTEND_URL` | Frontend URL for CORS | `https://toeic-learning-assistant-frontend-a.vercel.app/` |
 | `BCRYPT_ROUNDS` | Password hashing rounds | `12` |
 
 ### Database Schema

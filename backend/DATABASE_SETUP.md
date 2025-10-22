@@ -52,7 +52,7 @@ Create a `.env` file in the backend directory:
 # Server Configuration
 PORT=3001
 NODE_ENV=development
-FRONTEND_URL=https://toeiclearningassistant.onrender.com
+FRONTEND_URL=https://toeic-learning-assistant-frontend-a.vercel.app/
 
 # Database Configuration
 DATABASE_URL="postgresql://postgres:password@localhost:5432/toeic_learning_assistant"
