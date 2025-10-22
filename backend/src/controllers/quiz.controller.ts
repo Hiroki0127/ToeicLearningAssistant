@@ -22,9 +22,15 @@ export const getQuizzes = async (req: Request, res: Response): Promise<void> => 
     if (difficulty) where.difficulty = difficulty as string;
     
     // If userOnly is true and user is authenticated, only return user's quizzes
+    // If userOnly is true but user is not authenticated, return empty array
     // Otherwise, return sample quizzes (userId is null)
-    if (userOnly === 'true' && req.user) {
-      where.userId = req.user.userId;
+    if (userOnly === 'true') {
+      if (req.user) {
+        where.userId = req.user.userId;
+      } else {
+        // User not authenticated, return empty array for user quizzes
+        return successResponse(res, { data: [] });
+      }
     } else {
       where.userId = null; // Sample quizzes have no userId
     }

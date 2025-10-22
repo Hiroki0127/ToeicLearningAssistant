@@ -9,14 +9,14 @@ import {
   getQuizHistory,
   getQuizStats,
 } from '../controllers/quiz.controller';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, optionalAuth } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
 import { quizValidationSchemas } from '../utils/validation';
 
 const router = Router();
 
-// Public routes (no authentication required)
-router.get('/', getQuizzes);
+// Public routes (optional authentication for user-specific data)
+router.get('/', optionalAuth, getQuizzes);
 
 // Protected routes (authentication required)
 router.use(authenticateToken);
