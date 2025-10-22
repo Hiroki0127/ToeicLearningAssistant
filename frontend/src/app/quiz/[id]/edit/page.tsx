@@ -147,7 +147,17 @@ export default function EditQuizPage() {
       };
 
       // Update quiz via API
-      await updateQuiz(quizId, quizData);
+      await updateQuiz(quizId, {
+        ...quizData,
+        questions: questions.map(q => ({
+          type: q.type,
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+          points: q.points
+        }))
+      });
       
       router.push('/quiz');
     } catch (error) {

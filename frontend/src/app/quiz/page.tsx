@@ -1365,7 +1365,14 @@ export default function QuizPage() {
         type: customQuizData.type,
         difficulty: customQuizData.difficulty,
         timeLimit: customQuizData.timeLimit,
-        questions: customQuizData.questions
+        questions: customQuizData.questions.map(q => ({
+          type: q.type,
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+          points: q.points
+        }))
       });
       
       // Refresh the quiz list to show the newly created quiz
@@ -1502,7 +1509,14 @@ export default function QuizPage() {
         type: quiz.type,
         difficulty: quiz.difficulty,
         timeLimit: quiz.timeLimit,
-        questions: quiz.questions
+        questions: quiz.questions.map((q: any) => ({
+          type: q.type,
+          question: q.question,
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation,
+          points: q.points
+        }))
       };
       
       // Save to database via API
