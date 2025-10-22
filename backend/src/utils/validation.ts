@@ -50,7 +50,7 @@ export const createQuizSchema = z.object({
   description: z.string().min(1, 'Description is required').max(300, 'Description must be less than 300 characters'),
   type: z.enum(['vocabulary', 'grammar', 'reading', 'listening', 'mixed']),
   difficulty: z.enum(['easy', 'medium', 'hard']),
-  timeLimit: z.number().min(1).max(120).optional(), // 1-120 minutes
+  timeLimit: z.number().min(60).max(7200).optional(), // 1-120 minutes (in seconds)
   questions: z.array(z.object({
     type: z.enum(['multiple-choice', 'fill-in-blank', 'true-false']),
     question: z.string().min(1, 'Question is required').max(500, 'Question must be less than 500 characters'),
