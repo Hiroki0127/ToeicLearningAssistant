@@ -19,6 +19,9 @@ const router = Router();
 // Public routes (optional authentication for user-specific data)
 router.get('/', optionalAuth, getQuizzes);
 
+// Temporary admin route to delete test quizzes (no auth required for cleanup)
+router.delete('/admin/delete-test-quizzes', deleteTestQuizzes);
+
 // Protected routes (authentication required)
 router.use(authenticateToken);
 
@@ -32,8 +35,5 @@ router.get('/stats', getQuizStats);
 router.put('/:id', validateBody(quizValidationSchemas.createQuiz), updateQuiz);
 router.delete('/:id', deleteQuiz);
 router.get('/:id', getQuizById);
-
-// Temporary admin route to delete test quizzes
-router.delete('/admin/delete-test-quizzes', deleteTestQuizzes);
 
 export default router;
