@@ -8,6 +8,7 @@ import {
   submitQuizResult,
   getQuizHistory,
   getQuizStats,
+  deleteTestQuizzes,
 } from '../controllers/quiz.controller';
 import { authenticateToken, optionalAuth } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
@@ -31,5 +32,8 @@ router.get('/stats', getQuizStats);
 router.put('/:id', validateBody(quizValidationSchemas.createQuiz), updateQuiz);
 router.delete('/:id', deleteQuiz);
 router.get('/:id', getQuizById);
+
+// Temporary admin route to delete test quizzes
+router.delete('/admin/delete-test-quizzes', deleteTestQuizzes);
 
 export default router;
