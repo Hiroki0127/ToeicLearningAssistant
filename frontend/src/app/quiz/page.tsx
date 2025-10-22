@@ -1364,7 +1364,7 @@ export default function QuizPage() {
         description: customQuizData.description,
         type: customQuizData.type,
         difficulty: customQuizData.difficulty,
-        timeLimit: customQuizData.timeLimit,
+        timeLimit: customQuizData.timeLimit * 60, // Convert minutes to seconds
         questions: customQuizData.questions.map(q => ({
           type: q.type,
           question: q.question,
@@ -1508,7 +1508,7 @@ export default function QuizPage() {
         description: quiz.description,
         type: quiz.type,
         difficulty: quiz.difficulty,
-        timeLimit: quiz.timeLimit,
+        timeLimit: quiz.timeLimit, // timeLimit is already in seconds from database
         questions: quiz.questions.map((q: any) => ({
           type: q.type,
           question: q.question,
@@ -4105,7 +4105,7 @@ export default function QuizPage() {
                           </span>
                         </div>
                         <div>
-                          <strong>Time Limit:</strong> {selectedQuizForSharing.timeLimit} min
+                          <strong>Time Limit:</strong> {Math.floor(selectedQuizForSharing.timeLimit / 60)} min
                         </div>
                         <div>
                           <strong>Created:</strong> {formatShareDate(selectedQuizForSharing.createdAt)}
@@ -4936,7 +4936,7 @@ export default function QuizPage() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-700">Time Limit:</span>
-                          <span className="font-medium text-gray-900">{quiz.timeLimit} minutes</span>
+                          <span className="font-medium text-gray-900">{Math.floor(quiz.timeLimit / 60)} minutes</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-700">Questions:</span>
@@ -5015,7 +5015,7 @@ export default function QuizPage() {
                                   📊 {quiz.questions.length} Questions
                                 </span>
                                 <span className="flex items-center gap-1">
-                                  ⏱️ {quiz.timeLimit} min
+                                  ⏱️ {Math.floor(quiz.timeLimit / 60)} min
                                 </span>
                                 <span className="flex items-center gap-1">
                                   🎯 {quiz.difficulty}
@@ -5097,7 +5097,7 @@ export default function QuizPage() {
                                   📊 {quiz.questions.length} Questions
                                 </span>
                                 <span className="flex items-center gap-1">
-                                  ⏱️ {quiz.timeLimit} min
+                                  ⏱️ {Math.floor(quiz.timeLimit / 60)} min
                                 </span>
                                 <span className="flex items-center gap-1">
                                   🎯 {quiz.difficulty}

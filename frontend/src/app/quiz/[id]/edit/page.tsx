@@ -37,7 +37,7 @@ export default function EditQuizPage() {
             description: quiz.description,
             type: quiz.type as 'vocabulary' | 'grammar' | 'reading' | 'listening' | 'mixed',
             difficulty: quiz.difficulty as 'easy' | 'medium' | 'hard',
-            timeLimit: quiz.timeLimit || 600
+            timeLimit: Math.floor((quiz.timeLimit || 600) / 60) // Convert seconds to minutes for display
           });
           setQuestions(quiz.questions || []);
         }
@@ -149,6 +149,7 @@ export default function EditQuizPage() {
       // Update quiz via API
       await updateQuiz(quizId, {
         ...quizData,
+        timeLimit: quizData.timeLimit * 60, // Convert minutes to seconds
         questions: questions.map(q => ({
           type: q.type,
           question: q.question,
