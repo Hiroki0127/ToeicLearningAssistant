@@ -146,5 +146,6 @@ export type AIQuestionInput = z.infer<typeof aiQuestionSchema>;
 
 // Export validation schemas for use in routes
 export const quizValidationSchemas = {
+  createQuiz: createQuizSchema,
   submitQuizResult: submitQuizResultSchema,
 };
