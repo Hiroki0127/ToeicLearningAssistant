@@ -22,7 +22,7 @@ import {
   Zap, 
   Share2 
 } from 'lucide-react';
-import { getQuizzes, submitQuizResult, getQuizStats, getQuizHistory, type Quiz, type QuizResult, type QuizAttempt } from '@/lib/quiz';
+import { getQuizzes, createQuiz, submitQuizResult, getQuizStats, getQuizHistory, type Quiz, type QuizResult, type QuizAttempt } from '@/lib/quiz';
 
 // Using flexible types for complex nested state objects
 type QuizStats = Record<string, unknown>;

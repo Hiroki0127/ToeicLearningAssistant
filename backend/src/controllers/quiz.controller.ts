@@ -52,6 +52,46 @@ export const getQuizzes = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+export const createQuiz = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      badRequestResponse(res, 'Authentication required');
+      return;
+    }
+
+    const { title, description, type, difficulty, timeLimit, questions } = req.body;
+
+    // Validate required fields
+    if (!title || !description || !type || !difficulty || !questions) {
+      badRequestResponse(res, 'Missing required fields');
+      return;
+    }
+
+    // Create the quiz
+    const quiz = await prisma.quiz.create({
+      data: {
+        title,
+        description,
+        type,
+        difficulty,
+        timeLimit: timeLimit || 600, // Default 10 minutes
+        questions: JSON.stringify(questions),
+      },
+    });
+
+    // Parse questions for response
+    const quizWithParsedQuestions = {
+      ...quiz,
+      questions: JSON.parse(quiz.questions),
+    };
+
+    successResponse(res, quizWithParsedQuestions, 'Quiz created successfully');
+  } catch (error) {
+    console.error('Create quiz error:', error);
+    badRequestResponse(res, 'Failed to create quiz');
+  }
+};
+
 export const getQuizById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;

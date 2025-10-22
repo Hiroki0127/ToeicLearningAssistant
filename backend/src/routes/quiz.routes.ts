@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getQuizzes,
+  createQuiz,
   getQuizById,
   submitQuizResult,
   getQuizHistory,
@@ -19,6 +20,7 @@ router.get('/', getQuizzes);
 router.use(authenticateToken);
 
 // Specific routes must come before parameterized routes
+router.post('/', validateBody(quizValidationSchemas.createQuiz), createQuiz);
 router.post('/submit', validateBody(quizValidationSchemas.submitQuizResult), submitQuizResult);
 router.get('/history', getQuizHistory);
 router.get('/stats', getQuizStats);

@@ -88,6 +88,19 @@ export const getQuizById = async (id: string): Promise<Quiz> => {
   return response.data.data;
 };
 
+// Create a new quiz
+export const createQuiz = async (quizData: {
+  title: string;
+  description: string;
+  type: string;
+  difficulty: string;
+  timeLimit?: number;
+  questions: Question[];
+}): Promise<Quiz> => {
+  const response = await api.post('/quiz', quizData);
+  return response.data.data;
+};
+
 // Submit quiz result
 export const submitQuizResult = async (result: QuizResult): Promise<{
   quizAttempt: QuizAttempt;
