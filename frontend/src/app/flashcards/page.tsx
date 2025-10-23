@@ -99,8 +99,9 @@ export default function FlashcardsPage() {
   // Reset current index when flashcards change
   useEffect(() => {
     console.log('Flashcards changed:', flashcards.length, flashcards);
+    console.log('Current index before reset:', currentIndex);
     setCurrentIndex(0);
-  }, [flashcards]);
+  }, [flashcards, currentIndex]);
 
   if (loading) {
     return (
@@ -283,15 +284,25 @@ export default function FlashcardsPage() {
         ) : (
           <>
             {/* Flashcard */}
-            <Flashcard
-              flashcard={flashcards[currentIndex]}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              onCorrect={handleCorrect}
-              onIncorrect={handleIncorrect}
-              isFirst={currentIndex === 0}
-              isLast={currentIndex === flashcards.length - 1}
-            />
+            {(() => {
+              console.log('About to render flashcard:', {
+                currentIndex,
+                flashcardsLength: flashcards.length,
+                currentFlashcard: flashcards[currentIndex],
+                flashcardsArray: flashcards
+              });
+              return flashcards[currentIndex] && (
+                <Flashcard
+                  flashcard={flashcards[currentIndex]}
+                  onNext={handleNext}
+                  onPrevious={handlePrevious}
+                  onCorrect={handleCorrect}
+                  onIncorrect={handleIncorrect}
+                  isFirst={currentIndex === 0}
+                  isLast={currentIndex === flashcards.length - 1}
+                />
+              );
+            })()}
 
             {/* Session End Button */}
             {currentIndex === flashcards.length - 1 && (
