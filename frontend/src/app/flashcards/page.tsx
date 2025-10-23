@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import Layout from '@/components/layout/Layout';
 import { useAppStore } from '@/lib/store';
 import { useFlashcards } from '@/hooks/useFlashcards';
-import { BookOpen, Plus, Settings } from 'lucide-react';
+import { BookOpen, Plus, Settings, Edit3 } from 'lucide-react';
 
 export default function FlashcardsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -125,6 +125,12 @@ export default function FlashcardsPage() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Link href="/flashcards/manage">
+              <Button variant="outline" size="sm">
+                <Edit3 className="h-4 w-4 mr-2" />
+                Manage
+              </Button>
+            </Link>
             <Button variant="outline" size="sm">
               <Settings className="h-4 w-4 mr-2" />
               Settings

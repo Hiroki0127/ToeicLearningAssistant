@@ -132,6 +132,22 @@ export const useFlashcards = () => {
     return fetchFlashcards({ difficulty, page, limit: 10 });
   };
 
+  const getFlashcardById = async (id: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const flashcard = await flashcardService.getFlashcardById(id);
+      return flashcard;
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Failed to fetch flashcard';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const clearError = () => {
     setError(null);
   };
@@ -146,6 +162,7 @@ export const useFlashcards = () => {
     createFlashcard,
     updateFlashcard: updateFlashcardById,
     deleteFlashcard: deleteFlashcardById,
+    getFlashcardById,
     reviewFlashcard,
     searchFlashcards,
     getFlashcardsByDifficulty,
