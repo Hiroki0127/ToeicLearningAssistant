@@ -24,9 +24,7 @@ interface DashboardStats {
     title: string;
     result: string;
     score: string;
-    time: Date;
-    date: string;
-    timeOnly: string;
+    time: string; // ISO string from backend
   }>;
   quickStats: {
     totalStudyTime: number;

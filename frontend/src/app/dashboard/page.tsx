@@ -211,31 +211,37 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivity.map((activity: any) => (
-                    <div key={activity.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center">
-                        <Activity className="h-5 w-5 text-gray-400 mr-3" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            {activity.title}
-                          </p>
-                          <div className="flex items-center space-x-2">
-                            <p className="text-xs text-gray-500">{activity.date}</p>
-                            <span className="text-xs text-gray-300">•</span>
-                            <p className="text-xs text-gray-500">{activity.timeOnly}</p>
+                  {recentActivity.map((activity: any) => {
+                    const activityDate = new Date(activity.time);
+                    const dateString = activityDate.toLocaleDateString();
+                    const timeString = activityDate.toLocaleTimeString();
+                    
+                    return (
+                      <div key={activity.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center">
+                          <Activity className="h-5 w-5 text-gray-400 mr-3" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {activity.title}
+                            </p>
+                            <div className="flex items-center space-x-2">
+                              <p className="text-xs text-gray-500">{dateString}</p>
+                              <span className="text-xs text-gray-300">•</span>
+                              <p className="text-xs text-gray-500">{timeString}</p>
+                            </div>
                           </div>
                         </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`text-sm font-medium ${
+                            activity.result === 'Good' ? 'text-green-600' : 'text-orange-600'
+                          }`}>
+                            {activity.result === 'Good' ? '✓' : '⚠'} {activity.result}
+                          </span>
+                          <span className="text-blue-600 text-sm font-medium">{activity.score}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`text-sm font-medium ${
-                          activity.result === 'Good' ? 'text-green-600' : 'text-orange-600'
-                        }`}>
-                          {activity.result === 'Good' ? '✓' : '⚠'} {activity.result}
-                        </span>
-                        <span className="text-blue-600 text-sm font-medium">{activity.score}</span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

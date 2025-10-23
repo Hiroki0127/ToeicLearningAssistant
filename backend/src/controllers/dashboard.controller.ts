@@ -80,9 +80,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       title: `Flashcard Study (${session.cardsStudied} cards)`,
       result: session.correctAnswers > session.incorrectAnswers ? 'Good' : 'Needs Work',
       score: `${session.correctAnswers}/${session.cardsStudied}`,
-      time: session.startTime,
-      date: session.startTime.toLocaleDateString(),
-      timeOnly: session.startTime.toLocaleTimeString(),
+      time: session.startTime.toISOString(), // Send as ISO string for frontend to handle timezone
     }));
 
     const quizActivities = recentQuizAttempts.map(attempt => ({
@@ -91,14 +89,12 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       title: attempt.quiz.title,
       result: attempt.score >= (attempt.totalQuestions * 0.7) ? 'Good' : 'Needs Work',
       score: `${attempt.correctAnswers}/${attempt.totalQuestions}`,
-      time: attempt.completedAt,
-      date: attempt.completedAt.toLocaleDateString(),
-      timeOnly: attempt.completedAt.toLocaleTimeString(),
+      time: attempt.completedAt.toISOString(), // Send as ISO string for frontend to handle timezone
     }));
 
     // Combine and sort by time, take most recent 10
     const allActivities = [...sessionActivities, ...quizActivities]
-      .sort((a, b) => b.time.getTime() - a.time.getTime())
+      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
       .slice(0, 10);
 
     const recentActivity = allActivities;
