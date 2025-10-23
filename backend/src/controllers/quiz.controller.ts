@@ -295,6 +295,15 @@ export const submitQuizResult = async (req: Request, res: Response): Promise<voi
     }
 
     // Save quiz attempt
+    console.log('Creating quiz attempt:', {
+      quizId,
+      userId: req.user.userId,
+      score,
+      totalQuestions,
+      correctAnswers,
+      timeSpent
+    });
+
     const quizAttempt = await prisma.quizAttempt.create({
       data: {
         quizId,
@@ -306,6 +315,8 @@ export const submitQuizResult = async (req: Request, res: Response): Promise<voi
         answers: JSON.stringify(answers),
       },
     });
+
+    console.log('Quiz attempt created:', quizAttempt.id);
 
     // Update user progress (add experience points)
     const experienceGained = Math.floor(score / 10) * 10; // 10 XP per 10% score

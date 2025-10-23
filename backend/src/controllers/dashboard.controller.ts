@@ -122,6 +122,31 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       }
     }
 
+    // Calculate additional stats
+    const totalQuizAttempts = await prisma.quizAttempt.count({
+      where: { userId }
+    });
+
+    console.log(`Dashboard stats for user ${userId}:`, {
+      totalQuizAttempts,
+      userId
+    });
+
+    const averageQuizScoreResult = await prisma.quizAttempt.aggregate({
+      _avg: { score: true },
+      where: { userId }
+    });
+    const averageQuizScore = averageQuizScoreResult._avg.score ? Math.round(averageQuizScoreResult._avg.score) : 0;
+
+    // Calculate total study time from sessions
+    const totalStudyTimeMinutes = allSessions.reduce((total, session) => {
+      if (session.endTime) {
+        const duration = (new Date(session.endTime).getTime() - new Date(session.startTime).getTime()) / (1000 * 60);
+        return total + duration;
+      }
+      return total;
+    }, 0);
+
     const dashboardData = {
       progress: {
         totalCards,
@@ -141,10 +166,10 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       },
       recentActivity,
       quickStats: {
-        totalStudyTime: 0, // TODO: Calculate from session durations
+        totalStudyTime: Math.round(totalStudyTimeMinutes),
         cardsMastered: totalCorrect,
-        quizzesTaken: 0, // TODO: Implement quiz tracking
-        averageScore: accuracy,
+        quizzesTaken: totalQuizAttempts,
+        averageScore: averageQuizScore,
       }
     };
 
