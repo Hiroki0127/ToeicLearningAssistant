@@ -19,10 +19,18 @@ export default function FlashcardsPage() {
 
   const handleCorrect = () => {
     setCorrectAnswers(prev => prev + 1);
+    // Auto-advance to next card or end session if it's the last card
+    if (currentIndex < flashcards.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    }
   };
 
   const handleIncorrect = () => {
     setIncorrectAnswers(prev => prev + 1);
+    // Auto-advance to next card or end session if it's the last card
+    if (currentIndex < flashcards.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    }
   };
 
   const handleNext = () => {
@@ -37,6 +45,8 @@ export default function FlashcardsPage() {
     }
   };
 
+  const [sessionCompleted, setSessionCompleted] = useState(false);
+
   const handleSessionEnd = () => {
     const session = {
       id: Date.now().toString(),
@@ -49,6 +59,14 @@ export default function FlashcardsPage() {
       sessionType: 'flashcards' as const,
     };
     addStudySession(session);
+    setSessionCompleted(true);
+  };
+
+  const handleRestartSession = () => {
+    setCurrentIndex(0);
+    setCorrectAnswers(0);
+    setIncorrectAnswers(0);
+    setSessionCompleted(false);
   };
 
   // Fetch flashcards when component mounts
@@ -226,24 +244,64 @@ export default function FlashcardsPage() {
           </Card>
         </div>
 
-        {/* Flashcard */}
-        <Flashcard
-          flashcard={flashcards[currentIndex]}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onCorrect={handleCorrect}
-          onIncorrect={handleIncorrect}
-          isFirst={currentIndex === 0}
-          isLast={currentIndex === flashcards.length - 1}
-        />
+        {/* Session Completion Screen */}
+        {sessionCompleted ? (
+          <Card className="text-center py-12">
+            <CardContent>
+              <div className="text-6xl mb-4">🎉</div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Study Session Complete!</h2>
+              <div className="grid grid-cols-3 gap-4 mb-8 max-w-md mx-auto">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{correctAnswers}</div>
+                  <div className="text-sm text-gray-600">Correct</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">{incorrectAnswers}</div>
+                  <div className="text-sm text-gray-600">Incorrect</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {correctAnswers + incorrectAnswers > 0
+                      ? Math.round((correctAnswers / (correctAnswers + incorrectAnswers)) * 100)
+                      : 0}%
+                  </div>
+                  <div className="text-sm text-gray-600">Accuracy</div>
+                </div>
+              </div>
+              <div className="flex gap-4 justify-center">
+                <Button onClick={handleRestartSession} variant="outline">
+                  Study Again
+                </Button>
+                <Link href="/dashboard">
+                  <Button>
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Flashcard */}
+            <Flashcard
+              flashcard={flashcards[currentIndex]}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              onCorrect={handleCorrect}
+              onIncorrect={handleIncorrect}
+              isFirst={currentIndex === 0}
+              isLast={currentIndex === flashcards.length - 1}
+            />
 
-        {/* Session End Button */}
-        {currentIndex === flashcards.length - 1 && (
-          <div className="text-center mt-8">
-            <Button onClick={handleSessionEnd} size="lg">
-              End Study Session
-            </Button>
-          </div>
+            {/* Session End Button */}
+            {currentIndex === flashcards.length - 1 && (
+              <div className="text-center mt-8">
+                <Button onClick={handleSessionEnd} size="lg">
+                  End Study Session
+                </Button>
+              </div>
+            )}
+          </>
         )}
         </div>
       </div>
