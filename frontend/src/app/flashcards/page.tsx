@@ -53,19 +53,30 @@ export default function FlashcardsPage() {
 
   // Fetch flashcards when component mounts
   useEffect(() => {
-    console.log('Fetching flashcards...');
-    // Try to fetch user flashcards first, fallback to all flashcards
-    fetchUserFlashcards().then((result) => {
-      console.log('User flashcards fetched:', result);
-    }).catch((error) => {
-      console.log('User flashcards failed, trying all flashcards:', error);
-      fetchFlashcards().then((result) => {
-        console.log('All flashcards fetched:', result);
-      }).catch((fallbackError) => {
-        console.error('Error fetching flashcards:', fallbackError);
+    console.log('Component mounted. Current flashcards in store:', flashcards.length);
+    
+    // Only fetch from API if store is empty
+    if (flashcards.length === 0) {
+      console.log('Store is empty, fetching from API...');
+      
+      // Try to fetch user flashcards first, fallback to all flashcards
+      fetchUserFlashcards().then((result) => {
+        console.log('User flashcards fetched successfully:', result);
+      }).catch((error) => {
+        console.log('User flashcards failed (likely not logged in):', error.message);
+        console.log('Trying to fetch all flashcards...');
+        
+        fetchFlashcards().then((result) => {
+          console.log('All flashcards fetched successfully:', result);
+          console.log('Number of flashcards returned:', result.flashcards.length);
+        }).catch((fallbackError) => {
+          console.error('Both API calls failed:', fallbackError);
+        });
       });
-    });
-  }, [fetchUserFlashcards, fetchFlashcards]);
+    } else {
+      console.log('Store has flashcards, not fetching from API');
+    }
+  }, [fetchUserFlashcards, fetchFlashcards, flashcards.length]);
 
   // Reset current index when flashcards change
   useEffect(() => {
@@ -143,9 +154,9 @@ export default function FlashcardsPage() {
           </div>
           <div className="flex gap-2">
             <Link href="/flashcards/manage">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
                 <Edit3 className="h-4 w-4 mr-2" />
-                Manage
+                Manage Cards
               </Button>
             </Link>
             <Button variant="outline" size="sm">
