@@ -22,6 +22,9 @@ export default function FlashcardsPage() {
     // Auto-advance to next card or end session if it's the last card
     if (currentIndex < flashcards.length - 1) {
       setCurrentIndex(prev => Math.min(prev + 1, flashcards.length - 1));
+    } else {
+      // Last card - end the session
+      handleSessionEnd();
     }
   };
 
@@ -30,6 +33,9 @@ export default function FlashcardsPage() {
     // Auto-advance to next card or end session if it's the last card
     if (currentIndex < flashcards.length - 1) {
       setCurrentIndex(prev => Math.min(prev + 1, flashcards.length - 1));
+    } else {
+      // Last card - end the session
+      handleSessionEnd();
     }
   };
 
@@ -71,37 +77,21 @@ export default function FlashcardsPage() {
 
   // Fetch flashcards when component mounts
   useEffect(() => {
-    console.log('Component mounted. Current flashcards in store:', flashcards.length);
-    
     // Only fetch from API if store is empty
     if (flashcards.length === 0) {
-      console.log('Store is empty, fetching from API...');
-      
       // Try to fetch user flashcards first, fallback to all flashcards
-      fetchUserFlashcards().then((result) => {
-        console.log('User flashcards fetched successfully:', result);
-      }).catch((error) => {
-        console.log('User flashcards failed (likely not logged in):', error.message);
-        console.log('Trying to fetch all flashcards...');
-        
-        fetchFlashcards().then((result) => {
-          console.log('All flashcards fetched successfully:', result);
-          console.log('Number of flashcards returned:', result.flashcards.length);
-        }).catch((fallbackError) => {
-          console.error('Both API calls failed:', fallbackError);
+      fetchUserFlashcards().catch((error) => {
+        fetchFlashcards().catch((fallbackError) => {
+          console.error('Failed to fetch flashcards:', fallbackError);
         });
       });
-    } else {
-      console.log('Store has flashcards, not fetching from API');
     }
   }, [fetchUserFlashcards, fetchFlashcards, flashcards.length]);
 
   // Reset current index when flashcards change
   useEffect(() => {
-    console.log('Flashcards changed:', flashcards.length, flashcards);
-    console.log('Current index before reset:', currentIndex);
     setCurrentIndex(0);
-  }, [flashcards]); // Removed currentIndex from dependencies
+  }, [flashcards]);
 
   if (loading) {
     return (
@@ -284,34 +274,18 @@ export default function FlashcardsPage() {
         ) : (
           <>
             {/* Flashcard */}
-            {(() => {
-              console.log('About to render flashcard:', {
-                currentIndex,
-                flashcardsLength: flashcards.length,
-                currentFlashcard: flashcards[currentIndex],
-                flashcardsArray: flashcards
-              });
-              return flashcards[currentIndex] && (
-                <Flashcard
-                  flashcard={flashcards[currentIndex]}
-                  onNext={handleNext}
-                  onPrevious={handlePrevious}
-                  onCorrect={handleCorrect}
-                  onIncorrect={handleIncorrect}
-                  isFirst={currentIndex === 0}
-                  isLast={currentIndex === flashcards.length - 1}
-                />
-              );
-            })()}
-
-            {/* Session End Button */}
-            {currentIndex === flashcards.length - 1 && (
-              <div className="text-center mt-8">
-                <Button onClick={handleSessionEnd} size="lg">
-                  End Study Session
-                </Button>
-              </div>
+            {flashcards[currentIndex] && (
+              <Flashcard
+                flashcard={flashcards[currentIndex]}
+                onNext={handleNext}
+                onPrevious={handlePrevious}
+                onCorrect={handleCorrect}
+                onIncorrect={handleIncorrect}
+                isFirst={currentIndex === 0}
+                isLast={currentIndex === flashcards.length - 1}
+              />
             )}
+
           </>
         )}
         </div>

@@ -27,10 +27,6 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   const [isFlipped, setIsFlipped] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  // Debug logging
-  console.log('Flashcard component rendered with:', flashcard);
-  console.log('Flashcard difficulty:', flashcard?.difficulty);
-
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
     if (!showAnswer) {
