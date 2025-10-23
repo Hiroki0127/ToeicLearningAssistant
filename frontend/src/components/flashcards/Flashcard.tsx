@@ -73,18 +73,18 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             <span
               className={cn(
                 'px-2 py-1 rounded-full text-xs font-medium',
-                getDifficultyColor(flashcard.difficulty)
+                getDifficultyColor(flashcard.difficulty || 'easy')
               )}
             >
-              {flashcard.difficulty}
+              {flashcard.difficulty || 'easy'}
             </span>
             <span
               className={cn(
                 'px-2 py-1 rounded-full text-xs font-medium',
-                getPartOfSpeechColor(flashcard.partOfSpeech)
+                getPartOfSpeechColor(flashcard.partOfSpeech || 'noun')
               )}
             >
-              {flashcard.partOfSpeech}
+              {flashcard.partOfSpeech || 'noun'}
             </span>
           </div>
 
