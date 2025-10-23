@@ -35,15 +35,22 @@ interface DashboardStats {
   };
 }
 
-export const useDashboard = () => {
+export const useDashboard = (isAuthenticated: boolean = false) => {
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchDashboardStats = useCallback(async () => {
+    console.log('useDashboard: fetchDashboardStats called, isAuthenticated:', isAuthenticated);
+    if (!isAuthenticated) {
+      console.log('useDashboard: Not authenticated, skipping fetch');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
+      console.log('useDashboard: Fetching dashboard stats...');
 
       const response = await api.get('/dashboard/stats');
       
@@ -59,11 +66,13 @@ export const useDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    fetchDashboardStats();
-  }, [fetchDashboardStats]);
+    if (isAuthenticated) {
+      fetchDashboardStats();
+    }
+  }, [isAuthenticated, fetchDashboardStats]);
 
   return {
     dashboardData,

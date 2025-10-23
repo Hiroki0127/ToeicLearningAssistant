@@ -20,14 +20,15 @@ import {
 export default function DashboardPage() {
   const { user, isAuthenticated, loading } = useAuth();
   const { fetchUserFlashcards } = useFlashcards();
-  const { dashboardData, loading: dashboardLoading, error: dashboardError } = useDashboard();
+  const { dashboardData, loading: dashboardLoading, error: dashboardError } = useDashboard(isAuthenticated);
   const router = useRouter();
 
   useEffect(() => {
+    console.log('Dashboard auth state:', { loading, isAuthenticated, user });
     if (!loading && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, loading, router]);
+  }, [isAuthenticated, loading, router, user]);
 
   useEffect(() => {
     if (isAuthenticated) {
