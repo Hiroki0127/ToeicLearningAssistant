@@ -55,15 +55,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     const recentSessions = await prisma.studySession.findMany({
       where: { userId },
       orderBy: { startTime: 'desc' },
-      take: 10,
-      include: {
-        flashcards: {
-          select: {
-            word: true,
-            definition: true
-          }
-        }
-      }
+      take: 10
     });
 
     const recentActivity = recentSessions.map(session => ({

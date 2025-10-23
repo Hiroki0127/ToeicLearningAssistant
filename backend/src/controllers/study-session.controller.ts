@@ -54,18 +54,7 @@ export const getStudySessions = async (req: Request, res: Response): Promise<voi
         where,
         skip,
         take,
-        orderBy: { startTime: 'desc' },
-        include: {
-          flashcards: {
-            select: {
-              id: true,
-              word: true,
-              definition: true,
-              difficulty: true,
-              partOfSpeech: true
-            }
-          }
-        }
+        orderBy: { startTime: 'desc' }
       }),
       prisma.studySession.count({ where })
     ]);
@@ -101,17 +90,6 @@ export const getStudySessionById = async (req: Request, res: Response): Promise<
       where: { 
         id,
         userId 
-      },
-      include: {
-        flashcards: {
-          select: {
-            id: true,
-            word: true,
-            definition: true,
-            difficulty: true,
-            partOfSpeech: true
-          }
-        }
       }
     });
 
