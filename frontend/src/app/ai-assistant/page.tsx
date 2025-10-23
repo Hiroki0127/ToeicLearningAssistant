@@ -47,20 +47,120 @@ export default function AIAssistantPage() {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
-    // Simulate AI response (replace with actual AI integration later)
-    setTimeout(() => {
+    try {
+      let response = '';
+      
+      // Determine the type of query and route to appropriate AI service
+      const query = currentInput.toLowerCase();
+      
+      if (query.includes('vocabulary') || query.includes('word') || query.includes('meaning') || 
+          query.includes('definition') || /^[a-zA-Z]+$/.test(currentInput.trim())) {
+        // Vocabulary explanation
+        const word = currentInput.trim();
+        const vocabResponse = await fetch('/api/ai/explain-vocabulary', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ word }),
+        });
+        
+        if (vocabResponse.ok) {
+          const data = await vocabResponse.json();
+          response = data.data.explanation;
+        } else {
+          response = "I'm sorry, I couldn't process your vocabulary request. Please try again.";
+        }
+      } else if (query.includes('grammar') || query.includes('tense') || query.includes('sentence')) {
+        // Grammar explanation
+        const grammarResponse = await fetch('/api/ai/explain-grammar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            question: currentInput,
+            userAnswer: "I need help understanding this grammar concept"
+          }),
+        });
+        
+        if (grammarResponse.ok) {
+          const data = await grammarResponse.json();
+          response = data.data.explanation;
+        } else {
+          response = "I'm sorry, I couldn't process your grammar question. Please try again.";
+        }
+      } else if (query.includes('question') || query.includes('quiz') || query.includes('practice')) {
+        // Generate practice question
+        const topic = currentInput.replace(/generate|question|quiz|practice/gi, '').trim() || 'general TOEIC';
+        const questionResponse = await fetch('/api/ai/generate-question', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            topic,
+            difficulty: 'medium'
+          }),
+        });
+        
+        if (questionResponse.ok) {
+          const data = await questionResponse.json();
+          const question = data.data;
+          response = `Here's a TOEIC practice question for you:\n\n**Part ${question.part}**\n\n${question.passage || question.question}\n\n`;
+          
+          if (question.options) {
+            response += `Options:\n`;
+            question.options.forEach((option: string, index: number) => {
+              response += `${String.fromCharCode(65 + index)}. ${option}\n`;
+            });
+          }
+          
+          if (question.questions) {
+            question.questions.forEach((q: any) => {
+              response += `\n**Question ${q.number}:** ${q.question}\n`;
+              q.options.forEach((option: string, index: number) => {
+                response += `${String.fromCharCode(65 + index)}. ${option}\n`;
+              });
+            });
+          }
+          
+          response += `\n**Explanation:** ${question.explanation}`;
+        } else {
+          response = "I'm sorry, I couldn't generate a practice question. Please try again.";
+        }
+      } else {
+        // General TOEIC help
+        response = `I can help you with TOEIC preparation in several ways:\n\n` +
+          `• **Vocabulary**: Ask about specific words (e.g., "What does 'allocate' mean?")\n` +
+          `• **Grammar**: Ask grammar questions (e.g., "Explain present perfect tense")\n` +
+          `• **Practice Questions**: Request practice questions (e.g., "Generate a question about business emails")\n\n` +
+          `What specific TOEIC topic would you like help with?`;
+      }
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: "I understand you're asking about: \"" + inputMessage + "\". This is a placeholder response. In the future, this will connect to an AI service to provide personalized TOEIC learning assistance!",
+        content: response,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error calling AI service:', error);
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: "I'm sorry, I'm having trouble connecting to the AI service right now. Please try again in a moment.",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -71,12 +171,12 @@ export default function AIAssistantPage() {
   };
 
   const quickQuestions = [
-    "Explain the difference between 'affect' and 'effect'",
-    "Help me understand passive voice",
-    "What are common TOEIC vocabulary words?",
-    "How can I improve my reading speed?",
+    "allocate",
+    "Explain passive voice",
+    "Generate a question about business emails",
+    "contingency",
     "Explain present perfect tense",
-    "What are TOEIC listening tips?"
+    "Generate a question about office procedures"
   ];
 
   const handleQuickQuestion = (question: string) => {
@@ -133,7 +233,17 @@ export default function AIAssistantPage() {
                               : 'bg-gray-100 text-gray-900'
                           }`}
                         >
-                          <p className="text-sm">{message.content}</p>
+                          <div className="text-sm whitespace-pre-wrap">
+                            {message.content.split('\n').map((line, index) => {
+                              if (line.startsWith('**') && line.endsWith('**')) {
+                                return <strong key={index}>{line.slice(2, -2)}</strong>;
+                              } else if (line.startsWith('• ')) {
+                                return <div key={index} className="ml-2">• {line.slice(2)}</div>;
+                              } else {
+                                return <div key={index}>{line}</div>;
+                              }
+                            })}
+                          </div>
                           <p className={`text-xs mt-1 ${
                             message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
                           }`}>
