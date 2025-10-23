@@ -1,10 +1,9 @@
 import { useState, useCallback } from 'react';
-import { useAppStore } from '@/lib/store';
 import { flashcardService } from '@/lib/flashcards';
 import type { Flashcard, FlashcardFilters, FlashcardResponse } from '@/lib/flashcards';
 
 export const useFlashcards = () => {
-  const { flashcards, setFlashcards, addFlashcard, updateFlashcard, deleteFlashcard } = useAppStore();
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState({
@@ -61,7 +60,8 @@ export const useFlashcards = () => {
       setLoading(true);
       setError(null);
       const newFlashcard = await flashcardService.createFlashcard(data);
-      addFlashcard(newFlashcard);
+      // Refresh flashcards list after creating
+      await fetchUserFlashcards();
       return newFlashcard;
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
@@ -78,7 +78,8 @@ export const useFlashcards = () => {
       setLoading(true);
       setError(null);
       const updatedFlashcard = await flashcardService.updateFlashcard(id, data);
-      updateFlashcard(id, updatedFlashcard);
+      // Refresh flashcards list after updating
+      await fetchUserFlashcards();
       return updatedFlashcard;
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
@@ -95,7 +96,8 @@ export const useFlashcards = () => {
       setLoading(true);
       setError(null);
       await flashcardService.deleteFlashcard(id);
-      deleteFlashcard(id);
+      // Refresh flashcards list after deleting
+      await fetchUserFlashcards();
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
       const errorMessage = error.response?.data?.message || 'Failed to delete flashcard';

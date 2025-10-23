@@ -4,7 +4,7 @@ import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
-// Protected routes (authentication required)
+// All dashboard routes require authentication
 router.use(authenticateToken);
 
 // Get dashboard statistics

@@ -6,15 +6,14 @@ import { Flashcard } from '@/components/flashcards/Flashcard';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import Layout from '@/components/layout/Layout';
-import { useAppStore } from '@/lib/store';
 import { useFlashcards } from '@/hooks/useFlashcards';
+import { studySessionService } from '@/lib/study-sessions';
 import { BookOpen, Plus, Settings, Edit3 } from 'lucide-react';
 
 export default function FlashcardsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [incorrectAnswers, setIncorrectAnswers] = useState(0);
-  const { addStudySession } = useAppStore();
   const { flashcards, loading, error, fetchFlashcards, fetchUserFlashcards } = useFlashcards();
 
   const handleCorrect = () => {
@@ -53,19 +52,24 @@ export default function FlashcardsPage() {
 
   const [sessionCompleted, setSessionCompleted] = useState(false);
 
-  const handleSessionEnd = () => {
-    const session = {
-      id: Date.now().toString(),
-      userId: 'demo-user',
-      startTime: new Date(),
-      endTime: new Date(),
-      cardsStudied: flashcards.length,
-      correctAnswers,
-      incorrectAnswers,
-      sessionType: 'flashcards' as const,
-    };
-    addStudySession(session);
-    setSessionCompleted(true);
+  const handleSessionEnd = async () => {
+    try {
+      const sessionData = {
+        sessionType: 'flashcards' as const,
+        startTime: new Date().toISOString(),
+        endTime: new Date().toISOString(),
+        cardsStudied: flashcards.length,
+        correctAnswers,
+        incorrectAnswers,
+      };
+      
+      await studySessionService.createStudySession(sessionData);
+      setSessionCompleted(true);
+    } catch (error) {
+      console.error('Failed to save study session:', error);
+      // Still show completion screen even if save fails
+      setSessionCompleted(true);
+    }
   };
 
   const handleRestartSession = () => {

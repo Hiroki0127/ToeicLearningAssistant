@@ -1,192 +1,134 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { successResponse, badRequestResponse } from '../utils/response';
+import { successResponse, badRequestResponse, databaseErrorResponse } from '../utils/response';
 
 const prisma = new PrismaClient();
 
 export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('Dashboard stats request - user:', req.user ? 'authenticated' : 'not authenticated');
-    
     if (!req.user) {
-      console.log('No user found in request');
       badRequestResponse(res, 'Authentication required');
       return;
     }
 
     const userId = req.user.userId;
-    console.log('Getting dashboard stats for user:', userId);
 
-    // Get user progress
-    const userProgress = await prisma.userProgress.findUnique({
-      where: { userId },
-    });
-
-    // Get today's progress
+    // Get today's date range
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const todayProgress = await prisma.dailyProgress.findFirst({
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+    // Get user's flashcards count
+    const totalCards = await prisma.flashcard.count({
+      where: { userId }
+    });
+
+    // Get today's study sessions
+    const todaySessions = await prisma.studySession.findMany({
       where: {
         userId,
-        date: {
-          gte: today,
-          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000), // Next day
-        },
-      },
+        startTime: {
+          gte: startOfDay,
+          lt: endOfDay
+        }
+      }
     });
 
-    // Get total flashcards count
-    const totalFlashcards = await prisma.flashcard.count({
-      where: { userId },
-    });
+    // Calculate today's stats
+    const cardsStudiedToday = todaySessions.reduce((total, session) => 
+      total + (session.cardsStudied || 0), 0
+    );
 
-    // Get recent flashcard reviews (last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const totalCorrect = todaySessions.reduce((total, session) => 
+      total + (session.correctAnswers || 0), 0
+    );
 
-    const recentReviews = await prisma.flashcardReview.findMany({
-      where: {
-        userId,
-        reviewedAt: {
-          gte: sevenDaysAgo,
-        },
-      },
-      include: {
-        flashcard: true,
-      },
-      orderBy: { reviewedAt: 'desc' },
-      take: 5,
-    });
+    const totalIncorrect = todaySessions.reduce((total, session) => 
+      total + (session.incorrectAnswers || 0), 0
+    );
 
-    // Get recent quiz attempts (last 7 days)
-    const recentQuizAttempts = await prisma.quizAttempt.findMany({
-      where: {
-        userId,
-        completedAt: {
-          gte: sevenDaysAgo,
-        },
-      },
-      include: {
-        quiz: {
-          select: {
-            title: true,
-          },
-        },
-      },
-      orderBy: { completedAt: 'desc' },
-      take: 3,
-    });
-
-    // Calculate accuracy
-    const totalCorrect = userProgress?.totalCorrectAnswers || 0;
-    const totalIncorrect = userProgress?.totalIncorrectAnswers || 0;
-    const accuracy = totalCorrect + totalIncorrect > 0 
-      ? Math.round((totalCorrect / (totalCorrect + totalIncorrect)) * 100)
+    const accuracy = (totalCorrect + totalIncorrect) > 0 
+      ? Math.round((totalCorrect / (totalCorrect + totalIncorrect)) * 100) 
       : 0;
 
-    // Calculate experience progress
-    const currentLevel = userProgress?.level || 'beginner';
-    const currentXP = userProgress?.experience || 0;
-    
-    // Simple level progression (can be made more sophisticated)
-    const levelRequirements = {
-      beginner: 0,
-      intermediate: 500,
-      advanced: 1500,
-    };
-    
-    const nextLevel = currentLevel === 'beginner' ? 'intermediate' : 
-                     currentLevel === 'intermediate' ? 'advanced' : 'advanced';
-    const nextLevelXP = levelRequirements[nextLevel as keyof typeof levelRequirements];
-    const currentLevelXP = levelRequirements[currentLevel as keyof typeof levelRequirements];
+    // Get recent activity (last 10 sessions)
+    const recentSessions = await prisma.studySession.findMany({
+      where: { userId },
+      orderBy: { startTime: 'desc' },
+      take: 10,
+      include: {
+        flashcards: {
+          select: {
+            word: true,
+            definition: true
+          }
+        }
+      }
+    });
 
-    // Format recent activity
-    const recentActivity = [
-      ...recentReviews.map((review: { id: string; flashcard: { word: string }; isCorrect: boolean; reviewedAt: Date }) => ({
-        id: review.id,
-        type: 'flashcard',
-        word: review.flashcard.word,
-        result: review.isCorrect ? 'correct' : 'incorrect',
-        time: review.reviewedAt,
-      })),
-      ...recentQuizAttempts.map((attempt: { id: string; quiz: { title: string }; correctAnswers: number; totalQuestions: number; completedAt: Date }) => ({
-        id: attempt.id,
-        type: 'quiz',
-        title: attempt.quiz.title,
-        score: `${attempt.correctAnswers}/${attempt.totalQuestions}`,
-        time: attempt.completedAt,
-      })),
-    ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-     .slice(0, 5);
+    const recentActivity = recentSessions.map(session => ({
+      id: session.id,
+      type: session.sessionType,
+      word: session.sessionType === 'flashcards' ? 
+        `Study Session (${session.cardsStudied} cards)` : 
+        session.sessionType,
+      result: session.correctAnswers > session.incorrectAnswers ? 'Correct' : 'Incorrect',
+      score: `${session.correctAnswers}/${session.cardsStudied}`,
+      time: session.startTime.toLocaleTimeString(),
+    }));
 
-    // Calculate daily goal progress (default goal: 20 cards)
-    const dailyGoal = 20;
-    const studiedToday = todayProgress?.cardsStudied || 0;
+    // Calculate streak (consecutive days with study sessions)
+    const allSessions = await prisma.studySession.findMany({
+      where: { userId },
+      orderBy: { startTime: 'desc' },
+      select: { startTime: true }
+    });
 
-    // Format time for display
-    const formatTimeAgo = (date: Date) => {
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-      const diffMins = Math.floor(diffMs / (1000 * 60));
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    let currentStreak = 0;
+    let currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
 
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins} min ago`;
-      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-      return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    };
+    for (const session of allSessions) {
+      const sessionDate = new Date(session.startTime);
+      sessionDate.setHours(0, 0, 0, 0);
+      
+      if (sessionDate.getTime() === currentDate.getTime()) {
+        currentStreak++;
+        currentDate.setDate(currentDate.getDate() - 1);
+      } else if (sessionDate.getTime() < currentDate.getTime()) {
+        break;
+      }
+    }
 
     const dashboardData = {
       progress: {
-        totalCards: totalFlashcards,
-        studiedToday,
-        currentStreak: userProgress?.currentStreak || 0,
+        totalCards,
+        studiedToday: cardsStudiedToday,
+        currentStreak,
         accuracy,
-        level: currentLevel,
-        experience: currentXP,
-        nextLevel,
-        nextLevelXP,
-        currentLevelXP,
+        level: 'beginner', // TODO: Implement level system
+        experience: 0,
+        nextLevel: 'intermediate',
+        nextLevelXP: 500,
+        currentLevelXP: 0,
       },
       dailyGoal: {
-        studied: studiedToday,
-        goal: dailyGoal,
-        progress: Math.min((studiedToday / dailyGoal) * 100, 100),
+        studied: cardsStudiedToday,
+        goal: 20,
+        progress: Math.min((cardsStudiedToday / 20) * 100, 100),
       },
-      recentActivity: recentActivity.map(activity => ({
-        ...activity,
-        time: formatTimeAgo(activity.time),
-      })),
+      recentActivity,
       quickStats: {
-        totalStudyTime: Math.round((userProgress?.totalStudyTime || 0) / 60), // Convert to minutes
+        totalStudyTime: 0, // TODO: Calculate from session durations
         cardsMastered: totalCorrect,
-        quizzesTaken: await prisma.quizAttempt.count({ where: { userId } }),
-        averageScore: await calculateAverageQuizScore(userId),
-      },
+        quizzesTaken: 0, // TODO: Implement quiz tracking
+        averageScore: accuracy,
+      }
     };
 
     successResponse(res, dashboardData, 'Dashboard stats retrieved successfully');
   } catch (error) {
     console.error('Get dashboard stats error:', error);
-    badRequestResponse(res, 'Failed to retrieve dashboard stats');
+    databaseErrorResponse(res, error as Error);
   }
 };
-
-async function calculateAverageQuizScore(userId: string): Promise<number> {
-  try {
-    const quizAttempts = await prisma.quizAttempt.findMany({
-      where: { userId },
-      select: { score: true },
-    });
-
-    if (quizAttempts.length === 0) return 0;
-
-    const totalScore = quizAttempts.reduce((sum: number, attempt: { score: number }) => sum + attempt.score, 0);
-    return Math.round(totalScore / quizAttempts.length);
-  } catch (error) {
-    console.error('Error calculating average quiz score:', error);
-    return 0;
-  }
-}

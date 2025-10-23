@@ -112,6 +112,15 @@ export const endStudySessionSchema = z.object({
   incorrectAnswers: z.number().min(0),
 });
 
+export const studySessionInputSchema = z.object({
+  sessionType: z.enum(['flashcards', 'quiz', 'mixed']),
+  startTime: z.string().transform((str) => new Date(str)),
+  endTime: z.string().transform((str) => new Date(str)),
+  cardsStudied: z.number().min(0),
+  correctAnswers: z.number().min(0),
+  incorrectAnswers: z.number().min(0),
+});
+
 // Notification validation
 export const createNotificationSchema = z.object({
   type: z.enum(['reminder', 'achievement', 'streak', 'system']),
@@ -141,6 +150,7 @@ export type UpdateProgressInput = z.infer<typeof updateProgressSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;
 export type CreateStudySessionInput = z.infer<typeof createStudySessionSchema>;
 export type EndStudySessionInput = z.infer<typeof endStudySessionSchema>;
+export type StudySessionInput = z.infer<typeof studySessionInputSchema>;
 export type CreateNotificationInput = z.infer<typeof createNotificationSchema>;
 export type AIQuestionInput = z.infer<typeof aiQuestionSchema>;
 

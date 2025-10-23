@@ -61,7 +61,7 @@ export default function DashboardPage() {
     return null;
   }
 
-  // Use real dashboard data or fallback to defaults
+  // Use backend data
   const progressData = dashboardData?.progress || {
     totalCards: 0,
     studiedToday: 0,
@@ -75,10 +75,12 @@ export default function DashboardPage() {
   };
 
   const recentActivity = dashboardData?.recentActivity || [];
+  const dailyGoal = dashboardData?.dailyGoal || {
+    studied: 0,
+    goal: 20,
+    progress: 0,
+  };
 
-  // Debug logging
-  console.log('Dashboard data:', dashboardData);
-  console.log('Recent activity:', recentActivity);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -244,12 +246,12 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{dashboardData?.dailyGoal.studied || 0}/{dashboardData?.dailyGoal.goal || 20}</div>
+                  <div className="text-3xl font-bold text-blue-600">{dailyGoal.studied}/{dailyGoal.goal}</div>
                   <div className="text-sm text-gray-600">cards studied today</div>
                   <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
                     <div 
                       className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${dashboardData?.dailyGoal.progress || 0}%` }}
+                      style={{ width: `${dailyGoal.progress}%` }}
                     ></div>
                   </div>
                 </div>
