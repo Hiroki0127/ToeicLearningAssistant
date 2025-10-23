@@ -15,7 +15,7 @@ export default function FlashcardsPage() {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [incorrectAnswers, setIncorrectAnswers] = useState(0);
   const { addStudySession } = useAppStore();
-  const { flashcards, loading, error } = useFlashcards();
+  const { flashcards, loading, error, fetchFlashcards } = useFlashcards();
 
   const handleCorrect = () => {
     setCorrectAnswers(prev => prev + 1);
@@ -50,6 +50,11 @@ export default function FlashcardsPage() {
     };
     addStudySession(session);
   };
+
+  // Fetch flashcards when component mounts
+  useEffect(() => {
+    fetchFlashcards();
+  }, [fetchFlashcards]);
 
   // Reset current index when flashcards change
   useEffect(() => {
