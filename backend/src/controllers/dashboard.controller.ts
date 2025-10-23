@@ -103,7 +103,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     const allSessions = await prisma.studySession.findMany({
       where: { userId },
       orderBy: { startTime: 'desc' },
-      select: { startTime: true }
+      select: { startTime: true, endTime: true }
     });
 
     let currentStreak = 0;
