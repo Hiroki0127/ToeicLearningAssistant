@@ -211,25 +211,28 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentActivity.map((activity) => (
+                  {recentActivity.map((activity: any) => (
                     <div key={activity.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center">
                         <Activity className="h-5 w-5 text-gray-400 mr-3" />
                         <div>
                           <p className="text-sm font-medium text-gray-900">
-                            {activity.type === 'flashcard' ? `Studied "${activity.word}"` : activity.title}
+                            {activity.title}
                           </p>
-                          <p className="text-xs text-gray-500">{activity.time}</p>
+                          <div className="flex items-center space-x-2">
+                            <p className="text-xs text-gray-500">{activity.date}</p>
+                            <span className="text-xs text-gray-300">•</span>
+                            <p className="text-xs text-gray-500">{activity.timeOnly}</p>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center">
-                        {activity.result === 'correct' ? (
-                          <span className="text-green-600 text-sm font-medium">✓ Correct</span>
-                        ) : activity.score ? (
-                          <span className="text-blue-600 text-sm font-medium">{activity.score}</span>
-                        ) : (
-                          <span className="text-red-600 text-sm font-medium">✗ Incorrect</span>
-                        )}
+                      <div className="flex items-center space-x-2">
+                        <span className={`text-sm font-medium ${
+                          activity.result === 'Good' ? 'text-green-600' : 'text-orange-600'
+                        }`}>
+                          {activity.result === 'Good' ? '✓' : '⚠'} {activity.result}
+                        </span>
+                        <span className="text-blue-600 text-sm font-medium">{activity.score}</span>
                       </div>
                     </div>
                   ))}

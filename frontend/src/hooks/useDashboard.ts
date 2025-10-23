@@ -21,11 +21,12 @@ interface DashboardStats {
   recentActivity: Array<{
     id: string;
     type: 'flashcard' | 'quiz';
-    word?: string;
-    title?: string;
-    result?: string;
-    score?: string;
-    time: string;
+    title: string;
+    result: string;
+    score: string;
+    time: Date;
+    date: string;
+    timeOnly: string;
   }>;
   quickStats: {
     totalStudyTime: number;

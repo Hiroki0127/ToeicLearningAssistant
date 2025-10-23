@@ -51,23 +51,57 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       ? Math.round((totalCorrect / (totalCorrect + totalIncorrect)) * 100) 
       : 0;
 
-    // Get recent activity (last 10 sessions)
-    const recentSessions = await prisma.studySession.findMany({
-      where: { userId },
-      orderBy: { startTime: 'desc' },
-      take: 10
-    });
+    // Get recent activity (last 10 items from both study sessions and quiz attempts)
+    const [recentSessions, recentQuizAttempts] = await Promise.all([
+      prisma.studySession.findMany({
+        where: { userId },
+        orderBy: { startTime: 'desc' },
+        take: 10
+      }),
+      prisma.quizAttempt.findMany({
+        where: { userId },
+        orderBy: { completedAt: 'desc' },
+        take: 10,
+        include: {
+          quiz: {
+            select: {
+              title: true,
+              type: true
+            }
+          }
+        }
+      })
+    ]);
 
-    const recentActivity = recentSessions.map(session => ({
+    // Combine and format activities
+    const sessionActivities = recentSessions.map(session => ({
       id: session.id,
-      type: session.sessionType,
-      word: session.sessionType === 'flashcards' ? 
-        `Study Session (${session.cardsStudied} cards)` : 
-        session.sessionType,
-      result: session.correctAnswers > session.incorrectAnswers ? 'Correct' : 'Incorrect',
+      type: 'flashcard' as const,
+      title: `Flashcard Study (${session.cardsStudied} cards)`,
+      result: session.correctAnswers > session.incorrectAnswers ? 'Good' : 'Needs Work',
       score: `${session.correctAnswers}/${session.cardsStudied}`,
-      time: session.startTime.toLocaleTimeString(),
+      time: session.startTime,
+      date: session.startTime.toLocaleDateString(),
+      timeOnly: session.startTime.toLocaleTimeString(),
     }));
+
+    const quizActivities = recentQuizAttempts.map(attempt => ({
+      id: attempt.id,
+      type: 'quiz' as const,
+      title: attempt.quiz.title,
+      result: attempt.score >= (attempt.totalQuestions * 0.7) ? 'Good' : 'Needs Work',
+      score: `${attempt.correctAnswers}/${attempt.totalQuestions}`,
+      time: attempt.completedAt,
+      date: attempt.completedAt.toLocaleDateString(),
+      timeOnly: attempt.completedAt.toLocaleTimeString(),
+    }));
+
+    // Combine and sort by time, take most recent 10
+    const allActivities = [...sessionActivities, ...quizActivities]
+      .sort((a, b) => b.time.getTime() - a.time.getTime())
+      .slice(0, 10);
+
+    const recentActivity = allActivities;
 
     // Calculate streak (consecutive days with study sessions)
     const allSessions = await prisma.studySession.findMany({
