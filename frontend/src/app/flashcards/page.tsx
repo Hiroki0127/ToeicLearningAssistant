@@ -15,7 +15,7 @@ export default function FlashcardsPage() {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [incorrectAnswers, setIncorrectAnswers] = useState(0);
   const { addStudySession } = useAppStore();
-  const { flashcards, loading, error, fetchFlashcards } = useFlashcards();
+  const { flashcards, loading, error, fetchFlashcards, fetchUserFlashcards } = useFlashcards();
 
   const handleCorrect = () => {
     setCorrectAnswers(prev => prev + 1);
@@ -54,12 +54,18 @@ export default function FlashcardsPage() {
   // Fetch flashcards when component mounts
   useEffect(() => {
     console.log('Fetching flashcards...');
-    fetchFlashcards().then((result) => {
-      console.log('Flashcards fetched:', result);
+    // Try to fetch user flashcards first, fallback to all flashcards
+    fetchUserFlashcards().then((result) => {
+      console.log('User flashcards fetched:', result);
     }).catch((error) => {
-      console.error('Error fetching flashcards:', error);
+      console.log('User flashcards failed, trying all flashcards:', error);
+      fetchFlashcards().then((result) => {
+        console.log('All flashcards fetched:', result);
+      }).catch((fallbackError) => {
+        console.error('Error fetching flashcards:', fallbackError);
+      });
     });
-  }, [fetchFlashcards]);
+  }, [fetchUserFlashcards, fetchFlashcards]);
 
   // Reset current index when flashcards change
   useEffect(() => {
