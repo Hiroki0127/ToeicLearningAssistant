@@ -53,11 +53,17 @@ export default function FlashcardsPage() {
 
   // Fetch flashcards when component mounts
   useEffect(() => {
-    fetchFlashcards();
+    console.log('Fetching flashcards...');
+    fetchFlashcards().then((result) => {
+      console.log('Flashcards fetched:', result);
+    }).catch((error) => {
+      console.error('Error fetching flashcards:', error);
+    });
   }, [fetchFlashcards]);
 
   // Reset current index when flashcards change
   useEffect(() => {
+    console.log('Flashcards changed:', flashcards.length, flashcards);
     setCurrentIndex(0);
   }, [flashcards]);
 
