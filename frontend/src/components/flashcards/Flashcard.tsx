@@ -27,6 +27,10 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   const [isFlipped, setIsFlipped] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
 
+  // Debug logging
+  console.log('Flashcard component rendered with:', flashcard);
+  console.log('Flashcard difficulty:', flashcard?.difficulty);
+
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
     if (!showAnswer) {
@@ -63,6 +67,12 @@ export const Flashcard: React.FC<FlashcardProps> = ({
     setIsFlipped(false);
     setShowAnswer(false);
   };
+
+  // Safety check
+  if (!flashcard) {
+    console.error('Flashcard component received undefined flashcard');
+    return <div>Error: No flashcard data</div>;
+  }
 
   return (
     <div className="w-full max-w-2xl mx-auto">
