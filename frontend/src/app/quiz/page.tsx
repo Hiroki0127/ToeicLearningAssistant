@@ -23,6 +23,7 @@ import {
   Share2 
 } from 'lucide-react';
 import { getQuizzes, getSampleQuizzes, getUserQuizzes, createQuiz, updateQuiz, deleteQuiz, submitQuizResult, getQuizStats, getQuizHistory, type Quiz, type QuizResult, type QuizAttempt } from '@/lib/quiz';
+import { useAuth } from '@/hooks/useAuth';
 
 // Using flexible types for complex nested state objects
 type QuizStats = Record<string, unknown>;
@@ -37,6 +38,7 @@ type ReminderStats = Record<string, unknown>;
 
 export default function QuizPage() {
   const router = useRouter();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [sampleQuizzes, setSampleQuizzes] = useState<Quiz[]>([]);
   const [userQuizzes, setUserQuizzes] = useState<Quiz[]>([]);
   const [filteredSampleQuizzes, setFilteredSampleQuizzes] = useState<Quiz[]>([]);
@@ -2192,7 +2194,15 @@ export default function QuizPage() {
         answers: {}, // This would be populated with actual answers
       };
       
-      await submitQuizResult(quizResult);
+      console.log('Submitting quiz result:', quizResult);
+      console.log('User authenticated:', isAuthenticated);
+      
+      if (isAuthenticated) {
+        const result = await submitQuizResult(quizResult);
+        console.log('Quiz result submitted successfully:', result);
+      } else {
+        console.log('User not authenticated, quiz result not saved');
+      }
     } catch (error) {
       console.error('Failed to submit quiz result:', error);
       // Continue with quiz completion even if submission fails
