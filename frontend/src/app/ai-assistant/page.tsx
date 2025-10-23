@@ -1,0 +1,263 @@
+'use client';
+
+import { useState } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import Layout from '@/components/layout/Layout';
+import { useAuth } from '@/hooks/useAuth';
+import { 
+  Bot, 
+  Send, 
+  MessageCircle, 
+  Lightbulb, 
+  BookOpen, 
+  Target,
+  ArrowLeft
+} from 'lucide-react';
+import Link from 'next/link';
+
+interface Message {
+  id: string;
+  type: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+}
+
+export default function AIAssistantPage() {
+  const { user, isAuthenticated } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      type: 'assistant',
+      content: "Hello! I'm your TOEIC learning assistant. I can help you with vocabulary, grammar, reading comprehension, and study strategies. What would you like to work on today?",
+      timestamp: new Date()
+    }
+  ]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: inputMessage,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsLoading(true);
+
+    // Simulate AI response (replace with actual AI integration later)
+    setTimeout(() => {
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: "I understand you're asking about: \"" + inputMessage + "\". This is a placeholder response. In the future, this will connect to an AI service to provide personalized TOEIC learning assistance!",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+      setIsLoading(false);
+    }, 1500);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const quickQuestions = [
+    "Explain the difference between 'affect' and 'effect'",
+    "Help me understand passive voice",
+    "What are common TOEIC vocabulary words?",
+    "How can I improve my reading speed?",
+    "Explain present perfect tense",
+    "What are TOEIC listening tips?"
+  ];
+
+  const handleQuickQuestion = (question: string) => {
+    setInputMessage(question);
+  };
+
+  return (
+    <Layout>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-4">
+              <Link href="/dashboard">
+                <Button variant="outline" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                  <Bot className="h-8 w-8 mr-3 text-blue-600" />
+                  AI Assistant
+                </h1>
+                <p className="text-gray-600">
+                  Get personalized help with your TOEIC studies
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Chat Interface */}
+            <div className="lg:col-span-2">
+              <Card className="h-[600px] flex flex-col">
+                <CardHeader className="border-b">
+                  <h2 className="text-lg font-semibold flex items-center">
+                    <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
+                    Chat with AI Assistant
+                  </h2>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col p-0">
+                  {/* Messages */}
+                  <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                    {messages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                            message.type === 'user'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-900'
+                          }`}
+                        >
+                          <p className="text-sm">{message.content}</p>
+                          <p className={`text-xs mt-1 ${
+                            message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                          }`}>
+                            {message.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {isLoading && (
+                      <div className="flex justify-start">
+                        <div className="bg-gray-100 rounded-lg px-4 py-2">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Input */}
+                  <div className="border-t p-4">
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Ask me anything about TOEIC..."
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={isLoading}
+                      />
+                      <Button
+                        onClick={handleSendMessage}
+                        disabled={!inputMessage.trim() || isLoading}
+                        className="px-4"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Quick Questions */}
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <Lightbulb className="h-5 w-5 mr-2 text-yellow-600" />
+                    Quick Questions
+                  </h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {quickQuestions.map((question, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleQuickQuestion(question)}
+                        className="w-full text-left p-3 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Study Tips */}
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2 text-green-600" />
+                    Study Tips
+                  </h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 text-sm text-gray-600">
+                    <div className="flex items-start space-x-2">
+                      <Target className="h-4 w-4 mt-0.5 text-green-600" />
+                      <p>Focus on one skill at a time (listening, reading, grammar)</p>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Target className="h-4 w-4 mt-0.5 text-green-600" />
+                      <p>Practice with real TOEIC materials</p>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Target className="h-4 w-4 mt-0.5 text-green-600" />
+                      <p>Review mistakes and learn from them</p>
+                    </div>
+                    <div className="flex items-start space-x-2">
+                      <Target className="h-4 w-4 mt-0.5 text-green-600" />
+                      <p>Set realistic daily study goals</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Status */}
+              <Card>
+                <CardHeader>
+                  <h3 className="text-lg font-semibold">Status</h3>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-gray-600">
+                    <p className="mb-2">
+                      <span className="font-medium">AI Assistant:</span> Ready
+                    </p>
+                    <p className="mb-2">
+                      <span className="font-medium">User:</span> {user?.name || 'Guest'}
+                    </p>
+                    <p>
+                      <span className="font-medium">Status:</span> {isAuthenticated ? 'Authenticated' : 'Not logged in'}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}
