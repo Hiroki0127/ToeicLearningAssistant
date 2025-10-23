@@ -46,7 +46,7 @@ export default function FlashcardsPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await flashcardService.getUserFlashcards(1, 100); // Load more cards
+      const response = await flashcardService.getFlashcards({ page: 1, limit: 100 }); // Load all flashcards
       setFlashcards(response.flashcards);
     } catch (err: any) {
       setError(err.message || 'Failed to load flashcards');
