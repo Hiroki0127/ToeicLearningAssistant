@@ -66,7 +66,7 @@ export default function Navigation() {
                   Quizzes
                 </Link>
                 <Link 
-                  href="/ai" 
+                  href="/ai-assistant" 
                   className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   AI Assistant
@@ -173,7 +173,7 @@ export default function Navigation() {
                     Quizzes
                   </Link>
                   <Link
-                    href="/ai"
+                    href="/ai-assistant"
                     className="flex items-center text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-base font-medium transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
