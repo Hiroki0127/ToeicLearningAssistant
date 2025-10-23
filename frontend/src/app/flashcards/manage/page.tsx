@@ -70,7 +70,7 @@ export default function ManageFlashcardsPage() {
       card.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
       card.definition.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesDifficulty = !difficultyFilter || card.difficulty === difficultyFilter;
+    const matchesDifficulty = !difficultyFilter || (card.difficulty || 'easy') === difficultyFilter;
     
     return matchesSearch && matchesDifficulty;
   });
@@ -168,7 +168,7 @@ export default function ManageFlashcardsPage() {
             <Card>
               <CardContent className="text-center py-4">
                 <div className="text-2xl font-bold text-green-600">
-                  {flashcards.filter(card => card.difficulty === 'easy').length}
+                  {flashcards.filter(card => (card.difficulty || 'easy') === 'easy').length}
                 </div>
                 <div className="text-sm text-gray-600">Easy</div>
               </CardContent>
@@ -176,7 +176,7 @@ export default function ManageFlashcardsPage() {
             <Card>
               <CardContent className="text-center py-4">
                 <div className="text-2xl font-bold text-orange-600">
-                  {flashcards.filter(card => card.difficulty === 'medium').length}
+                  {flashcards.filter(card => (card.difficulty || 'easy') === 'medium').length}
                 </div>
                 <div className="text-sm text-gray-600">Medium</div>
               </CardContent>
@@ -218,13 +218,13 @@ export default function ManageFlashcardsPage() {
                           {flashcard.word}
                         </h3>
                         <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                          flashcard.difficulty === 'easy' 
+                          (flashcard.difficulty || 'easy') === 'easy' 
                             ? 'bg-green-100 text-green-800'
-                            : flashcard.difficulty === 'medium'
+                            : (flashcard.difficulty || 'easy') === 'medium'
                             ? 'bg-yellow-100 text-yellow-800'
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          {flashcard.difficulty}
+                          {flashcard.difficulty || 'easy'}
                         </span>
                       </div>
                       <div className="flex gap-1 ml-2">
