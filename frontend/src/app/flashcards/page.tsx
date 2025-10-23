@@ -21,7 +21,7 @@ export default function FlashcardsPage() {
     setCorrectAnswers(prev => prev + 1);
     // Auto-advance to next card or end session if it's the last card
     if (currentIndex < flashcards.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex(prev => Math.min(prev + 1, flashcards.length - 1));
     }
   };
 
@@ -29,19 +29,19 @@ export default function FlashcardsPage() {
     setIncorrectAnswers(prev => prev + 1);
     // Auto-advance to next card or end session if it's the last card
     if (currentIndex < flashcards.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex(prev => Math.min(prev + 1, flashcards.length - 1));
     }
   };
 
   const handleNext = () => {
     if (currentIndex < flashcards.length - 1) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex(prev => Math.min(prev + 1, flashcards.length - 1));
     }
   };
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
+      setCurrentIndex(prev => Math.max(prev - 1, 0));
     }
   };
 
@@ -101,7 +101,7 @@ export default function FlashcardsPage() {
     console.log('Flashcards changed:', flashcards.length, flashcards);
     console.log('Current index before reset:', currentIndex);
     setCurrentIndex(0);
-  }, [flashcards, currentIndex]);
+  }, [flashcards]); // Removed currentIndex from dependencies
 
   if (loading) {
     return (
