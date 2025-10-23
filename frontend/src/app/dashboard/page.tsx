@@ -14,7 +14,7 @@ import {
   Brain,
   Trophy,
   Activity,
-  Edit3
+  Bot
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -143,16 +143,16 @@ export default function DashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/flashcards/manage">
+          <Link href="/ai-assistant">
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-6">
                 <div className="flex items-center">
                   <div className="p-2 bg-purple-100 rounded-lg">
-                    <Edit3 className="h-6 w-6 text-purple-600" />
+                    <Bot className="h-6 w-6 text-purple-600" />
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Manage Flashcards</h3>
-                    <p className="text-gray-600">Edit and organize your cards</p>
+                    <h3 className="text-lg font-semibold text-gray-900">AI Assistant</h3>
+                    <p className="text-gray-600">Get help with your TOEIC studies</p>
                   </div>
                   <ArrowRight className="h-5 w-5 text-gray-400 ml-auto" />
                 </div>
