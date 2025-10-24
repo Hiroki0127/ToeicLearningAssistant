@@ -84,37 +84,6 @@ export class RAGService {
     }
   }
 
-  // Generate embeddings using simple hash-based method (Groq doesn't have embeddings)
-  private static async generateEmbeddings(texts: string[]): Promise<number[][]> {
-    const embeddings: number[][] = [];
-    
-    for (const text of texts) {
-      // Use simple hash-based embedding since Groq doesn't have embedding models
-      embeddings.push(this.simpleEmbedding(text));
-    }
-    
-    return embeddings;
-  }
-
-  // Simple fallback embedding (hash-based)
-  private static simpleEmbedding(text: string): number[] {
-    const hash = this.simpleHash(text);
-    const embedding = new Array(384).fill(0);
-    for (let i = 0; i < Math.min(hash.length, 384); i++) {
-      embedding[i] = (hash.charCodeAt(i) - 128) / 128;
-    }
-    return embedding;
-  }
-
-  private static simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return Math.abs(hash).toString();
-  }
 
   // Retrieve relevant TOEIC data for a query using enhanced text matching
   static async retrieveRelevantContext(query: string, topK: number = 5): Promise<{
