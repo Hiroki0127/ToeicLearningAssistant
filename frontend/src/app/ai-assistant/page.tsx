@@ -55,49 +55,28 @@ export default function AIAssistantPage() {
       let response = '';
       
       // Determine the type of query and route to appropriate AI service
-      const query = currentInput.toLowerCase();
+      const query = currentInput.toLowerCase().trim();
       
-      if (query.includes('vocabulary') || query.includes('word') || query.includes('meaning') || 
-          query.includes('definition') || /^[a-zA-Z]+$/.test(currentInput.trim())) {
-        // Vocabulary explanation
-        const word = currentInput.trim();
-        const vocabResponse = await fetch('/api/ai/explain-vocabulary', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ word }),
-        });
+      console.log('Processing query:', query);
+      
+      // Check for practice questions FIRST (most specific)
+      const isPracticeQuery = query.includes('practice') || 
+          query.includes('part 5') ||
+          query.includes('part 6') ||
+          query.includes('part 7') ||
+          query.includes('question') || 
+          query.includes('quiz');
+      
+      console.log('Is practice query?', isPracticeQuery);
+      
+      if (isPracticeQuery) {
         
-        if (vocabResponse.ok) {
-          const data = await vocabResponse.json();
-          response = data.data.explanation;
-        } else {
-          response = "I'm sorry, I couldn't process your vocabulary request. Please try again.";
-        }
-      } else if (query.includes('grammar') || query.includes('tense') || query.includes('sentence')) {
-        // Grammar explanation
-        const grammarResponse = await fetch('/api/ai/explain-grammar', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            question: currentInput,
-            userAnswer: "I need help understanding this grammar concept"
-          }),
-        });
+        // Extract topic from query
+        let topic = query.replace(/practice|question|quiz|part 5|part 6|part 7|toeic|help me with|give me/gi, '').trim();
+        if (!topic) topic = 'general TOEIC';
         
-        if (grammarResponse.ok) {
-          const data = await grammarResponse.json();
-          response = data.data.explanation;
-        } else {
-          response = "I'm sorry, I couldn't process your grammar question. Please try again.";
-        }
-      } else if (query.includes('question') || query.includes('quiz') || query.includes('practice')) {
-        // Generate practice question
-        const topic = currentInput.replace(/generate|question|quiz|practice/gi, '').trim() || 'general TOEIC';
-        const questionResponse = await fetch('/api/ai/generate-question', {
+        console.log('Calling question generation API for topic:', topic);
+        const questionResponse = await fetch('https://toeiclearningassistant.onrender.com/api/ai/generate-question', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -108,8 +87,11 @@ export default function AIAssistantPage() {
           }),
         });
         
+        console.log('Question API response status:', questionResponse.status);
+        
         if (questionResponse.ok) {
           const data = await questionResponse.json();
+          console.log('Question API success:', data);
           const question = data.data;
           response = `Here's a TOEIC practice question for you:\n\n**Part ${question.part}**\n\n${question.passage || question.question}\n\n`;
           
@@ -131,14 +113,123 @@ export default function AIAssistantPage() {
           
           response += `\n**Explanation:** ${question.explanation}`;
         } else {
-          response = "I'm sorry, I couldn't generate a practice question. Please try again.";
+          const errorData = await questionResponse.json();
+          console.error('Question generation API error:', errorData);
+          // Fallback response for practice questions
+          response = `**TOEIC Practice Question (Sample)**\n\n` +
+            `I'm currently unable to generate new questions via AI, but here's a sample TOEIC Part 5 question:\n\n` +
+            `**Question:** The marketing team has been working _____ to launch the new product.\n\n` +
+            `A) diligent\n` +
+            `B) diligently\n` +
+            `C) diligence\n` +
+            `D) diligentness\n\n` +
+            `**Answer:** B) diligently\n\n` +
+            `**Explanation:** The blank requires an adverb to modify 'working'. 'Diligently' is the correct adverb form.\n\n` +
+            `You can find more practice questions in the Quiz section of the app!`;
         }
-      } else {
+      } 
+      // Check for vocabulary queries (single words or "what does X mean")
+      else if (/^[a-zA-Z]+$/.test(query) || 
+               query.includes('what does') || 
+               query.includes('meaning') || 
+               query.includes('definition')) {
+        
+        console.log('Detected vocabulary query');
+        
+        // Extract word from query
+        let word = query;
+        if (query.includes('what does')) {
+          word = query.replace(/what does|mean|\?|'/gi, '').trim();
+        } else if (query.includes('meaning') || query.includes('definition')) {
+          word = query.replace(/meaning|definition|\?/gi, '').trim();
+        }
+        
+        console.log('Calling vocabulary API for word:', word);
+        const vocabResponse = await fetch('https://toeiclearningassistant.onrender.com/api/ai/explain-vocabulary', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ word }),
+        });
+        
+        console.log('Vocabulary API response status:', vocabResponse.status);
+        
+        if (vocabResponse.ok) {
+          const data = await vocabResponse.json();
+          console.log('Vocabulary API success:', data);
+          response = data.data.explanation;
+        } else {
+          const errorData = await vocabResponse.json();
+          console.error('Vocabulary API error:', errorData);
+          // Fallback response for vocabulary
+          response = `**${word.toUpperCase()}**\n\n` +
+            `I'm currently unable to access the AI vocabulary service, but here's what I can tell you:\n\n` +
+            `• This is a common TOEIC business vocabulary word\n` +
+            `• Try looking it up in your flashcards or dictionary\n` +
+            `• Practice using it in business contexts\n` +
+            `• The AI service will be available once the API key is configured\n\n` +
+            `For now, you can use the flashcard system to study vocabulary!`;
+        }
+      } 
+      // Check for grammar queries
+      else if (query.includes('grammar') || 
+               query.includes('tense') || 
+               query.includes('sentence') ||
+               query.includes('explain')) {
+        
+        console.log('Calling grammar API for query:', currentInput);
+        const grammarResponse = await fetch('https://toeiclearningassistant.onrender.com/api/ai/explain-grammar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            question: currentInput,
+            userAnswer: "I need help understanding this grammar concept"
+          }),
+        });
+        
+        if (grammarResponse.ok) {
+          const data = await grammarResponse.json();
+          response = data.data.explanation;
+        } else {
+          const errorData = await grammarResponse.json();
+          console.error('Grammar API error:', errorData);
+          // Fallback response for grammar
+          response = `**Grammar Help**\n\n` +
+            `I'm currently unable to access the AI grammar service, but here are some general TOEIC grammar tips:\n\n` +
+            `• **Verb Tenses**: Focus on present perfect, past perfect, and future tenses\n` +
+            `• **Passive Voice**: Common in business contexts\n` +
+            `• **Conditionals**: If/when statements are frequently tested\n` +
+            `• **Prepositions**: In, on, at, by, for, with usage\n` +
+            `• **Articles**: A, an, the in business contexts\n\n` +
+            `The AI grammar service will be available once the API key is configured!`;
+        }
+      } 
+      // Check for study tips/vocabulary help
+      else if (query.includes('remember') || 
+               query.includes('vocab') || 
+               query.includes('study') ||
+               query.includes('help')) {
+        
+        response = `Here are some effective strategies for remembering TOEIC vocabulary:\n\n` +
+          `• **Spaced Repetition**: Review words at increasing intervals (1 day, 3 days, 1 week)\n` +
+          `• **Context Learning**: Learn words in sentences, not in isolation\n` +
+          `• **Association**: Connect new words to words you already know\n` +
+          `• **Visual Memory**: Create mental images or use flashcards\n` +
+          `• **Practice**: Use words in your own sentences\n` +
+          `• **Business Context**: Focus on how words are used in business situations\n\n` +
+          `Try asking me about specific words like "allocate" or "contingency" to see detailed explanations!`;
+      } 
+      else {
+        console.log('Falling through to general help');
         // General TOEIC help
         response = `I can help you with TOEIC preparation in several ways:\n\n` +
-          `• **Vocabulary**: Ask about specific words (e.g., "What does 'allocate' mean?")\n` +
-          `• **Grammar**: Ask grammar questions (e.g., "Explain present perfect tense")\n` +
-          `• **Practice Questions**: Request practice questions (e.g., "Generate a question about business emails")\n\n` +
+          `• **Vocabulary**: Ask about specific words (e.g., "allocate" or "what does allocate mean?")\n` +
+          `• **Grammar**: Ask grammar questions (e.g., "Explain passive voice")\n` +
+          `• **Practice Questions**: Request practice questions (e.g., "Give me TOEIC part 5 practice")\n` +
+          `• **Study Tips**: Ask for learning strategies (e.g., "How can I remember vocabulary?")\n\n` +
           `What specific TOEIC topic would you like help with?`;
       }
 

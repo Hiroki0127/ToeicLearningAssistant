@@ -19,6 +19,8 @@ services:
         generateValue: true
       - key: GROQ_API_KEY
         sync: false
+        # Add your actual API key here temporarily for testing:
+        # value: gsk_your_actual_api_key_here
 
 databases:
   - name: toeic-db
