@@ -115,11 +115,12 @@ export class RAGService {
         return questionText.includes(queryLower) ||
                explanation.includes(queryLower) ||
                correctAnswer.includes(queryLower) ||
-               queryLower.includes('part 5') && question.quizType === 'grammar' ||
+               queryLower.includes('part 5') && (question.quizType === 'grammar' || question.quizType === 'vocabulary') ||
                queryLower.includes('part 6') && question.quizType === 'reading' ||
                queryLower.includes('part 7') && question.quizType === 'reading' ||
                queryLower.includes('vocabulary') && question.quizType === 'vocabulary' ||
-               queryLower.includes('grammar') && question.quizType === 'grammar';
+               queryLower.includes('grammar') && question.quizType === 'grammar' ||
+               queryLower.includes('reading') && question.quizType === 'reading';
       });
 
       // Find relevant quizzes
@@ -183,26 +184,33 @@ export class RAGService {
         });
       }
 
-      const prompt = `You are a TOEIC expert. Provide a comprehensive explanation for the word "${word}" based on the TOEIC database below.
+      const prompt = `You are a TOEIC expert with 10+ years of experience teaching TOEIC preparation. Provide a comprehensive explanation for the word "${word}" based on the official TOEIC database below.
+
+**TOEIC Exam Context:**
+- TOEIC Reading: 100 questions, 75 minutes, Parts 5-7
+- Part 5: 30 questions, incomplete sentences, grammar/vocabulary focus
+- Business English emphasis throughout all sections
+- Scoring: 5-495 points per section, 10-990 total
 
 **Requirements:**
-- Use EXACT definitions and examples from the database when available
-- Focus on business/TOEIC contexts
-- Include part of speech, difficulty level, and common usage patterns
-- Reference related practice questions if relevant
-- Provide TOEIC-specific tips for remembering the word
+- Use EXACT definitions and examples from the official TOEIC database when available
+- Focus on business/workplace contexts typical in TOEIC exams
+- Include part of speech, difficulty level, and common TOEIC usage patterns
+- Reference specific TOEIC question patterns where this word appears
+- Provide TOEIC-specific memory tips and test-taking strategies
+- Mention which TOEIC parts commonly test this word
 
-**TOEIC Database Context:**
+**Official TOEIC Database Context:**
 ${contextString}
 
 **Format your response as:**
 **Word: [WORD]**
-**Definition:** [exact definition from database]
+**TOEIC Definition:** [business-focused definition from database]
 **Part of Speech:** [noun/verb/adjective/etc]
-**Business Context:** [how it's used in TOEIC/business]
-**Example:** [exact example from database]
+**TOEIC Context:** [how it appears in official TOEIC exams]
+**Business Usage:** [workplace examples from database]
 **TOEIC Tips:** [specific advice for TOEIC test-takers]
-**Related Words:** [similar business vocabulary]`;
+**Related TOEIC Vocabulary:** [other business words tested together]`;
 
       const groq = getGroqClient();
       const completion = await groq.chat.completions.create({
@@ -246,29 +254,72 @@ ${contextString}
         });
       }
 
-      const prompt = `You are a TOEIC test expert. Generate a practice question based on the real TOEIC patterns below.
+      // Determine the part based on the topic
+      let targetPart = "5";
+      if (queryLower.includes('part 6') || queryLower.includes('text completion')) {
+        targetPart = "6";
+      } else if (queryLower.includes('part 7') || queryLower.includes('reading comprehension')) {
+        targetPart = "7";
+      } else if (queryLower.includes('part 5') || queryLower.includes('grammar') || queryLower.includes('vocabulary')) {
+        targetPart = "5";
+      }
 
-**Topic:** ${topic}
-**Difficulty:** ${difficulty}
+      const prompt = `You are a TOEIC test expert with access to official TOEIC sample questions. Generate a practice question for TOEIC Part ${targetPart} based on the topic "${topic}" at ${difficulty} difficulty.
+
+**Official TOEIC Exam Structure:**
+- Part 5: 30 questions, incomplete sentences, grammar/vocabulary (15 minutes recommended)
+- Part 6: 16 questions, text completion, business documents (10 minutes recommended)  
+- Part 7: 54 questions, reading comprehension, business texts (50 minutes recommended)
+- Total Reading: 100 questions, 75 minutes
+- Business English focus throughout all sections
 
 **Requirements:**
-- Follow the EXACT format and style of real TOEIC questions from the database
-- Use similar vocabulary and business contexts
-- Match the difficulty level and question type patterns
-- Include proper explanations like the real questions
+- Generate a question specifically for TOEIC Part ${targetPart}
+- Follow the EXACT format and style of official TOEIC questions
+- Use authentic business/TOEIC vocabulary and contexts
+- Match the difficulty level (${difficulty})
+- Include proper TOEIC-style explanations
+- Reference official TOEIC question patterns when available
 
-**Real TOEIC Question Patterns:**
+**Official TOEIC Question Patterns:**
 ${contextString}
 
-**Generate a question that follows these patterns. Return as JSON:**
-{
+**Generate a TOEIC Part ${targetPart} question. Return as JSON:**
+
+${targetPart === "5" ? `{
   "part": "5",
   "question": "Complete the sentence with the best option",
   "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
   "correctAnswer": "A",
   "explanation": "Detailed explanation following TOEIC style",
-  "questionType": "grammar|vocabulary|reading"
-}`;
+  "questionType": "grammar"
+}` : targetPart === "6" ? `{
+  "part": "6",
+  "passage": "Business email or memo with blanks",
+  "questions": [
+    {
+      "number": 131,
+      "question": "Fill in the blank",
+      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+      "correctAnswer": "A"
+    }
+  ],
+  "explanation": "Part 6 tests text completion in business documents",
+  "questionType": "text completion"
+}` : `{
+  "part": "7",
+  "passage": "Business reading passage (email, article, advertisement)",
+  "questions": [
+    {
+      "number": 153,
+      "question": "What is the main purpose of this passage?",
+      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+      "correctAnswer": "A"
+    }
+  ],
+  "explanation": "Part 7 tests reading comprehension of business texts",
+  "questionType": "reading comprehension"
+}`}`;
 
       const groq = getGroqClient();
       const completion = await groq.chat.completions.create({
@@ -289,15 +340,43 @@ ${contextString}
         console.log('Could not parse JSON, returning structured response');
       }
 
-      // Fallback: return structured response
-      return {
-        part: "5",
-        question: response,
-        options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
-        correctAnswer: "A",
-        explanation: "Based on TOEIC patterns from the database",
-        questionType: "grammar"
-      };
+      // Fallback: return structured response based on target part
+      if (targetPart === "6") {
+        return {
+          part: "6",
+          passage: "Business communication with blanks to fill in",
+          questions: [{
+            number: 131,
+            question: "Fill in the blank",
+            options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+            correctAnswer: "A"
+          }],
+          explanation: "Part 6 tests text completion in business documents",
+          questionType: "text completion"
+        };
+      } else if (targetPart === "7") {
+        return {
+          part: "7",
+          passage: "Business reading passage for comprehension",
+          questions: [{
+            number: 153,
+            question: "What is the main purpose of this passage?",
+            options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+            correctAnswer: "A"
+          }],
+          explanation: "Part 7 tests reading comprehension of business texts",
+          questionType: "reading comprehension"
+        };
+      } else {
+        return {
+          part: "5",
+          question: response,
+          options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+          correctAnswer: "A",
+          explanation: "Based on TOEIC patterns from the database",
+          questionType: "grammar"
+        };
+      }
     } catch (error) {
       console.error('Error in RAG question generation:', error);
       throw new Error('Failed to generate TOEIC question');
