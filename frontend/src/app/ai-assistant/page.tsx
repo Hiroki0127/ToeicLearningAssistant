@@ -311,20 +311,20 @@ export default function AIAssistantPage() {
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col p-0">
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[400px]">
                     {messages.map((message) => (
                       <div
                         key={message.id}
                         className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                          className={`max-w-[80%] rounded-lg px-4 py-2 break-words ${
                             message.type === 'user'
                               ? 'bg-blue-600 text-white'
                               : 'bg-gray-100 text-gray-900'
                           }`}
                         >
-                          <div className="text-sm whitespace-pre-wrap">
+                          <div className="text-sm whitespace-pre-wrap overflow-wrap-anywhere">
                             {message.content.split('\n').map((line, index) => {
                               if (line.startsWith('**') && line.endsWith('**')) {
                                 return <strong key={index}>{line.slice(2, -2)}</strong>;
