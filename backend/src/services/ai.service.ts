@@ -15,9 +15,12 @@ export class AIService {
 
   static async generateTOEICQuestion(topic: string, difficulty: 'easy' | 'medium' | 'hard' = 'medium') {
     try {
-      // Generate TOEIC question
+      // Use enhanced RAG to generate questions based on real TOEIC patterns
+      return await RAGService.generateTOEICQuestionWithRAG(topic, difficulty);
+    } catch (error) {
+      console.error('Error generating TOEIC question with RAG:', error);
       
-      // Enhanced prompt that automatically selects the appropriate TOEIC part based on topic
+      // Fallback to original method if RAG fails
       const prompt = `Generate a unique TOEIC Reading question specifically about "${topic}" at ${difficulty} difficulty level.
 
 AUTOMATIC PART SELECTION:
