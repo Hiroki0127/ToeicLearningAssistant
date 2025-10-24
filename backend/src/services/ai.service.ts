@@ -21,7 +21,8 @@ export class AIService {
       console.error('Error generating TOEIC question with RAG:', error);
       
       // Fallback to original method if RAG fails
-      const prompt = `Generate a unique TOEIC Reading question specifically about "${topic}" at ${difficulty} difficulty level.
+      try {
+        const prompt = `Generate a unique TOEIC Reading question specifically about "${topic}" at ${difficulty} difficulty level.
 
 AUTOMATIC PART SELECTION:
 - If topic is about GRAMMAR/VOCABULARY (prepositions, verb tenses, adjectives, etc.) → Generate Part 5 (Incomplete Sentences)
@@ -132,13 +133,13 @@ CRITICAL: Use ONLY the exact JSON format shown above. Do not add extra fields or
         console.log('Generated unique question for topic:', topic);
       }
       
-      console.log('Successfully generated question:', questionObj);
-      return questionObj;
-
-    } catch (error) {
-      console.error('Error generating TOEIC question:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to generate TOEIC question: ${errorMessage}`);
+        console.log('Successfully generated question:', questionObj);
+        return questionObj;
+      } catch (fallbackError) {
+        console.error('Error in fallback question generation:', fallbackError);
+        const errorMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+        throw new Error(`Failed to generate TOEIC question: ${errorMessage}`);
+      }
     }
   }
 
