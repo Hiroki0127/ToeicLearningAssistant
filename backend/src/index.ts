@@ -18,6 +18,9 @@ import studySessionRoutes from './routes/study-session.routes';
 // Import database utilities
 import { checkDatabaseConnection, getDatabaseStats } from './utils/database';
 
+// Import RAG service for initialization
+import { RAGService } from './services/rag.service';
+
 // Load environment variables
 dotenv.config();
 
@@ -215,12 +218,53 @@ app.use('*', (req, res) => {
   });
 });
 
+// Initialize RAG service with TOEIC knowledge base
+async function initializeServices() {
+  try {
+    console.log('🧠 Initializing RAG service with TOEIC knowledge base...');
+    await RAGService.initializeVectorDB();
+    console.log('✅ RAG service initialized successfully');
+  } catch (error) {
+    console.error('❌ Failed to initialize RAG service:', error);
+    console.log('⚠️  AI responses will use fallback mode');
+  }
+}
+
+// Add endpoint to check database content
+app.get('/api/debug/quiz-count', async (req, res) => {
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    const quizCount = await prisma.quiz.count();
+    const quizzes = await prisma.quiz.findMany({
+      select: { title: true, type: true }
+    });
+    
+    res.json({
+      success: true,
+      data: {
+        totalQuizzes: quizCount,
+        quizzes: quizzes
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🔗 API docs: http://localhost:${PORT}/api`);
   console.log(`🌐 Network access: http://172.20.10.2:${PORT}`);
+  
+  // Initialize services after server starts
+  await initializeServices();
 });
 
 export default app;
