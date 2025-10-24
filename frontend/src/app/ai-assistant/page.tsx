@@ -64,18 +64,28 @@ export default function AIAssistantPage() {
           query.includes('part 5') ||
           query.includes('part 6') ||
           query.includes('part 7') ||
-          query.includes('question') || 
+          (query.includes('question') && (query.includes('toeic') || query.includes('part'))) || 
           query.includes('quiz');
       
       console.log('Is practice query?', isPracticeQuery);
       
       if (isPracticeQuery) {
         
-        // Extract topic from query
-        let topic = query.replace(/practice|question|quiz|part 5|part 6|part 7|toeic|help me with|give me/gi, '').trim();
+        // Extract topic from query, but preserve part information
+        let topic = query.replace(/practice|question|quiz|toeic|help me with|give me/gi, '').trim();
         if (!topic) topic = 'general TOEIC';
         
+        // Preserve part information in the topic
+        if (query.includes('part 5')) {
+          topic = 'part 5 ' + topic;
+        } else if (query.includes('part 6')) {
+          topic = 'part 6 ' + topic;
+        } else if (query.includes('part 7')) {
+          topic = 'part 7 ' + topic;
+        }
+        
         console.log('Calling question generation API for topic:', topic);
+        console.log('Original query was:', currentInput);
         const questionResponse = await fetch('https://toeiclearningassistant.onrender.com/api/ai/generate-question', {
           method: 'POST',
           headers: {
