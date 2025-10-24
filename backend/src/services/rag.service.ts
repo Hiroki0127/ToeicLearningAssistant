@@ -229,6 +229,9 @@ ${contextString}
   // Generate TOEIC practice questions using real question patterns
   static async generateTOEICQuestionWithRAG(topic: string, difficulty: string = 'medium'): Promise<any> {
     try {
+      // Convert topic to lowercase for matching
+      const queryLower = topic.toLowerCase();
+      
       // Retrieve relevant questions and patterns
       const context = await this.retrieveRelevantContext(topic, 5);
       
