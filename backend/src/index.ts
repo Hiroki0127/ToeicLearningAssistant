@@ -231,7 +231,7 @@ async function initializeServices() {
 }
 
 // Add endpoint to check database content
-app.get('/api/debug/quiz-count', async (req, res) => {
+app.get('/api/debug/quiz-count', async (_req, res) => {
   try {
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
@@ -251,13 +251,13 @@ app.get('/api/debug/quiz-count', async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
 
 // Add endpoint to seed official TOEIC questions
-app.post('/api/admin/seed-toeic-questions', async (req, res) => {
+app.post('/api/admin/seed-toeic-questions', async (_req, res) => {
   try {
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
@@ -453,7 +453,7 @@ Call Giroozeh Ghorbani at 848-555-0231.`,
     
     await prisma.$disconnect();
     
-    res.json({
+    return res.json({
       success: true,
       message: 'Official TOEIC questions added successfully!',
       data: {
@@ -465,9 +465,9 @@ Call Giroozeh Ghorbani at 848-555-0231.`,
     
   } catch (error) {
     console.error('Error seeding TOEIC questions:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
