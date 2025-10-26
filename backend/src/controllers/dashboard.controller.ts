@@ -4,6 +4,62 @@ import { successResponse, badRequestResponse, databaseErrorResponse } from '../u
 
 const prisma = new PrismaClient();
 
+// Level system configuration
+const LEVELS = [
+  { name: 'beginner', minXP: 0, maxXP: 499 },
+  { name: 'intermediate', minXP: 500, maxXP: 1499 },
+  { name: 'advanced', minXP: 1500, maxXP: 2999 },
+  { name: 'expert', minXP: 3000, maxXP: Infinity }
+];
+
+// XP calculation function
+function calculateUserLevel(stats: {
+  totalCards: number;
+  cardsStudiedToday: number;
+  currentStreak: number;
+  totalCorrect: number;
+  totalIncorrect: number;
+  totalQuizAttempts: number;
+  averageQuizScore: number;
+  totalStudyTimeMinutes: number;
+}) {
+  let totalXP = 0;
+
+  // XP from flashcards studied (10 XP per card)
+  totalXP += stats.totalCards * 10;
+
+  // XP from correct answers (5 XP per correct answer)
+  totalXP += stats.totalCorrect * 5;
+
+  // XP from quiz attempts (50 XP per quiz + score bonus)
+  totalXP += stats.totalQuizAttempts * 50;
+  totalXP += Math.round(stats.averageQuizScore * stats.totalQuizAttempts);
+
+  // XP from study streaks (25 XP per day streak)
+  totalXP += stats.currentStreak * 25;
+
+  // XP from study time (1 XP per 10 minutes)
+  totalXP += Math.floor(stats.totalStudyTimeMinutes / 10);
+
+  // Determine current level
+  const currentLevel = LEVELS.find(level => totalXP >= level.minXP && totalXP <= level.maxXP) || LEVELS[0];
+  const nextLevel = LEVELS.find(level => level.minXP > totalXP) || LEVELS[LEVELS.length - 1];
+
+  // Calculate progress within current level
+  const currentLevelXP = totalXP - currentLevel.minXP;
+  const levelProgress = currentLevel.maxXP === Infinity ? 100 : 
+    Math.round((currentLevelXP / (currentLevel.maxXP - currentLevel.minXP + 1)) * 100);
+
+  return {
+    level: currentLevel.name,
+    experience: totalXP,
+    nextLevel: nextLevel.name,
+    nextLevelXP: nextLevel.minXP,
+    currentLevelXP,
+    levelProgress: Math.min(levelProgress, 100)
+  };
+}
+
 export const getDashboardStats = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {
@@ -147,17 +203,30 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       return total;
     }, 0);
 
+    // Calculate experience points and level
+    const levelSystem = calculateUserLevel({
+      totalCards,
+      cardsStudiedToday,
+      currentStreak,
+      totalCorrect,
+      totalIncorrect,
+      totalQuizAttempts,
+      averageQuizScore,
+      totalStudyTimeMinutes
+    });
+
     const dashboardData = {
       progress: {
         totalCards,
         studiedToday: cardsStudiedToday,
         currentStreak,
         accuracy,
-        level: 'beginner', // TODO: Implement level system
-        experience: 0,
-        nextLevel: 'intermediate',
-        nextLevelXP: 500,
-        currentLevelXP: 0,
+        level: levelSystem.level,
+        experience: levelSystem.experience,
+        nextLevel: levelSystem.nextLevel,
+        nextLevelXP: levelSystem.nextLevelXP,
+        currentLevelXP: levelSystem.currentLevelXP,
+        levelProgress: levelSystem.levelProgress,
       },
       dailyGoal: {
         studied: cardsStudiedToday,

@@ -73,6 +73,7 @@ export default function DashboardPage() {
     nextLevel: 'intermediate',
     nextLevelXP: 500,
     currentLevelXP: 0,
+    levelProgress: 0,
   };
 
   const recentActivity = dashboardData?.recentActivity || [];
@@ -94,11 +95,18 @@ export default function DashboardPage() {
               <p className="text-gray-600">Welcome back, {user?.name}!</p>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">Level {progressData.level}</span>
+              <div className="text-right">
+                <div className="text-sm font-medium text-gray-900 capitalize">
+                  Level {progressData.level}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {progressData.experience} XP • {progressData.levelProgress}% to {progressData.nextLevel}
+                </div>
+              </div>
               <div className="w-32 bg-gray-200 rounded-full h-2">
                 <div 
-                  className="bg-blue-600 h-2 rounded-full" 
-                  style={{ width: `${progressData.nextLevelXP > 0 ? ((progressData.experience - progressData.currentLevelXP) / (progressData.nextLevelXP - progressData.currentLevelXP)) * 100 : 0}%` }}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${progressData.levelProgress}%` }}
                 ></div>
               </div>
             </div>

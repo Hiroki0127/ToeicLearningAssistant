@@ -12,6 +12,7 @@ interface DashboardStats {
     nextLevel: string;
     nextLevelXP: number;
     currentLevelXP: number;
+    levelProgress: number;
   };
   dailyGoal: {
     studied: number;
