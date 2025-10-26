@@ -108,7 +108,12 @@ export default function AIAssistantPage() {
           if (question.options) {
             response += `Options:\n`;
             question.options.forEach((option: string, index: number) => {
-              response += `${String.fromCharCode(65 + index)}. ${option}\n`;
+              // Check if option already has alphabet prefix (A), B), etc.)
+              if (option.match(/^[A-D]\)/)) {
+                response += `${option}\n`;
+              } else {
+                response += `${String.fromCharCode(65 + index)}. ${option}\n`;
+              }
             });
           }
           
@@ -116,7 +121,12 @@ export default function AIAssistantPage() {
             question.questions.forEach((q: any) => {
               response += `\n**Question ${q.number}:** ${q.question}\n`;
               q.options.forEach((option: string, index: number) => {
-                response += `${String.fromCharCode(65 + index)}. ${option}\n`;
+                // Check if option already has alphabet prefix (A), B), etc.)
+                if (option.match(/^[A-D]\)/)) {
+                  response += `${option}\n`;
+                } else {
+                  response += `${String.fromCharCode(65 + index)}. ${option}\n`;
+                }
               });
             });
           }
