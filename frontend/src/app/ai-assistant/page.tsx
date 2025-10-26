@@ -456,25 +456,6 @@ export default function AIAssistantPage() {
                 </CardContent>
               </Card>
 
-              {/* Status */}
-              <Card>
-                <CardHeader>
-                  <h3 className="text-lg font-semibold text-gray-900">Status</h3>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-gray-700">
-                    <p className="mb-2">
-                      <span className="font-medium">AI Assistant:</span> Ready
-                    </p>
-                    <p className="mb-2">
-                      <span className="font-medium">User:</span> {user?.name || 'Guest'}
-                    </p>
-                    <p>
-                      <span className="font-medium">Status:</span> {isAuthenticated ? 'Authenticated' : 'Not logged in'}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
         </div>
