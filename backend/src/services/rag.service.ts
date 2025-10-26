@@ -115,9 +115,9 @@ export class RAGService {
         return questionText.includes(queryLower) ||
                explanation.includes(queryLower) ||
                correctAnswer.includes(queryLower) ||
-               queryLower.includes('part 5') && (question.quizType === 'grammar' || question.quizType === 'vocabulary') ||
-               queryLower.includes('part 6') && question.quizType === 'reading' ||
-               queryLower.includes('part 7') && question.quizType === 'reading' ||
+               queryLower.includes('part 5') && (question.quizType === 'grammar' || question.quizType === 'vocabulary' || question.quizType === 'part5') ||
+               queryLower.includes('part 6') && (question.quizType === 'reading' || question.quizType === 'part6') ||
+               queryLower.includes('part 7') && (question.quizType === 'reading' || question.quizType === 'part7') ||
                queryLower.includes('vocabulary') && question.quizType === 'vocabulary' ||
                queryLower.includes('grammar') && question.quizType === 'grammar' ||
                queryLower.includes('reading') && question.quizType === 'reading';
