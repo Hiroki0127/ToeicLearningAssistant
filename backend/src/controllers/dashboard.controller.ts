@@ -6,10 +6,10 @@ const prisma = new PrismaClient();
 
 // Level system configuration
 const LEVELS = [
-  { name: 'beginner', minXP: 0, maxXP: 499 },
-  { name: 'intermediate', minXP: 500, maxXP: 1499 },
-  { name: 'advanced', minXP: 1500, maxXP: 2999 },
-  { name: 'expert', minXP: 3000, maxXP: Infinity }
+  { name: 'beginner', minXP: 0, maxXP: 4999 },
+  { name: 'intermediate', minXP: 5000, maxXP: 14999 },
+  { name: 'advanced', minXP: 15000, maxXP: 29999 },
+  { name: 'expert', minXP: 30000, maxXP: Infinity }
 ];
 
 // XP calculation function
