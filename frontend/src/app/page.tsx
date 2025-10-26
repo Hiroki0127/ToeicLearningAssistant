@@ -20,15 +20,10 @@ export default function Home() {
             Enhance your TOEIC preparation with intelligent flashcards, personalized quizzes, 
             and adaptive learning powered by RAG + knowledge graph technology.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center">
             <Link href="/flashcards">
               <Button size="lg" className="w-full sm:w-auto">
                 Start Learning
-              </Button>
-            </Link>
-            <Link href="/demo">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                Try Demo
               </Button>
             </Link>
           </div>
