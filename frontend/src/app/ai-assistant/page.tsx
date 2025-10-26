@@ -324,7 +324,7 @@ export default function AIAssistantPage() {
             <div className="lg:col-span-2">
               <Card className="h-[600px] flex flex-col">
                 <CardHeader className="border-b">
-                  <h2 className="text-lg font-semibold flex items-center">
+                  <h2 className="text-lg font-semibold flex items-center text-gray-900">
                     <MessageCircle className="h-5 w-5 mr-2 text-blue-600" />
                     Chat with AI Assistant
                   </h2>
@@ -385,7 +385,7 @@ export default function AIAssistantPage() {
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
                         placeholder="Ask me anything about TOEIC..."
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                         disabled={isLoading}
                       />
                       <Button
