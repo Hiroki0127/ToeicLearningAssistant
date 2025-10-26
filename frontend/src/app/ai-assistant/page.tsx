@@ -406,7 +406,7 @@ export default function AIAssistantPage() {
               {/* Quick Questions */}
               <Card>
                 <CardHeader>
-                  <h3 className="text-lg font-semibold flex items-center">
+                  <h3 className="text-lg font-semibold flex items-center text-gray-900">
                     <Lightbulb className="h-5 w-5 mr-2 text-yellow-600" />
                     Quick Questions
                   </h3>
@@ -417,7 +417,7 @@ export default function AIAssistantPage() {
                       <button
                         key={index}
                         onClick={() => handleQuickQuestion(question)}
-                        className="w-full text-left p-3 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="w-full text-left p-3 text-sm bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-gray-900"
                       >
                         {question}
                       </button>
@@ -429,13 +429,13 @@ export default function AIAssistantPage() {
               {/* Study Tips */}
               <Card>
                 <CardHeader>
-                  <h3 className="text-lg font-semibold flex items-center">
+                  <h3 className="text-lg font-semibold flex items-center text-gray-900">
                     <BookOpen className="h-5 w-5 mr-2 text-green-600" />
                     Study Tips
                   </h3>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3 text-sm text-gray-600">
+                  <div className="space-y-3 text-sm text-gray-700">
                     <div className="flex items-start space-x-2">
                       <Target className="h-4 w-4 mt-0.5 text-green-600" />
                       <p>Focus on one skill at a time (listening, reading, grammar)</p>
@@ -459,10 +459,10 @@ export default function AIAssistantPage() {
               {/* Status */}
               <Card>
                 <CardHeader>
-                  <h3 className="text-lg font-semibold">Status</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Status</h3>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-700">
                     <p className="mb-2">
                       <span className="font-medium">AI Assistant:</span> Ready
                     </p>
