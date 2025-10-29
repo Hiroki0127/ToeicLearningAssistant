@@ -50,25 +50,25 @@ Generate a realistic business document (email, memo, letter) with 4 blanks to fi
   "passage": "BUSINESS DOCUMENT HEADER\\n\\n[Realistic business content with 4 strategic blanks placed throughout the text. Use authentic business language, proper formatting, and realistic scenarios like office announcements, project updates, customer communications, or policy changes.]",
   "questions": [
     {
-      "number": 131,
+      "number": 1,
       "question": "First blank question with context from the passage",
       "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
       "correctAnswer": "A"
     },
     {
-      "number": 132,
+      "number": 2,
       "question": "Second blank question with context from the passage", 
       "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
       "correctAnswer": "B"
     },
     {
-      "number": 133,
+      "number": 3,
       "question": "Third blank question with context from the passage",
       "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
       "correctAnswer": "C"
     },
     {
-      "number": 134,
+      "number": 4,
       "question": "Fourth blank question with context from the passage",
       "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
       "correctAnswer": "D"
@@ -87,6 +87,8 @@ IMPORTANT: Create realistic business documents like:
 - Product updates
 
 Use authentic business language and proper document formatting!
+
+CRITICAL: Always use question numbers 1, 2, 3, 4 for each Part 6 set - start fresh for each new passage!
 
 FOR PART 7 (Business Content topics):
 Return ONLY this exact JSON format:
@@ -214,13 +216,13 @@ Return ONLY this exact JSON format:
   "passage": "To: All Staff\\nFrom: Sarah Chen\\nSubject: Office Renovation\\n\\nDear Team,\\n\\nWe are pleased to announce that our office renovation will begin _____ next month. The construction team has assured us that the work will be completed _____ six weeks.",
   "questions": [
     {
-      "number": 131,
+      "number": 1,
       "question": "The renovation will begin _____ next month.",
       "options": ["in", "on", "at", "by"],
       "correctAnswer": "A"
     },
     {
-      "number": 132,
+      "number": 2,
       "question": "The work will be completed _____ six weeks.",
       "options": ["within", "during", "while", "since"],
       "correctAnswer": "A"

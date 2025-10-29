@@ -283,6 +283,7 @@ ${contextString}
 - Match the difficulty level (${difficulty})
 - Include proper TOEIC-style explanations
 - Reference official TOEIC question patterns when available
+- For Part 6: Always use question numbers 1, 2, 3, 4 for each individual set
 
 **Official TOEIC Question Patterns:**
 ${contextString}
@@ -301,31 +302,31 @@ ${targetPart === "5" ? `{
   "passage": "To: All Department Heads\\nFrom: HR Manager\\nSubject: New Employee Orientation\\n\\nDear Team,\\n\\nWe are pleased to announce that our new employee orientation program will begin _____ next Monday. All new hires will participate in a comprehensive training session that covers company policies, procedures, and culture. The program is designed to help new employees _____ quickly into their roles and understand our expectations. _____ , we will provide them with mentors from their respective departments to ensure a smooth transition. We encourage all department heads to _____ their new team members during this important period.\\n\\nThank you for your cooperation.\\n\\nBest regards,\\nHR Team",
   "questions": [
     {
-      "number": 131,
+      "number": 1,
       "question": "The new employee orientation program will begin _____ next Monday.",
       "options": ["A) in", "B) on", "C) at", "D) by"],
       "correctAnswer": "B"
     },
     {
-      "number": 132,
+      "number": 2,
       "question": "The program is designed to help new employees _____ quickly into their roles.",
       "options": ["A) settle", "B) move", "C) work", "D) start"],
       "correctAnswer": "A"
     },
     {
-      "number": 133,
+      "number": 3,
       "question": "_____ , we will provide them with mentors from their respective departments.",
       "options": ["A) However", "B) Additionally", "C) Therefore", "D) Instead"],
       "correctAnswer": "B"
     },
     {
-      "number": 134,
+      "number": 4,
       "question": "We encourage all department heads to _____ their new team members.",
       "options": ["A) support", "B) manage", "C) train", "D) evaluate"],
       "correctAnswer": "A"
     }
   ],
-  "explanation": "Part 6 tests text completion in business documents with 4 questions based on a single passage",
+  "explanation": "Part 6 tests text completion in business documents with 4 questions based on a single passage. Each Part 6 set uses questions 1-4.",
   "questionType": "text completion"
 }` : `{
   "part": "7",
@@ -392,7 +393,7 @@ ${targetPart === "5" ? `{
               correctAnswer: "A"
             }
           ],
-          explanation: "Part 6 tests text completion in business documents with 4 questions based on a single passage",
+          explanation: "Part 6 tests text completion in business documents with 4 questions based on a single passage. Each Part 6 set uses questions 1-4.",
           questionType: "text completion"
         };
       } else if (targetPart === "7") {
