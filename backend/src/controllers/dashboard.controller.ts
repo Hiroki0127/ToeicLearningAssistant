@@ -13,7 +13,7 @@ const LEVELS = [
 ];
 
 // XP calculation function
-function calculateUserLevel(stats: {
+export function calculateUserLevel(stats: {
   totalCards: number;
   cardsStudiedToday: number;
   currentStreak: number;
