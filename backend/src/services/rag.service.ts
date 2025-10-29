@@ -298,16 +298,34 @@ ${targetPart === "5" ? `{
   "questionType": "grammar"
 }` : targetPart === "6" ? `{
   "part": "6",
-  "passage": "Business email or memo with blanks",
+  "passage": "Business email or memo with 4 blanks for text completion",
   "questions": [
     {
       "number": 131,
-      "question": "Fill in the blank",
+      "question": "First blank question",
       "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
       "correctAnswer": "A"
+    },
+    {
+      "number": 132,
+      "question": "Second blank question",
+      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+      "correctAnswer": "B"
+    },
+    {
+      "number": 133,
+      "question": "Third blank question",
+      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+      "correctAnswer": "C"
+    },
+    {
+      "number": 134,
+      "question": "Fourth blank question",
+      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+      "correctAnswer": "D"
     }
   ],
-  "explanation": "Part 6 tests text completion in business documents",
+  "explanation": "Part 6 tests text completion in business documents with 4 questions based on a single passage",
   "questionType": "text completion"
 }` : `{
   "part": "7",
@@ -347,14 +365,34 @@ ${targetPart === "5" ? `{
       if (targetPart === "6") {
         return {
           part: "6",
-          passage: "Business communication with blanks to fill in",
-          questions: [{
-            number: 131,
-            question: "Fill in the blank",
-            options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
-            correctAnswer: "A"
-          }],
-          explanation: "Part 6 tests text completion in business documents",
+          passage: "Business communication with 4 blanks to fill in",
+          questions: [
+            {
+              number: 131,
+              question: "First blank question",
+              options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+              correctAnswer: "A"
+            },
+            {
+              number: 132,
+              question: "Second blank question",
+              options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+              correctAnswer: "B"
+            },
+            {
+              number: 133,
+              question: "Third blank question",
+              options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+              correctAnswer: "C"
+            },
+            {
+              number: 134,
+              question: "Fourth blank question",
+              options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+              correctAnswer: "D"
+            }
+          ],
+          explanation: "Part 6 tests text completion in business documents with 4 questions based on a single passage",
           questionType: "text completion"
         };
       } else if (targetPart === "7") {

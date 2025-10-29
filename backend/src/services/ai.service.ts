@@ -46,22 +46,34 @@ FOR PART 6 (Business Communication topics):
 Return ONLY this exact JSON format:
 {
   "part": "6",
-  "passage": "To: All Staff\\nFrom: Sarah Chen\\nSubject: Office Renovation\\n\\nDear Team,\\n\\nWe are pleased to announce that our office renovation will begin _____ next month. The construction team has assured us that the work will be completed _____ six weeks.",
+  "passage": "To: All Staff\\nFrom: Sarah Chen\\nSubject: Office Renovation\\n\\nDear Team,\\n\\nWe are pleased to announce that our office renovation will begin _____ next month. The construction team has assured us that the work will be completed _____ six weeks. During this time, we will be temporarily relocating to the _____ floor of the adjacent building. Please ensure all personal belongings are packed and labeled _____ Friday.",
   "questions": [
     {
       "number": 131,
       "question": "The renovation will begin _____ next month.",
-      "options": ["in", "on", "at", "by"],
+      "options": ["A) in", "B) on", "C) at", "D) by"],
       "correctAnswer": "A"
     },
     {
       "number": 132,
       "question": "The work will be completed _____ six weeks.",
-      "options": ["within", "during", "while", "since"],
+      "options": ["A) within", "B) during", "C) while", "D) since"],
+      "correctAnswer": "A"
+    },
+    {
+      "number": 133,
+      "question": "We will be relocating to the _____ floor.",
+      "options": ["A) second", "B) third", "C) fourth", "D) fifth"],
+      "correctAnswer": "B"
+    },
+    {
+      "number": 134,
+      "question": "Personal belongings should be packed _____ Friday.",
+      "options": ["A) by", "B) on", "C) in", "D) at"],
       "correctAnswer": "A"
     }
   ],
-  "explanation": "Part 6 tests text completion in business documents.",
+  "explanation": "Part 6 tests text completion in business documents with 4 questions based on a single passage.",
   "questionType": "text completion"
 }
 
