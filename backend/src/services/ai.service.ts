@@ -43,39 +43,50 @@ Return ONLY this exact JSON format:
 }
 
 FOR PART 6 (Business Communication topics):
-Return ONLY this exact JSON format:
+Generate a realistic business document (email, memo, letter) with 4 blanks to fill in. Use this format:
+
 {
   "part": "6",
-  "passage": "To: All Staff\\nFrom: Sarah Chen\\nSubject: Office Renovation\\n\\nDear Team,\\n\\nWe are pleased to announce that our office renovation will begin _____ next month. The construction team has assured us that the work will be completed _____ six weeks. During this time, we will be temporarily relocating to the _____ floor of the adjacent building. Please ensure all personal belongings are packed and labeled _____ Friday.",
+  "passage": "BUSINESS DOCUMENT HEADER\\n\\n[Realistic business content with 4 strategic blanks placed throughout the text. Use authentic business language, proper formatting, and realistic scenarios like office announcements, project updates, customer communications, or policy changes.]",
   "questions": [
     {
       "number": 131,
-      "question": "The renovation will begin _____ next month.",
-      "options": ["A) in", "B) on", "C) at", "D) by"],
+      "question": "First blank question with context from the passage",
+      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
       "correctAnswer": "A"
     },
     {
       "number": 132,
-      "question": "The work will be completed _____ six weeks.",
-      "options": ["A) within", "B) during", "C) while", "D) since"],
-      "correctAnswer": "A"
-    },
-    {
-      "number": 133,
-      "question": "We will be relocating to the _____ floor.",
-      "options": ["A) second", "B) third", "C) fourth", "D) fifth"],
+      "question": "Second blank question with context from the passage", 
+      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
       "correctAnswer": "B"
     },
     {
+      "number": 133,
+      "question": "Third blank question with context from the passage",
+      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+      "correctAnswer": "C"
+    },
+    {
       "number": 134,
-      "question": "Personal belongings should be packed _____ Friday.",
-      "options": ["A) by", "B) on", "C) in", "D) at"],
-      "correctAnswer": "A"
+      "question": "Fourth blank question with context from the passage",
+      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+      "correctAnswer": "D"
     }
   ],
   "explanation": "Part 6 tests text completion in business documents with 4 questions based on a single passage.",
   "questionType": "text completion"
 }
+
+IMPORTANT: Create realistic business documents like:
+- Company memos about policy changes
+- Emails about meetings or projects  
+- Letters to customers or suppliers
+- Office announcements
+- Training notifications
+- Product updates
+
+Use authentic business language and proper document formatting!
 
 FOR PART 7 (Business Content topics):
 Return ONLY this exact JSON format:

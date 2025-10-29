@@ -298,31 +298,31 @@ ${targetPart === "5" ? `{
   "questionType": "grammar"
 }` : targetPart === "6" ? `{
   "part": "6",
-  "passage": "Business email or memo with 4 blanks for text completion",
+  "passage": "To: All Department Heads\\nFrom: HR Manager\\nSubject: New Employee Orientation\\n\\nDear Team,\\n\\nWe are pleased to announce that our new employee orientation program will begin _____ next Monday. All new hires will participate in a comprehensive training session that covers company policies, procedures, and culture. The program is designed to help new employees _____ quickly into their roles and understand our expectations. _____ , we will provide them with mentors from their respective departments to ensure a smooth transition. We encourage all department heads to _____ their new team members during this important period.\\n\\nThank you for your cooperation.\\n\\nBest regards,\\nHR Team",
   "questions": [
     {
       "number": 131,
-      "question": "First blank question",
-      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
-      "correctAnswer": "A"
-    },
-    {
-      "number": 132,
-      "question": "Second blank question",
-      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+      "question": "The new employee orientation program will begin _____ next Monday.",
+      "options": ["A) in", "B) on", "C) at", "D) by"],
       "correctAnswer": "B"
     },
     {
+      "number": 132,
+      "question": "The program is designed to help new employees _____ quickly into their roles.",
+      "options": ["A) settle", "B) move", "C) work", "D) start"],
+      "correctAnswer": "A"
+    },
+    {
       "number": 133,
-      "question": "Third blank question",
-      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
-      "correctAnswer": "C"
+      "question": "_____ , we will provide them with mentors from their respective departments.",
+      "options": ["A) However", "B) Additionally", "C) Therefore", "D) Instead"],
+      "correctAnswer": "B"
     },
     {
       "number": 134,
-      "question": "Fourth blank question",
-      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
-      "correctAnswer": "D"
+      "question": "We encourage all department heads to _____ their new team members.",
+      "options": ["A) support", "B) manage", "C) train", "D) evaluate"],
+      "correctAnswer": "A"
     }
   ],
   "explanation": "Part 6 tests text completion in business documents with 4 questions based on a single passage",
@@ -365,31 +365,31 @@ ${targetPart === "5" ? `{
       if (targetPart === "6") {
         return {
           part: "6",
-          passage: "Business communication with 4 blanks to fill in",
+          passage: "MEMORANDUM\\n\\nTO: All Staff\\nFROM: Management\\nSUBJECT: Office Policy Update\\n\\nDear Team,\\n\\nWe are writing to inform you about important changes to our office policies that will take effect _____ next month. These updates are designed to improve workplace efficiency and ensure better communication across all departments.\\n\\nThe new policies include updated guidelines for remote work, revised meeting protocols, and enhanced security measures. All employees are required to _____ the new policy handbook by the end of this week. _____ , we will be conducting training sessions to help everyone understand these changes.\\n\\nPlease direct any questions to your immediate supervisor or the HR department. We appreciate your cooperation as we implement these improvements.\\n\\nBest regards,\\nManagement Team",
           questions: [
             {
               number: 131,
-              question: "First blank question",
-              options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
+              question: "These updates will take effect _____ next month.",
+              options: ["A) in", "B) on", "C) at", "D) by"],
               correctAnswer: "A"
             },
             {
               number: 132,
-              question: "Second blank question",
-              options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
-              correctAnswer: "B"
+              question: "All employees are required to _____ the new policy handbook.",
+              options: ["A) read", "B) write", "C) sign", "D) copy"],
+              correctAnswer: "A"
             },
             {
               number: 133,
-              question: "Third blank question",
-              options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
-              correctAnswer: "C"
+              question: "_____ , we will be conducting training sessions.",
+              options: ["A) However", "B) Additionally", "C) Therefore", "D) Instead"],
+              correctAnswer: "B"
             },
             {
               number: 134,
-              question: "Fourth blank question",
-              options: ["A) Option A", "B) Option B", "C) Option C", "D) Option D"],
-              correctAnswer: "D"
+              question: "Please direct any questions to your immediate supervisor or the HR department.",
+              options: ["A) send", "B) give", "C) ask", "D) tell"],
+              correctAnswer: "A"
             }
           ],
           explanation: "Part 6 tests text completion in business documents with 4 questions based on a single passage",
