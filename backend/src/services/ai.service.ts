@@ -74,7 +74,7 @@ Generate a realistic business document (email, memo, letter) with 4 blanks to fi
       "correctAnswer": "D"
     }
   ],
-  "explanation": "Part 6 tests text completion in business documents with 4 questions based on a single passage.",
+  "explanation": "Complete the blanks in the business document above.",
   "questionType": "text completion"
 }
 

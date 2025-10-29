@@ -326,7 +326,7 @@ ${targetPart === "5" ? `{
       "correctAnswer": "A"
     }
   ],
-  "explanation": "Part 6 tests text completion in business documents with 4 questions based on a single passage. Each Part 6 set uses questions 1-4.",
+  "explanation": "Complete the blanks in the business document above.",
   "questionType": "text completion"
 }` : `{
   "part": "7",
@@ -393,7 +393,7 @@ ${targetPart === "5" ? `{
               correctAnswer: "A"
             }
           ],
-          explanation: "Part 6 tests text completion in business documents with 4 questions based on a single passage. Each Part 6 set uses questions 1-4.",
+          explanation: "Complete the blanks in the business document above.",
           questionType: "text completion"
         };
       } else if (targetPart === "7") {
