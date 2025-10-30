@@ -113,38 +113,17 @@ TOEicLearningAssistant/
 └── docs/                    # Documentation
 ```
 
-## API Endpoints
+## API Documentation
 
-Authentication:
-- POST /api/auth/register - Register new user
-- POST /api/auth/login - Login
-- POST /api/auth/logout - Logout
+Full API documentation with request/response examples is available in [docs/API.md](docs/API.md).
 
-Quizzes:
-- GET /api/quiz - Get quizzes (supports ?userOnly=true filter)
-- GET /api/quiz/:id - Get specific quiz
-- POST /api/quiz - Create quiz
-- PUT /api/quiz/:id - Update quiz
-- DELETE /api/quiz/:id - Delete quiz
-- POST /api/quiz/submit - Submit quiz attempt
-
-Flashcards:
-- GET /api/flashcards - Get user's flashcards
-- POST /api/flashcards - Create flashcard
-- PUT /api/flashcards/:id - Update flashcard
-- DELETE /api/flashcards/:id - Delete flashcard
-
-Study Sessions:
-- POST /api/study-sessions - Create study session
-- GET /api/study-sessions - Get user's study sessions
-
-Dashboard:
-- GET /api/dashboard/stats - Get dashboard statistics
-
-AI:
-- POST /api/ai/generate-question - Generate TOEIC practice question
-- POST /api/ai/explain-vocabulary - Get vocabulary explanation
-- POST /api/ai/explain-grammar - Get grammar explanation
+The API provides endpoints for:
+- Authentication (register, login, profile management)
+- Quizzes (CRUD operations, quiz attempts, history)
+- Flashcards (CRUD operations, review tracking)
+- Study Sessions (session creation and tracking)
+- Dashboard (statistics, progress, leveling)
+- AI (question generation, vocabulary/grammar explanations with RAG)
 
 ## Development
 
