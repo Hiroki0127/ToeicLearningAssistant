@@ -7,6 +7,8 @@ Since Render shell is not available on the free tier, run migrations locally.
 1. **Get your Supabase connection string:**
    - Go to Supabase Dashboard → Project Settings → Database
    - Copy the "Connection string" → "URI" (it looks like: `postgresql://postgres:[PASSWORD]@db.xxxxx.supabase.co:5432/postgres`)
+   - **Important:** If the connection string doesn't include SSL parameters, add `?sslmode=require` at the end:
+     - Example: `postgresql://postgres:[PASSWORD]@db.xxxxx.supabase.co:5432/postgres?sslmode=require`
 
 2. **Run migrations locally:**
 
