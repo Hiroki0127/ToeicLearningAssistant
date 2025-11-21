@@ -26,7 +26,7 @@ Frontend:
 - Next.js 14 with App Router
 - TypeScript
 - Tailwind CSS
-- React hooks for state management
+- Zustand for state management
 
 Backend:
 - Express.js with TypeScript
@@ -124,6 +124,8 @@ The API provides endpoints for:
 - Study Sessions (session creation and tracking)
 - Dashboard (statistics, progress, leveling)
 - AI (question generation, vocabulary/grammar explanations with RAG)
+
+Note: The backend also includes knowledge graph and smart recommendations services, but these are not currently exposed in the frontend UI.
 
 ## Development
 
