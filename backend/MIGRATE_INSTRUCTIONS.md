@@ -47,6 +47,15 @@ Since Render shell is not available on the free tier, run migrations locally.
 ## Important Notes:
 
 - The connection string includes your password - keep it secure
+- **Special characters in passwords:** If your password contains special characters (like `!`, `@`, `#`, `$`, `%`, `&`, `*`, etc.), you need to URL-encode them:
+  - `!` → `%21`
+  - `@` → `%40`
+  - `#` → `%23`
+  - `$` → `%24`
+  - `%` → `%25`
+  - `&` → `%26`
+  - `*` → `%2A`
+  - Example: If password is `MyPass!123`, use `MyPass%21123` in the connection string
 - After updating Render, wait 1-2 minutes for the service to restart
 - You'll need to create a new account after migration (old data is gone)
 
