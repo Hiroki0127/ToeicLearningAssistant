@@ -27,11 +27,30 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Log error for debugging
+    console.error('API Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+    });
+
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      // Token expired or invalid - only redirect if not already on login page
       localStorage.removeItem('auth-token');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
     }
+
+    // Enhance error message with backend response if available
+    if (error.response?.data) {
+      const backendMessage = error.response.data.message || error.response.data.error;
+      if (backendMessage) {
+        error.message = backendMessage;
+      }
+    }
+
     return Promise.reject(error);
   }
 );

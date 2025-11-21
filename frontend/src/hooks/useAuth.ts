@@ -36,8 +36,15 @@ export const useAuth = () => {
       storeLogin(userData);
       return userData;
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      const errorMessage = error.response?.data?.message || 'Login failed';
+      console.error('Login error:', err);
+      // Handle both Error objects and axios errors
+      let errorMessage = 'Login failed';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else {
+        const error = err as { response?: { data?: { message?: string; error?: string } }; message?: string };
+        errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Login failed';
+      }
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
@@ -53,8 +60,15 @@ export const useAuth = () => {
       storeLogin(userData);
       return userData;
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
-      const errorMessage = error.response?.data?.message || 'Registration failed';
+      console.error('Registration error:', err);
+      // Handle both Error objects and axios errors
+      let errorMessage = 'Registration failed';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else {
+        const error = err as { response?: { data?: { message?: string; error?: string } }; message?: string };
+        errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || 'Registration failed';
+      }
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {

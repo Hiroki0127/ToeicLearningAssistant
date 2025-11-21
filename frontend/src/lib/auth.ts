@@ -21,24 +21,54 @@ export interface AuthResponse {
 export const authService = {
   // Login user
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await api.post('/auth/login', credentials);
-    const { user, token } = response.data.data;
-    
-    // Store token in localStorage
-    localStorage.setItem('auth-token', token);
-    
-    return { user, token };
+    try {
+      const response = await api.post('/auth/login', credentials);
+      
+      // Check if response has success field (error response)
+      if (response.data.success === false) {
+        throw new Error(response.data.message || response.data.error || 'Login failed');
+      }
+      
+      const { user, token } = response.data.data;
+      
+      // Store token in localStorage
+      localStorage.setItem('auth-token', token);
+      
+      return { user, token };
+    } catch (error: any) {
+      // Handle axios errors
+      if (error.response?.data) {
+        const errorMessage = error.response.data.message || error.response.data.error || 'Login failed';
+        throw new Error(errorMessage);
+      }
+      throw error;
+    }
   },
 
   // Register new user
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await api.post('/auth/register', data);
-    const { user, token } = response.data.data;
-    
-    // Store token in localStorage
-    localStorage.setItem('auth-token', token);
-    
-    return { user, token };
+    try {
+      const response = await api.post('/auth/register', data);
+      
+      // Check if response has success field (error response)
+      if (response.data.success === false) {
+        throw new Error(response.data.message || response.data.error || 'Registration failed');
+      }
+      
+      const { user, token } = response.data.data;
+      
+      // Store token in localStorage
+      localStorage.setItem('auth-token', token);
+      
+      return { user, token };
+    } catch (error: any) {
+      // Handle axios errors
+      if (error.response?.data) {
+        const errorMessage = error.response.data.message || error.response.data.error || 'Registration failed';
+        throw new Error(errorMessage);
+      }
+      throw error;
+    }
   },
 
   // Get current user profile
