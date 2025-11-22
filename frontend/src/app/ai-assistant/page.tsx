@@ -282,12 +282,11 @@ export default function AIAssistantPage() {
   };
 
   const quickQuestions = [
-    "allocate",
     "Explain passive voice",
-    "Generate a question about business emails",
     "contingency",
-    "Explain present perfect tense",
-    "Generate a question about office procedures"
+    "generate part 5 questions",
+    "generate part 6 questions",
+    "generate part 7 questions"
   ];
 
   const handleQuickQuestion = (question: string) => {
