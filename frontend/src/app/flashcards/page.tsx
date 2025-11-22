@@ -83,9 +83,10 @@ export default function FlashcardsPage() {
   useEffect(() => {
     // Only fetch from API if store is empty
     if (flashcards.length === 0) {
-      // Try to fetch user flashcards first, fallback to all flashcards
-      fetchUserFlashcards().catch((error) => {
-        fetchFlashcards().catch((fallbackError) => {
+      // Fetch ALL flashcards for study session (use high limit to get all)
+      fetchUserFlashcards(1, 1000).catch((error) => {
+        // Fallback to all flashcards if user flashcards fail
+        fetchFlashcards({ page: 1, limit: 1000 }).catch((fallbackError) => {
           console.error('Failed to fetch flashcards:', fallbackError);
         });
       });
