@@ -2139,14 +2139,47 @@ export default function QuizPage() {
   }, [isQuizActive, timeLeft]);
 
   const startQuiz = (quiz: Quiz) => {
-    setSelectedQuiz(quiz);
-    setCurrentQuestionIndex(0);
-    setSelectedAnswer(null);
-    setShowExplanation(false);
-    setScore(0);
-    setCorrectAnswers(0);
-    setTimeLeft(quiz.timeLimit * 60); // Convert minutes to seconds
-    setIsQuizActive(true);
+    try {
+      // Validate quiz has questions
+      if (!quiz.questions || !Array.isArray(quiz.questions) || quiz.questions.length === 0) {
+        console.error('Quiz has no questions:', quiz);
+        alert('This quiz has no questions available. Please select another quiz.');
+        return;
+      }
+
+      // Get actual question count (handle Part 6 format)
+      const getQuestionCount = () => {
+        const firstItem = quiz.questions[0] as any;
+        // Check if Part 6 format (has passage and nested questions)
+        if (firstItem && typeof firstItem === 'object' && 'passage' in firstItem && Array.isArray(firstItem.questions)) {
+          return firstItem.questions.length;
+        }
+        return quiz.questions.length;
+      };
+
+      const questionCount = getQuestionCount();
+      if (questionCount === 0) {
+        console.error('Quiz has no valid questions:', quiz);
+        alert('This quiz has no questions available. Please select another quiz.');
+        return;
+      }
+
+      setSelectedQuiz(quiz);
+      setCurrentQuestionIndex(0);
+      setSelectedAnswer(null);
+      setShowExplanation(false);
+      setScore(0);
+      setCorrectAnswers(0);
+      // Handle timeLimit - it might be in seconds or minutes, default to 10 minutes if not set
+      const timeLimitInSeconds = quiz.timeLimit 
+        ? (quiz.timeLimit > 100 ? quiz.timeLimit : quiz.timeLimit * 60) // If > 100, assume seconds; else minutes
+        : 600; // Default 10 minutes
+      setTimeLeft(timeLimitInSeconds);
+      setIsQuizActive(true);
+    } catch (error) {
+      console.error('Error starting quiz:', error);
+      alert('Failed to start quiz. Please try again.');
+    }
   };
 
   const handleAnswerSelect = (answer: string) => {
@@ -2166,7 +2199,8 @@ export default function QuizPage() {
   const handleNextQuestion = () => {
     if (!selectedQuiz) return;
 
-    if (currentQuestionIndex < selectedQuiz.questions.length - 1) {
+    const questionCount = getQuestionCount(selectedQuiz);
+    if (currentQuestionIndex < questionCount - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswer(null);
       setShowExplanation(false);
@@ -2215,9 +2249,42 @@ export default function QuizPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Helper to get actual question count (handles Part 6 format)
+  const getQuestionCount = (quiz: Quiz | null): number => {
+    if (!quiz || !quiz.questions || !Array.isArray(quiz.questions) || quiz.questions.length === 0) {
+      return 0;
+    }
+    const firstItem = quiz.questions[0] as any;
+    // Check if Part 6 format (has passage and nested questions)
+    if (firstItem && typeof firstItem === 'object' && 'passage' in firstItem && Array.isArray(firstItem.questions)) {
+      return firstItem.questions.length;
+    }
+    return quiz.questions.length;
+  };
+
   const getCurrentQuestion = () => {
-    if (!selectedQuiz) return null;
-    return selectedQuiz.questions[currentQuestionIndex];
+    if (!selectedQuiz || !selectedQuiz.questions) return null;
+    
+    // Handle Part 6 format where questions might be nested
+    const questions = selectedQuiz.questions;
+    if (!Array.isArray(questions) || questions.length === 0) return null;
+    
+    // Check if it's Part 6 format (has passage and nested questions)
+    const firstItem = questions[0] as any;
+    if (firstItem && typeof firstItem === 'object' && 'passage' in firstItem && Array.isArray(firstItem.questions)) {
+      // Part 6 format - return the first question set's question at current index
+      if (firstItem.questions && firstItem.questions[currentQuestionIndex]) {
+        return firstItem.questions[currentQuestionIndex];
+      }
+      return null;
+    }
+    
+    // Standard format - direct questions array
+    if (currentQuestionIndex >= 0 && currentQuestionIndex < questions.length) {
+      return questions[currentQuestionIndex];
+    }
+    
+    return null;
   };
 
   if (loading) {
@@ -2251,14 +2318,14 @@ export default function QuizPage() {
                 </div>
                 <div className="flex items-center space-x-2 text-blue-600">
                   <Target className="h-5 w-5" />
-                  <span>Question {currentQuestionIndex + 1} of {selectedQuiz.questions.length}</span>
+                  <span>Question {currentQuestionIndex + 1} of {getQuestionCount(selectedQuiz)}</span>
                 </div>
               </div>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${((currentQuestionIndex + 1) / selectedQuiz.questions.length) * 100}%` }}
+                style={{ width: `${((currentQuestionIndex + 1) / getQuestionCount(selectedQuiz)) * 100}%` }}
               ></div>
             </div>
           </div>
@@ -2317,7 +2384,7 @@ export default function QuizPage() {
                   onClick={handleNextQuestion}
                   className="w-full"
                 >
-                  {currentQuestionIndex < selectedQuiz.questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                  {currentQuestionIndex < getQuestionCount(selectedQuiz) - 1 ? 'Next Question' : 'Finish Quiz'}
                 </Button>
               )}
             </CardFooter>
