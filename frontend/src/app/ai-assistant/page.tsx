@@ -284,9 +284,9 @@ export default function AIAssistantPage() {
   const quickQuestions = [
     "Explain passive voice",
     "contingency",
-    "generate part 5 questions",
-    "generate part 6 questions",
-    "generate part 7 questions"
+    "Generate a part 5 question",
+    "Generate a part 6 question",
+    "Generate a part 7 question"
   ];
 
   const handleQuickQuestion = (question: string) => {
