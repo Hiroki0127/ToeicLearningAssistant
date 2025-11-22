@@ -24,3 +24,21 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure all input fields have dark, visible text */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  color: #111827; /* text-gray-900 */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280; /* text-gray-500 */
+}

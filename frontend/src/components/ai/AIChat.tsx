@@ -331,7 +331,7 @@ export default function AIChat() {
                   ? 'Ask about a grammar rule...'
                   : 'Enter a topic for a TOEIC question...'
               }
-              className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               disabled={loading}
             />
             <Button type="submit" disabled={loading || !input.trim()}>

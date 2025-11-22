@@ -101,7 +101,7 @@ export default function CreateFlashcardPage() {
                   name="word"
                   value={formData.word}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
                     errors.word ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Enter the vocabulary word"
@@ -122,7 +122,7 @@ export default function CreateFlashcardPage() {
                   value={formData.definition}
                   onChange={handleInputChange}
                   rows={3}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
                     errors.definition ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Enter the definition"
@@ -143,7 +143,7 @@ export default function CreateFlashcardPage() {
                   value={formData.example}
                   onChange={handleInputChange}
                   rows={3}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
                     errors.example ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Enter an example sentence using the word"
@@ -163,7 +163,7 @@ export default function CreateFlashcardPage() {
                   name="partOfSpeech"
                   value={formData.partOfSpeech}
                   onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
                     errors.partOfSpeech ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
