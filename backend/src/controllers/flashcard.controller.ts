@@ -250,15 +250,26 @@ export const getUserFlashcards = async (req: Request, res: Response): Promise<vo
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
 
+    // Get both user's flashcards AND sample flashcards (userId is null)
     const [flashcards, total] = await Promise.all([
       prisma.flashcard.findMany({
-        where: { userId: req.user.userId },
+        where: {
+          OR: [
+            { userId: req.user.userId },
+            { userId: null }, // Include sample flashcards
+          ],
+        },
         skip,
         take,
         orderBy: { createdAt: 'desc' },
       }),
       prisma.flashcard.count({
-        where: { userId: req.user.userId },
+        where: {
+          OR: [
+            { userId: req.user.userId },
+            { userId: null }, // Include sample flashcards
+          ],
+        },
       }),
     ]);
 
