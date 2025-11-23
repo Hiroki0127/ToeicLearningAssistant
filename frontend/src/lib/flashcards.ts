@@ -88,6 +88,12 @@ export const flashcardService = {
     return response.data.data;
   },
 
+  // Get flashcards that need review (ones user got incorrect)
+  async getFlashcardsNeedingReview(page: number = 1, limit: number = 1000): Promise<FlashcardResponse> {
+    const response = await api.get(`/flashcards/user/needs-review?page=${page}&limit=${limit}`);
+    return response.data.data;
+  },
+
 
   // Get flashcards by difficulty
   async getFlashcardsByDifficulty(difficulty: string, page: number = 1, limit: number = 10): Promise<FlashcardResponse> {

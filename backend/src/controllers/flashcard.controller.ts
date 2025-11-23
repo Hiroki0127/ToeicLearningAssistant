@@ -239,6 +239,89 @@ export const reviewFlashcard = async (req: Request, res: Response): Promise<void
   }
 };
 
+export const getFlashcardsNeedingReview = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      badRequestResponse(res, 'Authentication required');
+      return;
+    }
+
+    const { page = 1, limit = 1000 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
+
+    // Get flashcards that the user has reviewed incorrectly
+    // A flashcard needs review if:
+    // 1. User has at least one incorrect review for it, OR
+    // 2. User's most recent review was incorrect
+    const incorrectReviews = await prisma.flashcardReview.findMany({
+      where: {
+        userId: req.user.userId,
+        isCorrect: false,
+      },
+      select: {
+        flashcardId: true,
+      },
+      distinct: ['flashcardId'],
+    });
+
+    const flashcardIdsNeedingReview = incorrectReviews.map(r => r.flashcardId);
+
+    if (flashcardIdsNeedingReview.length === 0) {
+      successResponse(res, {
+        flashcards: [],
+        pagination: {
+          page: Number(page),
+          limit: take,
+          total: 0,
+          totalPages: 0,
+        },
+      }, 'No flashcards need review');
+      return;
+    }
+
+    // Get the actual flashcards
+    const [flashcards, total] = await Promise.all([
+      prisma.flashcard.findMany({
+        where: {
+          id: { in: flashcardIdsNeedingReview },
+          OR: [
+            { userId: req.user.userId },
+            { userId: null }, // Include sample flashcards
+          ],
+        },
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.flashcard.count({
+        where: {
+          id: { in: flashcardIdsNeedingReview },
+          OR: [
+            { userId: req.user.userId },
+            { userId: null },
+          ],
+        },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / take);
+
+    successResponse(res, {
+      flashcards,
+      pagination: {
+        page: Number(page),
+        limit: take,
+        total,
+        totalPages,
+      },
+    }, 'Flashcards needing review retrieved successfully');
+  } catch (error) {
+    console.error('Get flashcards needing review error:', error);
+    databaseErrorResponse(res, error as Error);
+  }
+};
+
 export const getUserFlashcards = async (req: Request, res: Response): Promise<void> => {
   try {
     if (!req.user) {

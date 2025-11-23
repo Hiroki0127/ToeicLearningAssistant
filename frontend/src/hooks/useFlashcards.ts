@@ -135,6 +135,24 @@ export const useFlashcards = () => {
     return fetchFlashcards({ difficulty, page, limit: 10 });
   };
 
+  const fetchFlashcardsNeedingReview = useCallback(async (page: number = 1, limit: number = 1000) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response: FlashcardResponse = await flashcardService.getFlashcardsNeedingReview(page, limit);
+      setFlashcards(response.flashcards);
+      setPagination(response.pagination);
+      return response;
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      const errorMessage = error.response?.data?.message || 'Failed to fetch flashcards needing review';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, [setFlashcards]);
+
   const getFlashcardById = async (id: string) => {
     try {
       setLoading(true);
@@ -162,6 +180,7 @@ export const useFlashcards = () => {
     pagination,
     fetchFlashcards,
     fetchUserFlashcards,
+    fetchFlashcardsNeedingReview,
     createFlashcard,
     updateFlashcard: updateFlashcardById,
     deleteFlashcard: deleteFlashcardById,

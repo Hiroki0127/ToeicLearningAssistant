@@ -6,7 +6,8 @@ import {
   updateFlashcard, 
   deleteFlashcard, 
   reviewFlashcard, 
-  getUserFlashcards 
+  getUserFlashcards,
+  getFlashcardsNeedingReview
 } from '../controllers/flashcard.controller';
 import { authenticateToken } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
@@ -26,5 +27,6 @@ router.put('/:id', validateBody(updateFlashcardSchema), updateFlashcard);
 router.delete('/:id', deleteFlashcard);
 router.post('/review', validateBody(flashcardReviewSchema), reviewFlashcard);
 router.get('/user/me', getUserFlashcards);
+router.get('/user/needs-review', getFlashcardsNeedingReview);
 
 export default router;
