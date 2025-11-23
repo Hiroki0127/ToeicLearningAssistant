@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [newGoal, setNewGoal] = useState(20);
   const [isSavingGoal, setIsSavingGoal] = useState(false);
+  const goalInitialized = useRef(false);
 
   useEffect(() => {
     console.log('Dashboard auth state:', { loading, isAuthenticated, user });
@@ -90,10 +91,11 @@ export default function DashboardPage() {
     progress: 0,
   };
 
-  // Initialize newGoal when dashboard data loads
+  // Initialize newGoal when dashboard data loads (only once)
   useEffect(() => {
-    if (dashboardData?.dailyGoal?.goal) {
+    if (!goalInitialized.current && dashboardData?.dailyGoal?.goal) {
       setNewGoal(dashboardData.dailyGoal.goal);
+      goalInitialized.current = true;
     }
   }, [dashboardData?.dailyGoal?.goal]);
 
@@ -116,6 +118,7 @@ export default function DashboardPage() {
         preferences: JSON.stringify(updatedPrefs),
       } as any);
       setIsEditingGoal(false);
+      goalInitialized.current = false; // Reset so useEffect can update after refetch
       // Refresh dashboard to show updated goal
       if (refetch) {
         refetch();
