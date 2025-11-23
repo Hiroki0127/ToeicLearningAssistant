@@ -106,32 +106,32 @@ export default function AIAssistantPage() {
           response = `Here's a TOEIC practice question for you:\n\n**Part ${question.part}**\n\n${question.passage || question.question}\n\n`;
           
           if (question.options) {
-            response += `Options:\n`;
+            response += `**Options:**\n\n`;
             question.options.forEach((option: string, index: number) => {
               // Check if option already has alphabet prefix (A), B), etc.)
               if (option.match(/^[A-D]\)/)) {
-                response += `${option}\n`;
+                response += `${option}\n\n`;
               } else {
-                response += `${String.fromCharCode(65 + index)}. ${option}\n`;
+                response += `${String.fromCharCode(65 + index)}. ${option}\n\n`;
               }
             });
           }
           
           if (question.questions) {
             question.questions.forEach((q: any) => {
-              response += `\n**Question ${q.number}:** ${q.question}\n`;
+              response += `\n**Question ${q.number}:** ${q.question}\n\n`;
               q.options.forEach((option: string, index: number) => {
                 // Check if option already has alphabet prefix (A), B), etc.)
                 if (option.match(/^[A-D]\)/)) {
-                  response += `${option}\n`;
+                  response += `${option}\n\n`;
                 } else {
-                  response += `${String.fromCharCode(65 + index)}. ${option}\n`;
+                  response += `${String.fromCharCode(65 + index)}. ${option}\n\n`;
                 }
               });
             });
           }
           
-          response += `\n**Explanation:** ${question.explanation}`;
+          response += `\n**Explanation:**\n\n${question.explanation}`;
         } else {
           const errorData = await questionResponse.json();
           console.error('Question generation API error:', errorData);
@@ -344,13 +344,38 @@ export default function AIAssistantPage() {
                           }`}
                         >
                           <div className="text-sm whitespace-pre-wrap overflow-wrap-anywhere">
-                            {message.content.split('\n').map((line, index) => {
+                            {message.content.split('\n').map((line, index, array) => {
+                              const isEmptyLine = line.trim() === '';
+                              const nextLine = array[index + 1];
+                              const isNextLineEmpty = nextLine && nextLine.trim() === '';
+                              const isNextLineBold = nextLine && nextLine.trim().startsWith('**');
+                              
+                              // Add spacing for empty lines
+                              if (isEmptyLine) {
+                                return <div key={index} className="h-3"></div>;
+                              }
+                              
+                              // Handle bold text (headers)
                               if (line.startsWith('**') && line.endsWith('**')) {
-                                return <strong key={index}>{line.slice(2, -2)}</strong>;
-                              } else if (line.startsWith('• ')) {
-                                return <div key={index} className="ml-2">• {line.slice(2)}</div>;
-                              } else {
-                                return <div key={index}>{line}</div>;
+                                return (
+                                  <div key={index} className="mb-2 mt-3 first:mt-0">
+                                    <strong className="text-base">{line.slice(2, -2)}</strong>
+                                  </div>
+                                );
+                              } 
+                              // Handle bullet points
+                              else if (line.startsWith('• ')) {
+                                return <div key={index} className="ml-2 mb-2">• {line.slice(2)}</div>;
+                              } 
+                              // Handle options (A, B, C, D)
+                              else if (/^[A-D][\.\)]/.test(line.trim())) {
+                                return <div key={index} className="mb-1.5 ml-2">{line}</div>;
+                              }
+                              // Handle regular text lines
+                              else {
+                                const isQuestionLine = line.includes('Question') || line.includes('Options:') || line.includes('Explanation:');
+                                const spacingClass = isQuestionLine ? 'mt-2 mb-1' : 'mb-2';
+                                return <div key={index} className={spacingClass}>{line}</div>;
                               }
                             })}
                           </div>
