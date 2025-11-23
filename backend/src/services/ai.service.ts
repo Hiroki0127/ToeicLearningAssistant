@@ -375,12 +375,10 @@ CRITICAL RULES:
       console.error('RAG vocabulary explanation failed, falling back to basic explanation:', error);
       
       // Fallback to basic explanation if RAG fails
-      const prompt = `Provide a TOEIC-focused explanation for the word "${word}":
-      - Definition
+      const prompt = `Provide a concise TOEIC-focused explanation for the word "${word}" in 2-3 sentences:
+      - Brief definition
       - Part of speech
-      - Example sentence in business context
-      - Common TOEIC usage
-      - Related words`;
+      - One example sentence in business context`;
 
       try {
         console.log('Sending fallback request to Groq for word:', word);
@@ -389,6 +387,7 @@ CRITICAL RULES:
           model: "llama-3.1-8b-instant",
           messages: [{ role: "user", content: prompt }],
           temperature: 0.5,
+          max_tokens: 150, // Limit response length for conciseness
         });
 
         console.log('Groq fallback response received');

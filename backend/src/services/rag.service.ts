@@ -163,60 +163,38 @@ export class RAGService {
       
       console.log(`RAG: Retrieved context - flashcards: ${context.flashcards.length}, questions: ${context.questions.length}`);
       
-      // Build comprehensive context string
+      // Build concise context string
       let contextString = '';
       
       if (context.flashcards.length > 0) {
-        contextString += '\n\n**Relevant Vocabulary from TOEIC Database:**\n';
-        context.flashcards.forEach((card, index) => {
-          contextString += `${index + 1}. **${card.word}**: ${card.definition}\n`;
-          if (card.example) contextString += `   Example: ${card.example}\n`;
-          contextString += `   Part of Speech: ${card.partOfSpeech}, Difficulty: ${card.difficulty}\n\n`;
-        });
+        // Use only the most relevant flashcard (first match)
+        const card = context.flashcards[0];
+        contextString += `**Definition:** ${card.definition}\n`;
+        if (card.example) contextString += `**Example:** ${card.example}\n`;
+        contextString += `**Part of Speech:** ${card.partOfSpeech}\n`;
       }
 
-      if (context.questions.length > 0) {
-        contextString += '\n**Related TOEIC Practice Questions:**\n';
-        context.questions.slice(0, 2).forEach((question, index) => {
-          contextString += `${index + 1}. ${question.question}\n`;
-          contextString += `   Answer: ${question.correctAnswer}\n`;
-          contextString += `   Explanation: ${question.explanation}\n\n`;
-        });
-      }
-
-      const prompt = `You are a TOEIC expert with 10+ years of experience teaching TOEIC preparation. Provide a comprehensive explanation for the word "${word}" based on the official TOEIC database below.
-
-**TOEIC Exam Context:**
-- TOEIC Reading: 100 questions, 75 minutes, Parts 5-7
-- Part 5: 30 questions, incomplete sentences, grammar/vocabulary focus
-- Business English emphasis throughout all sections
-- Scoring: 5-495 points per section, 10-990 total
+      const prompt = `Provide a concise TOEIC-focused explanation for the word "${word}" based on the official TOEIC database below.
 
 **Requirements:**
-- Use EXACT definitions and examples from the official TOEIC database when available
-- Focus on business/workplace contexts typical in TOEIC exams
-- Include part of speech, difficulty level, and common TOEIC usage patterns
-- Reference specific TOEIC question patterns where this word appears
-- Provide TOEIC-specific memory tips and test-taking strategies
-- Mention which TOEIC parts commonly test this word
+- Keep response brief and to the point (2-3 sentences maximum)
+- Use EXACT definitions from the database when available
+- Focus on business/workplace usage
+- Include part of speech and one example sentence
 
 **Official TOEIC Database Context:**
 ${contextString}
 
 **Format your response as:**
-**Word: [WORD]**
-**TOEIC Definition:** [business-focused definition from database]
-**Part of Speech:** [noun/verb/adjective/etc]
-**TOEIC Context:** [how it appears in official TOEIC exams]
-**Business Usage:** [workplace examples from database]
-**TOEIC Tips:** [specific advice for TOEIC test-takers]
-**Related TOEIC Vocabulary:** [other business words tested together]`;
+**[WORD]** ([part of speech]): [brief definition]
+Example: [one business context sentence]`;
 
       const groq = getGroqClient();
       const completion = await groq.chat.completions.create({
         model: "llama-3.1-8b-instant",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.3, // Lower temperature for more consistent, factual responses
+        max_tokens: 150, // Limit response length for conciseness
       });
 
       return completion.choices[0]?.message?.content || 'Sorry, I could not process your request.';
