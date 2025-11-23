@@ -162,11 +162,29 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
 
     const { name, preferences } = req.body;
 
+    // Get current user to merge preferences
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { preferences: true }
+    });
+
+    let mergedPreferences = currentUser?.preferences || '{}';
+    if (preferences) {
+      try {
+        const currentPrefs = currentUser?.preferences ? JSON.parse(currentUser.preferences) : {};
+        const newPrefs = typeof preferences === 'string' ? JSON.parse(preferences) : preferences;
+        mergedPreferences = JSON.stringify({ ...currentPrefs, ...newPrefs });
+      } catch (e) {
+        console.error('Error parsing preferences:', e);
+        mergedPreferences = typeof preferences === 'string' ? preferences : JSON.stringify(preferences);
+      }
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id: req.user.userId },
       data: {
         ...(name && { name }),
-        ...(preferences && { preferences }),
+        ...(preferences && { preferences: mergedPreferences }),
         updatedAt: new Date(),
       },
       select: {

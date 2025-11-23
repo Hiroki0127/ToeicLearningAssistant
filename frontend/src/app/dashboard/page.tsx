@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
@@ -14,14 +14,20 @@ import {
   Brain,
   Trophy,
   Activity,
-  Bot
+  Bot,
+  Edit2,
+  Check,
+  X
 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, updateProfile } = useAuth();
   const { fetchUserFlashcards } = useFlashcards();
-  const { dashboardData, loading: dashboardLoading, error: dashboardError } = useDashboard(isAuthenticated);
+  const { dashboardData, loading: dashboardLoading, error: dashboardError, refetch } = useDashboard(isAuthenticated);
   const router = useRouter();
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
+  const [newGoal, setNewGoal] = useState(20);
+  const [isSavingGoal, setIsSavingGoal] = useState(false);
 
   useEffect(() => {
     console.log('Dashboard auth state:', { loading, isAuthenticated, user });
@@ -84,6 +90,48 @@ export default function DashboardPage() {
     progress: 0,
   };
 
+  // Initialize newGoal when dashboard data loads
+  useEffect(() => {
+    if (dashboardData?.dailyGoal?.goal) {
+      setNewGoal(dashboardData.dailyGoal.goal);
+    }
+  }, [dashboardData?.dailyGoal?.goal]);
+
+  const handleSaveGoal = async () => {
+    if (newGoal < 1 || newGoal > 100) {
+      alert('Daily goal must be between 1 and 100');
+      return;
+    }
+
+    setIsSavingGoal(true);
+    try {
+      // Get current preferences (backend stores as JSON string, frontend has as object)
+      const currentPrefs = user?.preferences || { dailyGoal: 20, notificationTime: '09:00', difficulty: 'beginner', focusAreas: ['vocabulary', 'grammar'] };
+      const updatedPrefs = {
+        ...currentPrefs,
+        dailyGoal: newGoal,
+      };
+      // Backend expects preferences as JSON string
+      await updateProfile({
+        preferences: JSON.stringify(updatedPrefs),
+      } as any);
+      setIsEditingGoal(false);
+      // Refresh dashboard to show updated goal
+      if (refetch) {
+        refetch();
+      }
+    } catch (error) {
+      console.error('Failed to update daily goal:', error);
+      alert('Failed to update daily goal. Please try again.');
+    } finally {
+      setIsSavingGoal(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setNewGoal(dailyGoal.goal);
+    setIsEditingGoal(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -261,19 +309,72 @@ export default function DashboardPage() {
             {/* Daily Goal */}
             <Card>
               <CardHeader>
-                <h3 className="text-lg font-semibold text-gray-900">Daily Goal</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Daily Goal</h3>
+                  {!isEditingGoal && (
+                    <button
+                      onClick={() => setIsEditingGoal(true)}
+                      className="text-gray-500 hover:text-gray-700 transition-colors"
+                      title="Edit daily goal"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-600">{dailyGoal.studied}/{dailyGoal.goal}</div>
-                  <div className="text-sm text-gray-600">cards studied today</div>
-                  <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${dailyGoal.progress}%` }}
-                    ></div>
+                {isEditingGoal ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="daily-goal-input" className="block text-sm font-medium text-gray-700 mb-2">
+                        Cards per day
+                      </label>
+                      <input
+                        id="daily-goal-input"
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={newGoal}
+                        onChange={(e) => setNewGoal(parseInt(e.target.value) || 1)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={isSavingGoal}
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Enter a number between 1 and 100</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleSaveGoal}
+                        disabled={isSavingGoal}
+                        size="sm"
+                        className="flex-1"
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                        Save
+                      </Button>
+                      <Button
+                        onClick={handleCancelEdit}
+                        disabled={isSavingGoal}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-blue-600">{dailyGoal.studied}/{dailyGoal.goal}</div>
+                    <div className="text-sm text-gray-600">cards studied today</div>
+                    <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                        style={{ width: `${dailyGoal.progress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

@@ -69,6 +69,22 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
 
     const userId = req.user.userId;
 
+    // Get user preferences to read daily goal
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { preferences: true }
+    });
+
+    let dailyGoal = 20; // Default
+    if (user?.preferences) {
+      try {
+        const preferences = JSON.parse(user.preferences);
+        dailyGoal = preferences.dailyGoal || 20;
+      } catch (e) {
+        console.error('Error parsing user preferences:', e);
+      }
+    }
+
     // Get today's date range
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -230,8 +246,8 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       },
       dailyGoal: {
         studied: cardsStudiedToday,
-        goal: 20,
-        progress: Math.min((cardsStudiedToday / 20) * 100, 100),
+        goal: dailyGoal,
+        progress: Math.min((cardsStudiedToday / dailyGoal) * 100, 100),
       },
       recentActivity,
       quickStats: {
