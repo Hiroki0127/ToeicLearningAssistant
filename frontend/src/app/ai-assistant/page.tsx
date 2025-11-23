@@ -110,7 +110,7 @@ export default function AIAssistantPage() {
             question.options.forEach((option: string, index: number) => {
               // Check if option already has alphabet prefix (A), B), etc.)
               if (option.match(/^[A-D]\)/)) {
-                response += `${option}\n\n`;
+                response += `${option}\n`;
               } else {
                 response += `${String.fromCharCode(65 + index)}. ${option}\n`;
               }
@@ -123,15 +123,15 @@ export default function AIAssistantPage() {
               q.options.forEach((option: string, index: number) => {
                 // Check if option already has alphabet prefix (A), B), etc.)
                 if (option.match(/^[A-D]\)/)) {
-                  response += `${option}\n\n`;
+                  response += `${option}\n`;
                 } else {
-                  response += `${String.fromCharCode(65 + index)}. ${option}\n\n`;
+                  response += `${String.fromCharCode(65 + index)}. ${option}\n`;
                 }
               });
             });
           }
           
-          response += `\n**Explanation:**\n\n${question.explanation}`;
+          response += `\n**Explanation:**\n${question.explanation}`;
         } else {
           const errorData = await questionResponse.json();
           console.error('Question generation API error:', errorData);
