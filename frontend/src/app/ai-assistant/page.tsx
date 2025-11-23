@@ -139,10 +139,10 @@ export default function AIAssistantPage() {
           response = `**TOEIC Practice Question (Sample)**\n\n` +
             `I'm currently unable to generate new questions via AI, but here's a sample TOEIC Part 5 question:\n\n` +
             `**Question:** The marketing team has been working _____ to launch the new product.\n\n` +
-            `A) diligent\n` +
-            `B) diligently\n` +
-            `C) diligence\n` +
-            `D) diligentness\n\n` +
+            `A) diligent` +
+            `B) diligently` +
+            `C) diligence` +
+            `D) diligentness\n` +
             `**Answer:** B) diligently\n\n` +
             `**Explanation:** The blank requires an adverb to modify 'working'. 'Diligently' is the correct adverb form.\n\n` +
             `You can find more practice questions in the Quiz section of the app!`;
