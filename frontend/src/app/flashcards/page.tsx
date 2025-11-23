@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import Layout from '@/components/layout/Layout';
 import { useFlashcards } from '@/hooks/useFlashcards';
 import { studySessionService } from '@/lib/study-sessions';
-import { BookOpen, Plus, Settings, Edit3 } from 'lucide-react';
+import { BookOpen, Plus, Edit3 } from 'lucide-react';
 
 export default function FlashcardsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -173,10 +173,6 @@ export default function FlashcardsPage() {
                 Manage Cards
               </Button>
             </Link>
-            <Button variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
             <Link href="/flashcards/create">
               <Button size="sm">
                 <Plus className="h-4 w-4 mr-2" />
