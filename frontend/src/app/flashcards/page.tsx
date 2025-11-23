@@ -26,28 +26,28 @@ export default function FlashcardsPage() {
   const [sessionCompleted, setSessionCompleted] = useState(false);
 
   // Fetch counts for selection screen
-  useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        // Fetch all flashcards count
-        const allResponse = await fetchUserFlashcards(1, 1);
-        setAllFlashcardsCount(allResponse.pagination.total);
+  const fetchCounts = async () => {
+    try {
+      // Fetch all flashcards count
+      const allResponse = await fetchUserFlashcards(1, 1);
+      setAllFlashcardsCount(allResponse.pagination.total);
 
-        // Fetch needs review count
-        if (isAuthenticated) {
-          try {
-            const reviewResponse = await fetchFlashcardsNeedingReview(1, 1);
-            setNeedsReviewCount(reviewResponse.pagination.total);
-          } catch (err) {
-            // If no reviews exist yet, count is 0
-            setNeedsReviewCount(0);
-          }
+      // Fetch needs review count
+      if (isAuthenticated) {
+        try {
+          const reviewResponse = await fetchFlashcardsNeedingReview(1, 1);
+          setNeedsReviewCount(reviewResponse.pagination.total);
+        } catch (err) {
+          // If no reviews exist yet, count is 0
+          setNeedsReviewCount(0);
         }
-      } catch (err) {
-        console.error('Failed to fetch flashcard counts:', err);
       }
-    };
+    } catch (err) {
+      console.error('Failed to fetch flashcard counts:', err);
+    }
+  };
 
+  useEffect(() => {
     if (!selectedSet) {
       fetchCounts();
     }
@@ -60,6 +60,7 @@ export default function FlashcardsPage() {
     if (flashcards[currentIndex] && isAuthenticated) {
       try {
         await reviewFlashcard(flashcards[currentIndex].id, true, 0);
+        console.log('Review saved: correct for', flashcards[currentIndex].word);
       } catch (err) {
         console.error('Failed to save review:', err);
       }
@@ -81,6 +82,7 @@ export default function FlashcardsPage() {
     if (flashcards[currentIndex] && isAuthenticated) {
       try {
         await reviewFlashcard(flashcards[currentIndex].id, false, 0);
+        console.log('Review saved: incorrect for', flashcards[currentIndex].word);
       } catch (err) {
         console.error('Failed to save review:', err);
       }
@@ -124,6 +126,15 @@ export default function FlashcardsPage() {
       await studySessionService.createStudySession(sessionData);
       setSessionCompleted(true);
       setSessionStartTime(null);
+      // Refresh review count after session ends (reviews have been saved)
+      if (isAuthenticated) {
+        try {
+          const reviewResponse = await fetchFlashcardsNeedingReview(1, 1);
+          setNeedsReviewCount(reviewResponse.pagination.total);
+        } catch (err) {
+          console.error('Failed to refresh review count:', err);
+        }
+      }
     } catch (error) {
       console.error('Failed to save study session:', error);
       setSessionCompleted(true);
@@ -151,6 +162,15 @@ export default function FlashcardsPage() {
       if (setType === 'all') {
         await fetchUserFlashcards(1, 1000);
       } else if (setType === 'needs-review') {
+        // Refresh count before loading
+        if (isAuthenticated) {
+          try {
+            const reviewResponse = await fetchFlashcardsNeedingReview(1, 1);
+            setNeedsReviewCount(reviewResponse.pagination.total);
+          } catch (err) {
+            console.error('Failed to refresh review count:', err);
+          }
+        }
         await fetchFlashcardsNeedingReview(1, 1000);
       }
     } catch (err) {
@@ -158,13 +178,15 @@ export default function FlashcardsPage() {
     }
   };
 
-  const handleBackToSelection = () => {
+  const handleBackToSelection = async () => {
     setSelectedSet(null);
     setCurrentIndex(0);
     setCorrectAnswers(0);
     setIncorrectAnswers(0);
     setSessionCompleted(false);
     setSessionStartTime(null);
+    // Refresh counts when going back to selection
+    await fetchCounts();
   };
 
   // Reset current index when flashcards change
@@ -251,8 +273,15 @@ export default function FlashcardsPage() {
 
               {/* Needs Review */}
               <Card 
-                className={`hover:shadow-lg transition-shadow cursor-pointer ${needsReviewCount === 0 ? 'opacity-60' : ''}`}
-                onClick={() => needsReviewCount > 0 && handleSelectSet('needs-review')}
+                className={`hover:shadow-lg transition-shadow ${needsReviewCount === 0 ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                onClick={() => {
+                  if (needsReviewCount > 0) {
+                    handleSelectSet('needs-review');
+                  } else {
+                    // Refresh count if clicked when 0
+                    fetchCounts();
+                  }
+                }}
               >
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -272,8 +301,22 @@ export default function FlashcardsPage() {
                       <span className="text-lg font-bold text-gray-900">{needsReviewCount}</span>
                     </div>
                     {needsReviewCount === 0 ? (
-                      <div className="text-sm text-gray-500 italic">
-                        No cards need review yet. Study some flashcards first!
+                      <div className="space-y-2">
+                        <div className="text-sm text-gray-500 italic">
+                          No cards need review yet. Study some flashcards first!
+                        </div>
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            fetchCounts();
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Refresh Count
+                        </Button>
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 text-sm text-gray-600">

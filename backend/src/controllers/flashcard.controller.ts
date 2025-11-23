@@ -229,6 +229,8 @@ export const reviewFlashcard = async (req: Request, res: Response): Promise<void
       },
     });
 
+    console.log(`Review created: flashcardId=${reviewData.flashcardId}, userId=${req.user.userId}, isCorrect=${reviewData.isCorrect}`);
+
     // Update user progress
     await updateUserProgress(req.user.userId, reviewData.isCorrect);
 
@@ -251,9 +253,7 @@ export const getFlashcardsNeedingReview = async (req: Request, res: Response): P
     const take = Number(limit);
 
     // Get flashcards that the user has reviewed incorrectly
-    // A flashcard needs review if:
-    // 1. User has at least one incorrect review for it, OR
-    // 2. User's most recent review was incorrect
+    // A flashcard needs review if user has at least one incorrect review for it
     const incorrectReviews = await prisma.flashcardReview.findMany({
       where: {
         userId: req.user.userId,
@@ -265,7 +265,9 @@ export const getFlashcardsNeedingReview = async (req: Request, res: Response): P
       distinct: ['flashcardId'],
     });
 
+    console.log(`Found ${incorrectReviews.length} flashcards with incorrect reviews for user ${req.user.userId}`);
     const flashcardIdsNeedingReview = incorrectReviews.map(r => r.flashcardId);
+    console.log('Flashcard IDs needing review:', flashcardIdsNeedingReview);
 
     if (flashcardIdsNeedingReview.length === 0) {
       successResponse(res, {
