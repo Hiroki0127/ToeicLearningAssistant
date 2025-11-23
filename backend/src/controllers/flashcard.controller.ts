@@ -252,21 +252,42 @@ export const getFlashcardsNeedingReview = async (req: Request, res: Response): P
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
 
-    // Get flashcards that the user has reviewed incorrectly
-    // A flashcard needs review if user has at least one incorrect review for it
-    const incorrectReviews = await prisma.flashcardReview.findMany({
+    // Get all flashcards the user has reviewed
+    // A flashcard needs review if the most recent review was incorrect
+    const allReviews = await prisma.flashcardReview.findMany({
       where: {
         userId: req.user.userId,
-        isCorrect: false,
       },
       select: {
         flashcardId: true,
+        isCorrect: true,
+        reviewedAt: true,
       },
-      distinct: ['flashcardId'],
+      orderBy: {
+        reviewedAt: 'desc',
+      },
     });
 
-    console.log(`Found ${incorrectReviews.length} flashcards with incorrect reviews for user ${req.user.userId}`);
-    const flashcardIdsNeedingReview = incorrectReviews.map(r => r.flashcardId);
+    // Group by flashcardId and find the most recent review for each
+    const mostRecentReviews = new Map<string, { isCorrect: boolean; reviewedAt: Date }>();
+    for (const review of allReviews) {
+      if (!mostRecentReviews.has(review.flashcardId)) {
+        mostRecentReviews.set(review.flashcardId, {
+          isCorrect: review.isCorrect,
+          reviewedAt: review.reviewedAt,
+        });
+      }
+    }
+
+    // Filter to only flashcards where the most recent review was incorrect
+    const flashcardIdsNeedingReview: string[] = [];
+    for (const [flashcardId, review] of mostRecentReviews.entries()) {
+      if (!review.isCorrect) {
+        flashcardIdsNeedingReview.push(flashcardId);
+      }
+    }
+
+    console.log(`Found ${flashcardIdsNeedingReview.length} flashcards needing review (most recent review was incorrect) for user ${req.user.userId}`);
     console.log('Flashcard IDs needing review:', flashcardIdsNeedingReview);
 
     if (flashcardIdsNeedingReview.length === 0) {
