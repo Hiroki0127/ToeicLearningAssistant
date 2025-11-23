@@ -40,7 +40,7 @@ export const updateFlashcardSchema = createFlashcardSchema.partial().extend({
 });
 
 export const flashcardReviewSchema = z.object({
-  flashcardId: z.string().uuid('Invalid flashcard ID'),
+  flashcardId: z.string().min(1, 'Flashcard ID is required'),
   isCorrect: z.boolean(),
   responseTime: z.number().min(0, 'Response time must be positive'),
 });
