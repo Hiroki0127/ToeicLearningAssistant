@@ -14,6 +14,7 @@ export default function FlashcardsPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [incorrectAnswers, setIncorrectAnswers] = useState(0);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const { flashcards, loading, error, fetchFlashcards, fetchUserFlashcards } = useFlashcards();
 
   const handleCorrect = () => {
@@ -54,10 +55,13 @@ export default function FlashcardsPage() {
 
   const handleSessionEnd = async () => {
     try {
+      const endTime = new Date();
+      const startTime = sessionStartTime || endTime; // Use session start time or current time as fallback
+      
       const sessionData = {
         sessionType: 'flashcards' as const,
-        startTime: new Date().toISOString(),
-        endTime: new Date().toISOString(),
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
         cardsStudied: flashcards.length,
         correctAnswers,
         incorrectAnswers,
@@ -65,10 +69,12 @@ export default function FlashcardsPage() {
       
       await studySessionService.createStudySession(sessionData);
       setSessionCompleted(true);
+      setSessionStartTime(null); // Reset for next session
     } catch (error) {
       console.error('Failed to save study session:', error);
       // Still show completion screen even if save fails
       setSessionCompleted(true);
+      setSessionStartTime(null);
     }
   };
 
@@ -77,6 +83,7 @@ export default function FlashcardsPage() {
     setCorrectAnswers(0);
     setIncorrectAnswers(0);
     setSessionCompleted(false);
+    setSessionStartTime(new Date()); // Start new session timer
   };
 
   // Fetch flashcards when component mounts
@@ -92,6 +99,13 @@ export default function FlashcardsPage() {
       });
     }
   }, [fetchUserFlashcards, fetchFlashcards, flashcards.length]);
+
+  // Start tracking session time when flashcards are loaded
+  useEffect(() => {
+    if (flashcards.length > 0 && !sessionStartTime) {
+      setSessionStartTime(new Date());
+    }
+  }, [flashcards.length, sessionStartTime]);
 
   // Reset current index when flashcards change
   useEffect(() => {

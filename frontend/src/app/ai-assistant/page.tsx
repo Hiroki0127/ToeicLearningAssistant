@@ -182,14 +182,7 @@ export default function AIAssistantPage() {
         } else {
           const errorData = await vocabResponse.json();
           console.error('Vocabulary API error:', errorData);
-          // Fallback response for vocabulary
-          response = `**${word.toUpperCase()}**\n\n` +
-            `I'm currently unable to access the AI vocabulary service, but here's what I can tell you:\n\n` +
-            `• This is a common TOEIC business vocabulary word\n` +
-            `• Try looking it up in your flashcards or dictionary\n` +
-            `• Practice using it in business contexts\n` +
-            `• The AI service will be available once the API key is configured\n\n` +
-            `For now, you can use the flashcard system to study vocabulary!`;
+          throw new Error(errorData.message || errorData.error || 'Failed to get vocabulary explanation');
         }
       } 
       // Check for grammar queries
