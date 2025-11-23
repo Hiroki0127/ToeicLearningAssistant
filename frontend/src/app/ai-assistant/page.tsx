@@ -103,10 +103,10 @@ export default function AIAssistantPage() {
           const data = await questionResponse.json();
           console.log('Question API success:', data);
           const question = data.data;
-          response = `Here's a TOEIC practice question for you:\n\n**Part ${question.part}**\n\n${question.passage || question.question}\n\n`;
+          response = `Here's a TOEIC practice question for you:\n**Part ${question.part}**\n${question.passage || question.question}\n\n`;
           
           if (question.options) {
-            response += `**Options:**\n\n`;
+            response += `**Options:**\n`;
             question.options.forEach((option: string, index: number) => {
               // Check if option already has alphabet prefix (A), B), etc.)
               if (option.match(/^[A-D]\)/)) {
