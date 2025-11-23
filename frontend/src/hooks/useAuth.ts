@@ -5,28 +5,46 @@ import type { User, LoginCredentials, RegisterData } from '@/types';
 
 export const useAuth = () => {
   const { user, isAuthenticated, login: storeLogin, logout: storeLogout } = useAppStore();
-  const [loading, setLocalLoading] = useState(false);
+  const [loading, setLocalLoading] = useState(true); // Start with true to prevent premature redirects
   const [error, setError] = useState<string | null>(null);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   // Check authentication status on mount
   useEffect(() => {
     const checkAuth = async () => {
-      if (authService.isAuthenticated() && !user) {
-        try {
-          setLocalLoading(true);
-          const userData = await authService.getProfile();
-          storeLogin(userData);
-        } catch (err) {
-          console.error('Failed to get user profile:', err);
-          authService.logout();
-        } finally {
+      // If there's a token in localStorage, try to restore the session
+      if (authService.isAuthenticated()) {
+        if (!user) {
+          // Token exists but user not in store - fetch profile
+          try {
+            setLocalLoading(true);
+            const userData = await authService.getProfile();
+            storeLogin(userData);
+          } catch (err) {
+            console.error('Failed to get user profile:', err);
+            // Token might be invalid - clear it
+            authService.logout();
+            storeLogout();
+          } finally {
+            setLocalLoading(false);
+            setInitialCheckDone(true);
+          }
+        } else {
+          // User already in store, just mark check as done
           setLocalLoading(false);
+          setInitialCheckDone(true);
         }
+      } else {
+        // No token - user is not authenticated
+        setLocalLoading(false);
+        setInitialCheckDone(true);
       }
     };
 
-    checkAuth();
-  }, [user, storeLogin]);
+    if (!initialCheckDone) {
+      checkAuth();
+    }
+  }, [user, storeLogin, storeLogout, initialCheckDone]);
 
   const login = async (credentials: LoginCredentials) => {
     try {
