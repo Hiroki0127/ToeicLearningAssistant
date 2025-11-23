@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [formErrors, setFormErrors] = useState<{ email?: string; password?: string }>({});
   
   const { login, loading, error, clearError } = useAuth();
@@ -46,7 +47,7 @@ export default function LoginPage() {
     }
 
     try {
-      await login({ email, password });
+      await login({ email, password, rememberMe });
       router.push('/dashboard');
     } catch {
       // Error is handled by useAuth hook
@@ -150,10 +151,12 @@ export default function LoginPage() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                    Remember me
+                    Remember me (30 days)
                   </label>
                 </div>
 

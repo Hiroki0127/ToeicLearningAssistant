@@ -78,7 +78,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password }: LoginInput = req.body;
+    const { email, password, rememberMe }: LoginInput = req.body;
 
     // Find user
     const user = await prisma.user.findUnique({
@@ -106,8 +106,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Generate JWT token
-    const token = generateToken(user.id, user.email);
+    // Generate JWT token with expiration based on rememberMe
+    const token = generateToken(user.id, user.email, rememberMe);
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
@@ -293,9 +293,10 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 };
 
 // Helper function to generate JWT token
-const generateToken = (userId: string, email: string): string => {
+const generateToken = (userId: string, email: string, rememberMe: boolean = false): string => {
   const secret = process.env['JWT_SECRET'];
-  const expiresIn = process.env['JWT_EXPIRES_IN'] || '7d';
+  // If rememberMe is true, use 30 days, otherwise use default (7 days)
+  const expiresIn = rememberMe ? '30d' : (process.env['JWT_EXPIRES_IN'] || '7d');
 
   if (!secret) {
     throw new Error('JWT_SECRET not configured');
