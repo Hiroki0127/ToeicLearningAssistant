@@ -112,7 +112,7 @@ export default function AIAssistantPage() {
               if (option.match(/^[A-D]\)/)) {
                 response += `${option}\n\n`;
               } else {
-                response += `${String.fromCharCode(65 + index)}. ${option}\n\n`;
+                response += `${String.fromCharCode(65 + index)}. ${option}\n`;
               }
             });
           }
