@@ -83,12 +83,23 @@ export const authService = {
     return response.data.data;
   },
 
-  // Change password
+  // Change password (requires authentication)
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     await api.put('/auth/change-password', {
       currentPassword,
       newPassword,
     });
+  },
+
+  // Reset password (no authentication required, uses email)
+  async resetPassword(email: string, newPassword: string): Promise<void> {
+    const response = await api.post('/auth/reset-password', {
+      email,
+      newPassword,
+    });
+    if (response.data.success === false) {
+      throw new Error(response.data.message || response.data.error || 'Password reset failed');
+    }
   },
 
   // Logout user

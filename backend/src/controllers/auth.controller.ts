@@ -233,6 +233,65 @@ export const changePassword = async (req: Request, res: Response): Promise<void>
   }
 };
 
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      badRequestResponse(res, 'Email and new password are required');
+      return;
+    }
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+
+    if (!user) {
+      // Don't reveal if email exists for security
+      successResponse(res, null, 'If the email exists, a password reset link has been sent');
+      return;
+    }
+
+    // Validate password requirements
+    if (newPassword.length < 8) {
+      badRequestResponse(res, 'Password must be at least 8 characters');
+      return;
+    }
+    if (!/[a-z]/.test(newPassword)) {
+      badRequestResponse(res, 'Password must contain at least one lowercase letter');
+      return;
+    }
+    if (!/[A-Z]/.test(newPassword)) {
+      badRequestResponse(res, 'Password must contain at least one uppercase letter');
+      return;
+    }
+    if (!/[0-9]/.test(newPassword)) {
+      badRequestResponse(res, 'Password must contain at least one number');
+      return;
+    }
+
+    // Hash new password
+    const saltRounds = parseInt(process.env['BCRYPT_ROUNDS'] || '12');
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update password
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedNewPassword,
+        updatedAt: new Date(),
+      },
+    });
+
+    successResponse(res, null, 'Password reset successfully');
+  } catch (error) {
+    console.error('Reset password error:', error);
+    badRequestResponse(res, 'Failed to reset password');
+  }
+};
+
 // Helper function to generate JWT token
 const generateToken = (userId: string, email: string): string => {
   const secret = process.env['JWT_SECRET'];
