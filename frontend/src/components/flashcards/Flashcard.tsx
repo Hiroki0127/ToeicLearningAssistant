@@ -36,18 +36,14 @@ export const Flashcard: React.FC<FlashcardProps> = ({
 
   const handleCorrect = () => {
     onCorrect();
-    if (!isLast) {
-      onNext();
-    }
+    // Note: onCorrect already handles navigation in the parent component
     setIsFlipped(false);
     setShowAnswer(false);
   };
 
   const handleIncorrect = () => {
     onIncorrect();
-    if (!isLast) {
-      onNext();
-    }
+    // Note: onIncorrect already handles navigation in the parent component
     setIsFlipped(false);
     setShowAnswer(false);
   };
