@@ -101,8 +101,8 @@ export default function DashboardPage() {
   };
 
   const handleSaveGoal = async () => {
-    if (newGoal < 1 || newGoal > 100) {
-      alert('Daily goal must be between 1 and 100');
+    if (newGoal < 1 || newGoal > 500) {
+      alert('Daily goal must be between 1 and 500');
       return;
     }
 
