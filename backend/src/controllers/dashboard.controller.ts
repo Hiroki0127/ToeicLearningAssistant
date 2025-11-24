@@ -222,6 +222,20 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     });
     const averageQuizScore = averageQuizScoreResult._avg.score ? Math.round(averageQuizScoreResult._avg.score) : 0;
 
+    // Calculate total cards mastered (unique flashcards marked as correct)
+    // Count distinct flashcards that have been reviewed correctly at least once
+    const correctReviews = await prisma.flashcardReview.findMany({
+      where: {
+        userId,
+        isCorrect: true,
+      },
+      select: {
+        flashcardId: true,
+      },
+      distinct: ['flashcardId'],
+    });
+    const totalCardsMastered = correctReviews.length;
+
     // Calculate total study time from sessions
     // Only count sessions with valid endTime and positive duration
     const totalStudyTimeMinutes = allSessions.reduce((total, session) => {
@@ -268,7 +282,7 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
       recentActivity,
       quickStats: {
         totalStudyTime: Math.round(totalStudyTimeMinutes),
-        cardsMastered: totalCorrect,
+        cardsMastered: totalCardsMastered, // Cumulative correct answers from all time
         quizzesTaken: totalQuizAttempts,
         averageScore: averageQuizScore,
       }
