@@ -44,6 +44,15 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated, fetchUserFlashcards]);
 
+  // Initialize newGoal when dashboard data loads (only once)
+  // MUST be before any conditional returns (Rules of Hooks)
+  useEffect(() => {
+    if (!goalInitialized.current && dashboardData?.dailyGoal?.goal) {
+      setNewGoal(dashboardData.dailyGoal.goal);
+      goalInitialized.current = true;
+    }
+  }, [dashboardData?.dailyGoal?.goal]);
+
   if (loading || dashboardLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -90,14 +99,6 @@ export default function DashboardPage() {
     goal: 20,
     progress: 0,
   };
-
-  // Initialize newGoal when dashboard data loads (only once)
-  useEffect(() => {
-    if (!goalInitialized.current && dashboardData?.dailyGoal?.goal) {
-      setNewGoal(dashboardData.dailyGoal.goal);
-      goalInitialized.current = true;
-    }
-  }, [dashboardData?.dailyGoal?.goal]);
 
   const handleSaveGoal = async () => {
     if (newGoal < 1 || newGoal > 100) {
