@@ -223,10 +223,14 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     const averageQuizScore = averageQuizScoreResult._avg.score ? Math.round(averageQuizScoreResult._avg.score) : 0;
 
     // Calculate total study time from sessions
+    // Only count sessions with valid endTime and positive duration
     const totalStudyTimeMinutes = allSessions.reduce((total, session) => {
       if (session.endTime) {
         const duration = (new Date(session.endTime).getTime() - new Date(session.startTime).getTime()) / (1000 * 60);
-        return total + duration;
+        // Only add positive durations (filter out zero or negative durations from bad data)
+        if (duration > 0) {
+          return total + duration;
+        }
       }
       return total;
     }, 0);
