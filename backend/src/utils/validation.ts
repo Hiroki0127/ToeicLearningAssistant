@@ -19,7 +19,7 @@ export const loginSchema = z.object({
 export const updateUserSchema = z.object({
   name: z.string().min(2).max(50).optional(),
   preferences: z.object({
-    dailyGoal: z.number().min(1).max(100).optional(),
+    dailyGoal: z.number().min(1).max(500).optional(),
     notificationTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format (HH:MM)').optional(),
     difficulty: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
     focusAreas: z.array(z.string()).optional(),
