@@ -2,29 +2,39 @@ import { Request, Response } from 'express';
 import { getDashboardStats, calculateUserLevel } from '../controllers/dashboard.controller';
 import { JWTPayload } from '../types';
 
-// Mock Prisma
-const mockPrisma = {
-  flashcard: {
-    count: jest.fn(),
-    findMany: jest.fn(),
-  },
-  studySession: {
-    count: jest.fn(),
-    findMany: jest.fn(),
-  },
-  quizAttempt: {
-    count: jest.fn(),
-    aggregate: jest.fn(),
-    findMany: jest.fn(),
-  },
-  user: {
-    findUnique: jest.fn(),
-  },
-};
+// Mock Prisma - define inside factory to avoid hoisting issues
+jest.mock('@prisma/client', () => {
+  const mockPrisma = {
+    flashcard: {
+      count: jest.fn(),
+      findMany: jest.fn(),
+    },
+    flashcardReview: {
+      findMany: jest.fn(),
+    },
+    studySession: {
+      count: jest.fn(),
+      findMany: jest.fn(),
+    },
+    quizAttempt: {
+      count: jest.fn(),
+      aggregate: jest.fn(),
+      findMany: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
+    },
+    $disconnect: jest.fn(),
+  };
+  
+  return {
+    PrismaClient: jest.fn(() => mockPrisma),
+  };
+});
 
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => mockPrisma),
-}));
+// Get reference to mockPrisma for use in tests
+const { PrismaClient } = require('@prisma/client');
+const mockPrisma = new PrismaClient();
 
 describe('Dashboard Controller - Simple Tests', () => {
   let mockReq: Partial<Request>;

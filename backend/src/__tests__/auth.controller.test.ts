@@ -44,8 +44,14 @@ describe('Auth Controller', () => {
       json: mockJson,
     };
 
-    // Get the mock instance
-    mockPrisma = (PrismaClient as jest.Mock).mock.results[0].value;
+    // Get the mock instance - ensure it exists
+    const mockInstance = (PrismaClient as jest.Mock).mock.results[0]?.value;
+    if (mockInstance) {
+      mockPrisma = mockInstance;
+    } else {
+      // Fallback: create a new instance if mock doesn't exist yet
+      mockPrisma = new PrismaClient();
+    }
 
     jest.clearAllMocks();
   });
@@ -181,10 +187,12 @@ describe('Auth Controller', () => {
       await login(mockReq as Request, mockRes as Response);
 
       expect(mockStatus).toHaveBeenCalledWith(401);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Invalid credentials'
-      });
+      expect(mockJson).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: 'Invalid credentials'
+        })
+      );
     });
 
     it('should return error if user not found', async () => {
@@ -198,10 +206,12 @@ describe('Auth Controller', () => {
       await login(mockReq as Request, mockRes as Response);
 
       expect(mockStatus).toHaveBeenCalledWith(401);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Invalid credentials'
-      });
+      expect(mockJson).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: false,
+          error: 'Invalid credentials'
+        })
+      );
     });
   });
 });

@@ -12,14 +12,17 @@ jest.mock('@/lib/auth', () => ({
   },
 }));
 
-// Mock the store
+// Mock the store - Zustand stores are hooks that return state
+const mockStoreLogin = jest.fn();
+const mockStoreLogout = jest.fn();
+
 jest.mock('@/lib/store', () => ({
-  useAppStore: () => ({
+  useAppStore: jest.fn(() => ({
     user: null,
     isAuthenticated: false,
-    login: jest.fn(),
-    logout: jest.fn(),
-  }),
+    login: mockStoreLogin,
+    logout: mockStoreLogout,
+  })),
 }));
 
 // Mock localStorage
@@ -45,10 +48,20 @@ describe('useAuth Hook - Simple Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorageMock.getItem.mockReturnValue(null);
+    mockStoreLogin.mockClear();
+    mockStoreLogout.mockClear();
   });
 
-  it('should initialize with no user when not authenticated', () => {
+  it('should initialize with no user when not authenticated', async () => {
+    const { authService } = require('@/lib/auth');
+    authService.isAuthenticated.mockReturnValue(false);
+    
     const { result } = renderHook(() => useAuth());
+    
+    // Wait for initial auth check to complete
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
     
     expect(result.current.user).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
@@ -63,15 +76,20 @@ describe('useAuth Hook - Simple Tests', () => {
     const { useAppStore } = require('@/lib/store');
     
     authService.login.mockResolvedValue({ user: mockUser, token: 'mock-token' });
-    const mockStoreLogin = jest.fn();
+    authService.isAuthenticated.mockReturnValue(false);
     useAppStore.mockReturnValue({
       user: null,
       isAuthenticated: false,
       login: mockStoreLogin,
-      logout: jest.fn(),
+      logout: mockStoreLogout,
     });
 
     const { result } = renderHook(() => useAuth());
+
+    // Wait for initial auth check to complete
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
 
     await act(async () => {
       await result.current.login(mockCredentials);
@@ -93,15 +111,20 @@ describe('useAuth Hook - Simple Tests', () => {
     const { useAppStore } = require('@/lib/store');
     
     authService.register.mockResolvedValue({ user: mockUser, token: 'mock-token' });
-    const mockStoreLogin = jest.fn();
+    authService.isAuthenticated.mockReturnValue(false);
     useAppStore.mockReturnValue({
       user: null,
       isAuthenticated: false,
       login: mockStoreLogin,
-      logout: jest.fn(),
+      logout: mockStoreLogout,
     });
 
     const { result } = renderHook(() => useAuth());
+
+    // Wait for initial auth check to complete
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
 
     await act(async () => {
       await result.current.register(mockRegisterData);
@@ -115,15 +138,20 @@ describe('useAuth Hook - Simple Tests', () => {
     const { authService } = require('@/lib/auth');
     const { useAppStore } = require('@/lib/store');
     
-    const mockStoreLogout = jest.fn();
+    authService.isAuthenticated.mockReturnValue(true);
     useAppStore.mockReturnValue({
       user: { id: '1', email: 'test@example.com', name: 'Test User' },
       isAuthenticated: true,
-      login: jest.fn(),
+      login: mockStoreLogin,
       logout: mockStoreLogout,
     });
 
     const { result } = renderHook(() => useAuth());
+
+    // Wait for initial auth check to complete
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
 
     await act(async () => {
       result.current.logout();
@@ -141,20 +169,27 @@ describe('useAuth Hook - Simple Tests', () => {
     const { useAppStore } = require('@/lib/store');
     
     authService.login.mockRejectedValue(mockError);
+    authService.isAuthenticated.mockReturnValue(false);
     useAppStore.mockReturnValue({
       user: null,
       isAuthenticated: false,
-      login: jest.fn(),
-      logout: jest.fn(),
+      login: mockStoreLogin,
+      logout: mockStoreLogout,
     });
 
     const { result } = renderHook(() => useAuth());
+
+    // Wait for initial auth check to complete
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
 
     await act(async () => {
       try {
         await result.current.login(mockCredentials);
       } catch (error) {
-        expect(error).toBe(mockError);
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toBe('Invalid credentials');
       }
     });
 

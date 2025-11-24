@@ -1,4 +1,20 @@
-import { AIService } from '../services/ai.service';
+// Mock Groq SDK before importing anything
+const mockGroqClient = {
+  chat: {
+    completions: {
+      create: jest.fn(),
+    },
+  },
+};
+
+// Mock groq-sdk as a default export that is a constructor
+jest.mock('groq-sdk', () => {
+  const MockGroq = jest.fn().mockImplementation(() => mockGroqClient);
+  return {
+    __esModule: true,
+    default: MockGroq,
+  };
+});
 
 // Mock RAGService
 jest.mock('../services/rag.service', () => ({
@@ -9,27 +25,19 @@ jest.mock('../services/rag.service', () => ({
   },
 }));
 
-// Mock the getGroqClient function
+// Mock the getGroqClient function to return the same mock instance
 jest.mock('../utils/groq', () => ({
-  getGroqClient: jest.fn(() => ({
-    chat: {
-      completions: {
-        create: jest.fn(),
-      },
-    },
-  })),
+  getGroqClient: jest.fn(() => mockGroqClient),
 }));
+
+import { AIService } from '../services/ai.service';
 
 // Mock environment variables
 process.env.GROQ_API_KEY = 'test-api-key';
 
 describe('AI Service - Simple Tests', () => {
-  let mockGroqClient: any;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    const { getGroqClient } = require('../utils/groq');
-    mockGroqClient = getGroqClient();
   });
 
   describe('generateTOEICQuestion', () => {
@@ -79,21 +87,17 @@ describe('AI Service - Simple Tests', () => {
       expect(result).toEqual(JSON.parse(mockGroqResponse.choices[0].message.content));
     });
 
-    it('should return fallback response when all services fail', async () => {
+    it('should throw error when all services fail', async () => {
       const { RAGService } = require('../services/rag.service');
       RAGService.generateTOEICQuestionWithRAG.mockRejectedValue(new Error('RAG failed'));
       mockGroqClient.chat.completions.create.mockRejectedValue(new Error('Groq API failed'));
 
-      const result = await AIService.generateTOEICQuestion('part 5', 'medium');
+      await expect(AIService.generateTOEICQuestion('part 5', 'medium')).rejects.toThrow(
+        'Failed to generate TOEIC question'
+      );
 
-      expect(result).toEqual({
-        part: '5',
-        question: 'The company is planning to _____ its marketing strategy.',
-        options: ['A) modify', 'B) expand', 'C) revise', 'D) alter'],
-        correctAnswer: 'B',
-        explanation: 'This is a fallback explanation due to an error in generating the question.',
-        questionType: 'unknown'
-      });
+      expect(RAGService.generateTOEICQuestionWithRAG).toHaveBeenCalledWith('part 5', 'medium');
+      expect(mockGroqClient.chat.completions.create).toHaveBeenCalled();
     });
   });
 
@@ -129,14 +133,17 @@ describe('AI Service - Simple Tests', () => {
       expect(result).toBe('Groq explanation for allocate');
     });
 
-    it('should return fallback response when all services fail', async () => {
+    it('should throw error when all services fail', async () => {
       const { RAGService } = require('../services/rag.service');
       RAGService.explainVocabularyWithRAG.mockRejectedValue(new Error('RAG failed'));
       mockGroqClient.chat.completions.create.mockRejectedValue(new Error('Groq API failed'));
 
-      const result = await AIService.generateVocabularyExplanation('allocate');
+      await expect(AIService.generateVocabularyExplanation('allocate')).rejects.toThrow(
+        'Failed to generate vocabulary explanation'
+      );
 
-      expect(result).toBe('Unable to generate vocabulary explanation');
+      expect(RAGService.explainVocabularyWithRAG).toHaveBeenCalledWith('allocate');
+      expect(mockGroqClient.chat.completions.create).toHaveBeenCalled();
     });
   });
 
@@ -158,12 +165,14 @@ describe('AI Service - Simple Tests', () => {
       expect(result).toBe('Groq explanation for present perfect');
     });
 
-    it('should return fallback response when Groq API fails', async () => {
+    it('should throw error when Groq API fails', async () => {
       mockGroqClient.chat.completions.create.mockRejectedValue(new Error('Groq API failed'));
 
-      const result = await AIService.explainGrammar('present perfect', 'I have been studying');
+      await expect(AIService.explainGrammar('present perfect', 'I have been studying')).rejects.toThrow(
+        'Failed to explain grammar'
+      );
 
-      expect(result).toBe('Unable to explain grammar');
+      expect(mockGroqClient.chat.completions.create).toHaveBeenCalled();
     });
   });
 });

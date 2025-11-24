@@ -1,25 +1,37 @@
 import { Request, Response } from 'express';
 import { getDashboardStats } from '../controllers/dashboard.controller';
 
-// Mock Prisma before importing the controller
-const mockPrisma = {
-  flashcard: {
-    count: jest.fn(),
-  },
-  studySession: {
-    findMany: jest.fn(),
-  },
-  quizAttempt: {
-    count: jest.fn(),
-    aggregate: jest.fn(),
-  },
-  $disconnect: jest.fn(),
-};
+// Mock Prisma - define inside factory to avoid hoisting issues
+jest.mock('@prisma/client', () => {
+  const mockPrisma = {
+    flashcard: {
+      count: jest.fn(),
+    },
+    flashcardReview: {
+      findMany: jest.fn(),
+    },
+    studySession: {
+      findMany: jest.fn(),
+    },
+    quizAttempt: {
+      count: jest.fn(),
+      aggregate: jest.fn(),
+      findMany: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
+    },
+    $disconnect: jest.fn(),
+  };
+  
+  return {
+    PrismaClient: jest.fn(() => mockPrisma),
+  };
+});
 
-// Mock Prisma client
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn(() => mockPrisma),
-}));
+// Get reference to mockPrisma for use in tests
+const { PrismaClient } = require('@prisma/client');
+const mockPrisma = new PrismaClient();
 
 describe('Dashboard Controller', () => {
   let mockReq: Partial<Request>;
