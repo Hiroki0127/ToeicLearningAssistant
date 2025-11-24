@@ -154,5 +154,34 @@ describe('Dashboard Controller', () => {
         })
       );
     });
+
+    it('should keep streak when no session yet today but streak is active', async () => {
+      mockPrisma.flashcard.count.mockResolvedValue(0);
+      mockPrisma.studySession.findMany
+        .mockResolvedValueOnce([]) // No sessions today for stats
+        .mockResolvedValueOnce([
+          {
+            startTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            endTime: new Date(Date.now() - 23 * 60 * 60 * 1000),
+          }
+        ]); // Last session yesterday
+      mockPrisma.quizAttempt.count.mockResolvedValue(0);
+      mockPrisma.quizAttempt.aggregate.mockResolvedValue({
+        _avg: { score: null }
+      });
+
+      await getDashboardStats(mockReq as Request, mockRes as Response);
+
+      expect(mockJson).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          data: expect.objectContaining({
+            progress: expect.objectContaining({
+              currentStreak: 1,
+            }),
+          })
+        })
+      );
+    });
   });
 });

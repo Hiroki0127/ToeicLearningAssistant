@@ -179,8 +179,20 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
     });
 
     let currentStreak = 0;
-    let currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+
+    const hasTodaySession = allSessions.some(session => {
+      const sessionDate = new Date(session.startTime);
+      sessionDate.setHours(0, 0, 0, 0);
+      return sessionDate.getTime() === todayDate.getTime();
+    });
+
+    // If no study yet today but streak should persist, start from yesterday
+    let currentDate = new Date(todayDate);
+    if (!hasTodaySession) {
+      currentDate.setDate(currentDate.getDate() - 1);
+    }
 
     for (const session of allSessions) {
       const sessionDate = new Date(session.startTime);
