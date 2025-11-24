@@ -50,6 +50,8 @@ export default function QuizPage() {
   const [score, setScore] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [initialTimeLeft, setInitialTimeLeft] = useState(0);
+  const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
   const [isQuizActive, setIsQuizActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
@@ -2175,6 +2177,8 @@ export default function QuizPage() {
         ? (quiz.timeLimit > 100 ? quiz.timeLimit : quiz.timeLimit * 60) // If > 100, assume seconds; else minutes
         : 600; // Default 10 minutes
       setTimeLeft(timeLimitInSeconds);
+      setInitialTimeLeft(timeLimitInSeconds);
+      setQuizStartTime(Date.now());
       setIsQuizActive(true);
     } catch (error) {
       console.error('Error starting quiz:', error);
@@ -2219,12 +2223,20 @@ export default function QuizPage() {
       const totalPossiblePoints = selectedQuiz.questions.reduce((sum, q) => sum + q.points, 0);
       const percentageScore = totalPossiblePoints > 0 ? Math.round((score / totalPossiblePoints) * 100) : 0;
       
+      const fallbackTimeLimit = selectedQuiz.timeLimit 
+        ? (selectedQuiz.timeLimit > 100 ? selectedQuiz.timeLimit : selectedQuiz.timeLimit * 60)
+        : 600;
+      const initialTimeForQuiz = initialTimeLeft || fallbackTimeLimit;
+      const elapsedSeconds = quizStartTime 
+        ? Math.max(Math.round((Date.now() - quizStartTime) / 1000), 0)
+        : Math.max(initialTimeForQuiz - timeLeft, 0);
+
       const quizResult: QuizResult = {
         quizId: selectedQuiz.id,
         score: percentageScore,
         totalQuestions: selectedQuiz.questions.length,
         correctAnswers: correctAnswers, // Use the actual count of correct answers
-        timeSpent: (selectedQuiz.timeLimit * 60) - timeLeft, // Time spent in seconds
+        timeSpent: elapsedSeconds, // Time spent in seconds
         answers: {}, // This would be populated with actual answers
       };
       
@@ -2240,6 +2252,9 @@ export default function QuizPage() {
     } catch (error) {
       console.error('Failed to submit quiz result:', error);
       // Continue with quiz completion even if submission fails
+    } finally {
+      setQuizStartTime(null);
+      setInitialTimeLeft(0);
     }
   };
 
