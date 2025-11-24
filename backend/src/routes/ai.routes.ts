@@ -3,6 +3,7 @@ import {
   generateQuestion,
   explainGrammar,
   explainVocabulary,
+  chat,
 } from '../controllers/ai.controller';
 import { validateBody } from '../middleware/validation';
 import { z } from 'zod';
@@ -46,9 +47,18 @@ const explainVocabularySchema = z.object({
   word: z.string().min(1, 'Word is required'),
 });
 
+const chatSchema = z.object({
+  message: z.string().min(1, 'Message is required'),
+  conversationHistory: z.array(z.object({
+    role: z.string(),
+    content: z.string(),
+  })).optional(),
+});
+
 // AI endpoints
 router.post('/generate-question', validateBody(generateQuestionSchema), generateQuestion);
 router.post('/explain-grammar', validateBody(explainGrammarSchema), explainGrammar);
 router.post('/explain-vocabulary', validateBody(explainVocabularySchema), explainVocabulary);
+router.post('/chat', validateBody(chatSchema), chat);
 
 export default router;

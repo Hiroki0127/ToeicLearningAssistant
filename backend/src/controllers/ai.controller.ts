@@ -60,3 +60,22 @@ export const explainVocabulary = async (req: Request, res: Response): Promise<vo
     badRequestResponse(res, 'Failed to explain vocabulary');
   }
 };
+
+// New general chat endpoint
+export const chat = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { message, conversationHistory = [] } = req.body;
+
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      badRequestResponse(res, 'Message is required');
+      return;
+    }
+
+    const response = await AIService.chat(message, conversationHistory);
+    successResponse(res, { response }, 'Chat response generated successfully');
+  } catch (error) {
+    console.error('Chat error:', error);
+    const err = error as Error;
+    badRequestResponse(res, `Failed to generate chat response: ${err.message}`);
+  }
+};

@@ -220,30 +220,48 @@ export default function AIAssistantPage() {
             `The AI grammar service will be available once the API key is configured!`;
         }
       } 
-      // Check for study tips/vocabulary help
-      else if (query.includes('remember') || 
-               query.includes('vocab') || 
-               query.includes('study') ||
-               query.includes('help')) {
-        
-        response = `Here are some effective strategies for remembering TOEIC vocabulary:\n\n` +
-          `• **Spaced Repetition**: Review words at increasing intervals (1 day, 3 days, 1 week)\n` +
-          `• **Context Learning**: Learn words in sentences, not in isolation\n` +
-          `• **Association**: Connect new words to words you already know\n` +
-          `• **Visual Memory**: Create mental images or use flashcards\n` +
-          `• **Practice**: Use words in your own sentences\n` +
-          `• **Business Context**: Focus on how words are used in business situations\n\n` +
-          `Try asking me about specific words like "allocate" or "contingency" to see detailed explanations!`;
-      } 
+      // For all other queries, use the general chat endpoint
       else {
-        console.log('Falling through to general help');
-        // General TOEIC help
-        response = `I can help you with TOEIC preparation in several ways:\n\n` +
-          `• **Vocabulary**: Ask about specific words (e.g., "allocate" or "what does allocate mean?")\n` +
-          `• **Grammar**: Ask grammar questions (e.g., "Explain passive voice")\n` +
-          `• **Practice Questions**: Request practice questions (e.g., "Give me TOEIC part 5 practice")\n` +
-          `• **Study Tips**: Ask for learning strategies (e.g., "How can I remember vocabulary?")\n\n` +
-          `What specific TOEIC topic would you like help with?`;
+        console.log('Using general chat endpoint for query:', currentInput);
+        
+        // Build conversation history from all messages (full conversation like ChatGPT)
+        // Backend will handle token limits intelligently
+        const recentMessages = messages.map(msg => ({
+          role: msg.type === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        }));
+        
+        try {
+          const chatResponse = await fetch('https://toeiclearningassistant.onrender.com/api/ai/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              message: currentInput,
+              conversationHistory: recentMessages
+            }),
+          });
+          
+          if (chatResponse.ok) {
+            const data = await chatResponse.json();
+            response = data.data.response;
+          } else {
+            const errorData = await chatResponse.json();
+            console.error('Chat API error:', errorData);
+            throw new Error(errorData.message || 'Failed to get chat response');
+          }
+        } catch (error) {
+          console.error('Chat endpoint error:', error);
+          // Fallback to helpful message
+          response = `I can help you with TOEIC preparation and general English questions. Here are some things I can assist with:\n\n` +
+            `• **Vocabulary**: Ask about specific words (e.g., "allocate" or "what does allocate mean?")\n` +
+            `• **Grammar**: Ask grammar questions (e.g., "Explain passive voice")\n` +
+            `• **Practice Questions**: Request practice questions (e.g., "Give me TOEIC part 5 practice")\n` +
+            `• **Study Tips**: Ask for learning strategies\n` +
+            `• **General Questions**: Ask me anything related to English or TOEIC preparation\n\n` +
+            `What would you like help with?`;
+        }
       }
 
       const assistantMessage: Message = {

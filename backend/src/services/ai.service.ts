@@ -402,4 +402,69 @@ CRITICAL RULES:
       }
     }
   }
+
+  // General chat method - handles any type of question
+  // Remembers full conversation like ChatGPT, with smart token management
+  static async chat(message: string, conversationHistory: Array<{role: string, content: string}> = []): Promise<string> {
+    try {
+      const groq = getGroqClient();
+      
+      // System prompt
+      const systemPrompt = `You are a helpful AI assistant for TOEIC (Test of English for International Communication) preparation. 
+You help students learn English for business contexts, focusing on:
+- TOEIC exam preparation (Parts 1-7)
+- Business English vocabulary and grammar
+- Study strategies and tips
+- General English questions related to TOEIC topics
+
+You can also answer general questions, but try to relate them to TOEIC/business English when relevant.
+Be concise, clear, and helpful. Use examples when appropriate.`;
+
+      // Build conversation context - use full history like ChatGPT
+      // llama-3.1-8b-instant has ~8k token context window
+      // We'll use all messages and let Groq handle truncation if needed
+      // Or we can be smart and estimate tokens (roughly 1 token = 4 characters)
+      const messages: Array<{role: string, content: string}> = [
+        {
+          role: 'system',
+          content: systemPrompt
+        },
+        ...conversationHistory, // Use full conversation history (no limit)
+        {
+          role: 'user',
+          content: message
+        }
+      ];
+
+      // Estimate total tokens (rough approximation: 1 token ≈ 4 characters)
+      // System prompt + all messages + new message
+      const estimatedTokens = messages.reduce((total, msg) => {
+        return total + Math.ceil((msg.content?.length || 0) / 4);
+      }, 0);
+
+      // If we're getting close to the limit (8k tokens), trim oldest messages
+      // Keep system prompt and recent messages
+      let finalMessages = messages;
+      if (estimatedTokens > 6000) { // Safety margin: trim if over 6k estimated tokens
+        console.log(`Conversation getting long (${estimatedTokens} estimated tokens), trimming oldest messages`);
+        // Keep system prompt, trim oldest conversation history, keep recent messages
+        const systemMsg = messages[0];
+        const userMsg = messages[messages.length - 1];
+        const recentHistory = conversationHistory.slice(-20); // Keep last 20 messages
+        finalMessages = [systemMsg, ...recentHistory, userMsg];
+      }
+
+      const completion = await groq.chat.completions.create({
+        model: "llama-3.1-8b-instant",
+        messages: finalMessages as any,
+        temperature: 0.7,
+        max_tokens: 2000, // Increased for longer responses
+      });
+
+      return completion.choices[0]?.message?.content || 'Sorry, I could not process your request.';
+    } catch (error) {
+      console.error('Error in general chat:', error);
+      throw new Error('Failed to generate chat response');
+    }
+  }
 }
