@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { successResponse, createdResponse, badRequestResponse, notFoundResponse, databaseErrorResponse } from '../utils/response';
 import type { CreateFlashcardInput, UpdateFlashcardInput, FlashcardReviewInput } from '../utils/validation';
+import { KnowledgeGraphAutoService } from '../services/knowledge-graph-auto.service';
 
 const prisma = new PrismaClient();
 
@@ -19,6 +20,16 @@ export const createFlashcard = async (req: Request, res: Response): Promise<void
         ...flashcardData,
         userId: req.user.userId,
       },
+    });
+
+    // Auto-grow Knowledge Graph: Create node from flashcard (async, don't wait)
+    KnowledgeGraphAutoService.createNodeFromFlashcard(flashcard).catch(err => {
+      console.error('Error auto-creating KG node:', err);
+    });
+
+    // Auto-grow Knowledge Graph: Create relationships from definition similarity (async)
+    KnowledgeGraphAutoService.createRelationshipsFromSimilarity(flashcard.id).catch(err => {
+      console.error('Error auto-creating similarity relationships:', err);
     });
 
     createdResponse(res, flashcard, 'Flashcard created successfully');
@@ -233,6 +244,15 @@ export const reviewFlashcard = async (req: Request, res: Response): Promise<void
 
     // Update user progress
     await updateUserProgress(req.user.userId, reviewData.isCorrect);
+
+    // Auto-grow Knowledge Graph: Create relationships from co-study patterns (async, don't wait)
+    KnowledgeGraphAutoService.createRelationshipsFromStudyPattern(
+      req.user.userId,
+      reviewData.flashcardId,
+      30 // 30 minute window
+    ).catch(err => {
+      console.error('Error auto-creating co-study relationships:', err);
+    });
 
     successResponse(res, review, 'Flashcard review recorded successfully');
   } catch (error) {
