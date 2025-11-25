@@ -14,6 +14,8 @@ This project was built to solve a real problem: most TOEIC study apps use generi
 
 - **AI Assistant with RAG Integration** - Generates Part 5, 6, and 7 practice questions grounded in real TOEIC content from the database. Maintains full conversation history like ChatGPT with smart token management.
 - **Flashcards System** - Study vocabulary with interactive cards, track progress, and automatically generate "Needs Review" sets based on incorrect answers.
+- **Smart Recommendations** - AI-powered personalized flashcard recommendations based on weak areas, spaced repetition, knowledge graph relationships, and study patterns.
+- **Notifications** - Real-time notifications for achievements, study streaks, reminders, and system updates with unread count badge and full notifications page.
 - **TOEIC Quizzes** - Sample TOEIC-style quizzes (Part 5, 6, 7) plus ability to create custom quizzes with timed sessions.
 - **Progress Dashboard** - Comprehensive tracking including:
   - Study streaks with persistence across day changes
@@ -153,9 +155,9 @@ The API provides endpoints for:
 - **Study Sessions** - Session creation, duration tracking, statistics
 - **Dashboard** - Statistics, progress tracking, leveling system
 - **AI Services** - Question generation, vocabulary/grammar explanations with RAG, general chat
-- **Notifications** - User notifications (backend only, not exposed in frontend UI)
+- **Notifications** - User notifications (create, read, delete, preferences management)
+- **Smart Recommendations** - Personalized flashcard recommendations (general, daily, weak areas, related concepts)
 - **Knowledge Graph** - Vocabulary relationship queries (backend only, not exposed in frontend UI)
-- **Smart Recommendations** - Personalized flashcard recommendations (backend only, not exposed in frontend UI)
 
 ## How RAG Works
 
@@ -314,21 +316,18 @@ The project uses:
 
 The following features are implemented in the backend API but not yet exposed in the frontend UI:
 
-- **Notifications System** - Backend endpoints exist for creating, retrieving, and managing user notifications (reminders, achievements, streaks, system messages)
-- **Knowledge Graph** - Backend service for querying vocabulary relationships, learning paths, and related concepts
-- **Smart Recommendations** - Backend service for generating personalized flashcard recommendations based on weak areas, spaced repetition, and knowledge graph connections
-
-These can be integrated into the frontend in future updates.
+- **Knowledge Graph** - Backend service for querying vocabulary relationships, learning paths, and related concepts. Can be integrated into the frontend for visualization in future updates.
 
 ## Future Enhancements
 
 Potential improvements for future development:
-- Frontend integration for notifications, knowledge graph, and smart recommendations
 - Knowledge graph visualization for vocabulary relationships
+- Push notifications for mobile devices
 - Listening practice (Part 1-4)
-- Spaced repetition algorithm for flashcards
+- Enhanced spaced repetition algorithm for flashcards
 - Social features (leaderboards, study groups)
 - Mobile app (React Native)
+- Notification preferences UI for customizing notification types and timing
 
 ## License
 

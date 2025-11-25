@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { KnowledgeGraphIntegrated } from './knowledge-graph-integrated.service';
 
 const prisma = new PrismaClient();
 
@@ -163,6 +164,33 @@ export class RAGService {
       
       console.log(`RAG: Retrieved context - flashcards: ${context.flashcards.length}, questions: ${context.questions.length}`);
       
+      // Enhance with Knowledge Graph
+      let knowledgeGraphContext = '';
+      try {
+        const kgData = await KnowledgeGraphIntegrated.findRelatedConcepts(word, {
+          maxDepth: 1,
+          limit: 3,
+          includeFlashcards: true,
+        });
+        
+        if (kgData.concepts && kgData.concepts.length > 0) {
+          knowledgeGraphContext += '\n**Related Vocabulary Concepts:**\n';
+          kgData.concepts.slice(0, 2).forEach((concept: any, index: number) => {
+            knowledgeGraphContext += `${index + 1}. ${concept.title}: ${concept.description} (${concept.relationshipType})\n`;
+          });
+        }
+        
+        if (kgData.flashcards && kgData.flashcards.length > 0) {
+          knowledgeGraphContext += '\n**Related Words to Study:**\n';
+          kgData.flashcards.slice(0, 2).forEach((card: any, index: number) => {
+            knowledgeGraphContext += `${index + 1}. ${card.word}: ${card.definition}\n`;
+          });
+        }
+      } catch (kgError) {
+        console.log('Knowledge Graph enhancement not available, continuing without it:', kgError);
+        // Continue without KG if it fails
+      }
+      
       // Build concise context string
       let contextString = '';
       
@@ -181,9 +209,11 @@ export class RAGService {
 - Use EXACT definitions from the database when available
 - Focus on business/workplace usage
 - Include part of speech and one example sentence
+- Reference related vocabulary when relevant
 
 **Official TOEIC Database Context:**
 ${contextString}
+${knowledgeGraphContext}
 
 **Format your response as:**
 **[WORD]** ([part of speech]): [brief definition]
@@ -212,6 +242,29 @@ Example: [one business context sentence]`;
       
       // Retrieve relevant questions and patterns
       const context = await this.retrieveRelevantContext(topic, 5);
+      
+      // Enhance with Knowledge Graph for better vocabulary relationships
+      let knowledgeGraphContext = '';
+      try {
+        const kgEnhancement = await KnowledgeGraphIntegrated.enhanceRAGWithKnowledgeGraph(topic);
+        
+        if (kgEnhancement.relatedConcepts && kgEnhancement.relatedConcepts.length > 0) {
+          knowledgeGraphContext += '\n**Related Vocabulary Concepts (for authentic question content):**\n';
+          kgEnhancement.relatedConcepts.slice(0, 3).forEach((concept: any, index: number) => {
+            knowledgeGraphContext += `${index + 1}. ${concept.title}: ${concept.description}\n`;
+          });
+        }
+        
+        if (kgEnhancement.relatedFlashcards && kgEnhancement.relatedFlashcards.length > 0) {
+          knowledgeGraphContext += '\n**Related Vocabulary Words (use in question context):**\n';
+          kgEnhancement.relatedFlashcards.slice(0, 3).forEach((card: any, index: number) => {
+            knowledgeGraphContext += `${index + 1}. ${card.word}: ${card.definition}\n`;
+          });
+        }
+      } catch (kgError) {
+        console.log('Knowledge Graph enhancement not available, continuing without it:', kgError);
+        // Continue without KG if it fails
+      }
       
       // Build context with real TOEIC question patterns
       let contextString = '';
@@ -261,10 +314,12 @@ Example: [one business context sentence]`;
 - Match the difficulty level (${difficulty})
 - Include proper TOEIC-style explanations
 - Reference official TOEIC question patterns when available
+- Use related vocabulary concepts to create more authentic and interconnected questions
 - For Part 6: Always use question numbers 1, 2, 3, 4 for each individual set
 
 **Official TOEIC Question Patterns:**
 ${contextString}
+${knowledgeGraphContext}
 
 **Generate a TOEIC Part ${targetPart} question. Return as JSON:**
 
