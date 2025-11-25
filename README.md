@@ -12,7 +12,7 @@ This project was built to solve a real problem: most TOEIC study apps use generi
 
 ### Key Features
 
-- **AI Assistant with RAG Integration** - Generates Part 5, 6, and 7 practice questions grounded in real TOEIC content from the database. Maintains full conversation history like ChatGPT with smart token management.
+- **AI Assistant with RAG + Knowledge Graph Integration** - Generates Part 5, 6, and 7 practice questions grounded in real TOEIC content from the database. Knowledge Graph automatically enhances responses with related vocabulary concepts. Maintains full conversation history like ChatGPT with smart token management.
 - **Flashcards System** - Study vocabulary with interactive cards, track progress, and automatically generate "Needs Review" sets based on incorrect answers.
 - **Smart Recommendations** - AI-powered personalized flashcard recommendations based on weak areas, spaced repetition, knowledge graph relationships, and study patterns.
 - **Notifications** - Real-time notifications for achievements, study streaks, reminders, and system updates with unread count badge and full notifications page.
@@ -159,26 +159,43 @@ The API provides endpoints for:
 - **Smart Recommendations** - Personalized flashcard recommendations (general, daily, weak areas, related concepts)
 - **Knowledge Graph** - Vocabulary relationship queries (backend only, not exposed in frontend UI)
 
-## How RAG Works
+## How RAG + Knowledge Graph Works
 
-The RAG (Retrieval-Augmented Generation) system enhances AI responses by grounding them in actual TOEIC content:
+The RAG (Retrieval-Augmented Generation) system enhanced with Knowledge Graph automatically improves AI responses by grounding them in actual TOEIC content and vocabulary relationships:
 
 1. **Initialization** - On server startup, loads all flashcards, quizzes, and questions from the database into memory
 2. **Query Processing** - When a user requests a practice question or vocabulary explanation:
    - Searches through the loaded content to find relevant examples
    - Filters by TOEIC part type (Part 5, 6, or 7) when applicable
    - Selects the most relevant flashcards and questions
-3. **Context Building** - Constructs a context string from retrieved items including:
+3. **Knowledge Graph Enhancement** - Automatically enriches context with:
+   - Related vocabulary concepts from the Knowledge Graph
+   - Semantic relationships between words
+   - Related flashcards based on vocabulary connections
+4. **Context Building** - Constructs a context string from retrieved items including:
    - Relevant vocabulary with definitions
    - Sample questions matching the requested format
    - Business context examples
-4. **AI Generation** - Passes the context to Groq API along with TOEIC-specific prompts that enforce:
+   - Related vocabulary concepts (from Knowledge Graph)
+5. **AI Generation** - Passes the enhanced context to Groq API along with TOEIC-specific prompts that enforce:
    - Correct question format (4 questions for Part 6, proper numbering)
    - Realistic business document templates
    - Appropriate difficulty levels
-5. **Response** - Returns AI-generated content that matches official TOEIC patterns
+   - Use of interconnected vocabulary for authentic scenarios
+6. **Response** - Returns AI-generated content that matches official TOEIC patterns with enhanced vocabulary relationships
 
-This ensures the AI generates questions that match the actual exam format, vocabulary, and style rather than generic English questions.
+This ensures the AI generates questions that match the actual exam format, vocabulary, and style rather than generic English questions, with improved context from vocabulary relationships.
+
+### Auto-Growing Knowledge Graph
+
+The Knowledge Graph automatically grows as users interact with the app:
+- **Node Creation**: When users create flashcards, Knowledge Graph nodes are automatically created
+- **Relationship Formation**: Relationships are created based on:
+  - Co-study patterns (words studied together in the same session)
+  - Definition similarity (words with similar meanings)
+  - Relationship types: synonym, related_to, same_category, co_studied
+- **Strength Tracking**: Relationships strengthen when words are studied together multiple times
+- **Continuous Improvement**: The graph becomes richer over time, improving AI responses and recommendations
 
 ## Testing
 
@@ -312,11 +329,24 @@ The project uses:
 - Trim oldest messages if approaching limit
 - Maintains context while preventing token overflow
 
-## Backend-Only Features
+### Challenge 6: Knowledge Graph Integration & Auto-Growth
+**Problem:** Enhancing AI responses with vocabulary relationships while allowing the Knowledge Graph to grow organically from user interactions.
 
-The following features are implemented in the backend API but not yet exposed in the frontend UI:
+**Solution:** 
+- Integrated Knowledge Graph queries into RAG service to automatically enhance AI responses
+- Implemented auto-growth system that creates nodes from flashcards and relationships from study patterns
+- Relationships strengthen based on co-study frequency and definition similarity
+- Graceful fallback if Knowledge Graph data is unavailable
+- Non-blocking async operations to avoid slowing down user interactions
 
-- **Knowledge Graph** - Backend service for querying vocabulary relationships, learning paths, and related concepts. Can be integrated into the frontend for visualization in future updates.
+## Knowledge Graph System
+
+The Knowledge Graph is a core component that enhances AI responses and recommendations:
+
+- **Automatic Growth**: Nodes and relationships are automatically created from user interactions (flashcard creation, study patterns)
+- **RAG Integration**: Automatically enhances AI responses with related vocabulary concepts
+- **Smart Recommendations**: Powers personalized flashcard recommendations based on vocabulary relationships
+- **Backend API**: Full API available for querying relationships, learning paths, and related concepts (can be visualized in future updates)
 
 ## Future Enhancements
 
