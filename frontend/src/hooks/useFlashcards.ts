@@ -173,6 +173,17 @@ export const useFlashcards = () => {
     setError(null);
   };
 
+  // Set flashcards directly (useful for recommendations)
+  const setFlashcardsDirectly = useCallback((newFlashcards: Flashcard[]) => {
+    setFlashcards(newFlashcards);
+    setPagination({
+      page: 1,
+      limit: newFlashcards.length,
+      total: newFlashcards.length,
+      totalPages: 1,
+    });
+  }, []);
+
   return {
     flashcards,
     loading,
@@ -189,5 +200,6 @@ export const useFlashcards = () => {
     searchFlashcards,
     getFlashcardsByDifficulty,
     clearError,
+    setFlashcardsDirectly,
   };
 };

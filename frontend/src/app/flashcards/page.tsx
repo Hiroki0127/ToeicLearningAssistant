@@ -8,10 +8,11 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import Layout from '@/components/layout/Layout';
 import { useFlashcards } from '@/hooks/useFlashcards';
 import { studySessionService } from '@/lib/study-sessions';
-import { BookOpen, Plus, Edit3, RotateCcw, Target, Clock, TrendingUp } from 'lucide-react';
+import { BookOpen, Plus, Edit3, RotateCcw, Target, Clock, TrendingUp, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRecommendations } from '@/hooks/useRecommendations';
 
-type FlashcardSetType = 'all' | 'needs-review' | null;
+type FlashcardSetType = 'all' | 'needs-review' | 'recommended' | null;
 
 export default function FlashcardsPage() {
   const { isAuthenticated } = useAuth();
@@ -20,9 +21,11 @@ export default function FlashcardsPage() {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [incorrectAnswers, setIncorrectAnswers] = useState(0);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
-  const { flashcards, loading, error, fetchFlashcards, fetchUserFlashcards, fetchFlashcardsNeedingReview, reviewFlashcard } = useFlashcards();
+  const { flashcards, loading, error, fetchFlashcards, fetchUserFlashcards, fetchFlashcardsNeedingReview, reviewFlashcard, setFlashcardsDirectly } = useFlashcards();
+  const { fetchRecommendations, getRecommendedFlashcards, loading: recommendationsLoading } = useRecommendations();
   const [allFlashcardsCount, setAllFlashcardsCount] = useState(0);
   const [needsReviewCount, setNeedsReviewCount] = useState(0);
+  const [recommendedCount, setRecommendedCount] = useState(0);
   const [sessionCompleted, setSessionCompleted] = useState(false);
 
   // Fetch counts for selection screen
@@ -40,6 +43,15 @@ export default function FlashcardsPage() {
         } catch (err) {
           // If no reviews exist yet, count is 0
           setNeedsReviewCount(0);
+        }
+
+        // Fetch recommendations count
+        try {
+          const recommendationsResponse = await fetchRecommendations({ limit: 100, includeReasons: false });
+          setRecommendedCount(recommendationsResponse.totalFound || 0);
+        } catch (err) {
+          console.error('Failed to fetch recommendations count:', err);
+          setRecommendedCount(0);
         }
       }
     } catch (err) {
@@ -172,6 +184,21 @@ export default function FlashcardsPage() {
           }
         }
         await fetchFlashcardsNeedingReview(1, 1000);
+      } else if (setType === 'recommended') {
+        // Fetch recommendations and convert to flashcards
+        if (isAuthenticated) {
+          try {
+            await fetchRecommendations({ limit: 100, includeReasons: true });
+            const recommendedFlashcards = getRecommendedFlashcards();
+            if (recommendedFlashcards.length > 0) {
+              setFlashcardsDirectly(recommendedFlashcards);
+            } else {
+              console.warn('No recommendations available');
+            }
+          } catch (err) {
+            console.error('Failed to fetch recommendations:', err);
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to fetch flashcards:', err);
@@ -197,7 +224,7 @@ export default function FlashcardsPage() {
     }
   }, [flashcards, selectedSet]);
 
-  if (loading && !selectedSet) {
+  if ((loading || recommendationsLoading) && !selectedSet) {
     return (
       <Layout>
         <div className="min-h-screen bg-gray-50 py-12">
@@ -243,7 +270,7 @@ export default function FlashcardsPage() {
             </div>
 
             {/* Flashcard Set Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* All Flashcards */}
               <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleSelectSet('all')}>
                 <CardHeader>
@@ -322,6 +349,63 @@ export default function FlashcardsPage() {
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <TrendingUp className="w-4 h-4" />
                         <span>Improve your weak areas</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recommended */}
+              <Card 
+                className={`hover:shadow-lg transition-shadow ${recommendedCount === 0 ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                onClick={() => {
+                  if (recommendedCount > 0) {
+                    handleSelectSet('recommended');
+                  } else {
+                    // Refresh count if clicked when 0
+                    fetchCounts();
+                  }
+                }}
+              >
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <Sparkles className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-gray-900">Recommended</h3>
+                      <p className="text-sm text-gray-600">AI-powered study suggestions</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Smart Picks</span>
+                      <span className="text-lg font-bold text-gray-900">{recommendedCount}</span>
+                    </div>
+                    {recommendedCount === 0 ? (
+                      <div className="space-y-2">
+                        <div className="text-sm text-gray-500 italic">
+                          {recommendationsLoading ? 'Loading recommendations...' : 'No recommendations available yet. Study some flashcards first!'}
+                        </div>
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            fetchCounts();
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                          Refresh
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Sparkles className="w-4 h-4" />
+                        <span>Personalized for you</span>
                       </div>
                     )}
                   </div>

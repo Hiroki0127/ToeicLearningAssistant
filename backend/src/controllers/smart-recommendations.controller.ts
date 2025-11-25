@@ -10,12 +10,12 @@ export class SmartRecommendationsController {
    */
   static async getRecommendations(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
-      
-      if (!userId) {
+      if (!req.user) {
         successResponse(res, null, 'User not authenticated', 401);
         return;
       }
+
+      const userId = req.user.userId;
 
       const { 
         limit = 10, 
@@ -42,12 +42,12 @@ export class SmartRecommendationsController {
    */
   static async getDailyRecommendations(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
-      
-      if (!userId) {
+      if (!req.user) {
         successResponse(res, null, 'User not authenticated', 401);
         return;
       }
+
+      const userId = req.user.userId;
 
       const result = await SmartRecommendationsService.getRecommendations(userId, {
         limit: 5, // Smaller set for daily focus
@@ -75,12 +75,12 @@ export class SmartRecommendationsController {
    */
   static async getWeakAreaRecommendations(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
-      
-      if (!userId) {
+      if (!req.user) {
         successResponse(res, null, 'User not authenticated', 401);
         return;
       }
+
+      const userId = req.user.userId;
 
       const result = await SmartRecommendationsService.getRecommendations(userId, {
         limit: 8,
@@ -110,12 +110,12 @@ export class SmartRecommendationsController {
    */
   static async getRelatedRecommendations(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (req as any).user?.id;
-      
-      if (!userId) {
+      if (!req.user) {
         successResponse(res, null, 'User not authenticated', 401);
         return;
       }
+
+      const userId = req.user.userId;
 
       const result = await SmartRecommendationsService.getRecommendations(userId, {
         limit: 8,
